@@ -1,0 +1,40 @@
+<header class="bg-white shadow-md sticky top-0 z-50">
+  <div class="container mx-auto px-4">
+    <div class="flex items-center justify-between h-20">
+      <div class="flex items-center gap-3 justify-center md:justify-start w-full md:w-auto">
+        <img
+          [src]="logoUrl"
+          [alt]="storeName + ' logo'"
+          class="w-12 h-12 md:w-14 md:h-14 rounded-full object-cover border-2 border-gray-200 shadow-sm">
+        <h1 class="text-xl md:text-3xl font-bold bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
+          {{ storeName }}
+        </h1>
+      </div>
+
+      <button
+        (click)="toggleMenu()"
+        class="md:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
+        aria-label="Toggle menu">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path *ngIf="!isMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          <path *ngIf="isMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+
+      <nav class="hidden md:flex space-x-8">
+        <a href="#" class="text-gray-700 hover:text-orange-600 font-medium transition-colors">Produtos</a>
+        <a href="#" class="text-gray-700 hover:text-orange-600 font-medium transition-colors">Categorias</a>
+        <a href="#" class="text-gray-700 hover:text-orange-600 font-medium relative transition-colors">
+          Carrinho
+          <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+        </a>
+      </nav>
+    </div>
+
+    <nav *ngIf="isMenuOpen" class="md:hidden pb-4 space-y-2">
+      <a href="#" class="block py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded px-2 transition-colors">Produtos</a>
+      <a href="#" class="block py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded px-2 transition-colors">Categorias</a>
+      <a href="#" class="block py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded px-2 transition-colors">Carrinho (0)</a>
+    </nav>
+  </div>
+</header>

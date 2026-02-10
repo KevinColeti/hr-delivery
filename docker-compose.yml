@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hrnachapa-postgres
+    environment:
+      POSTGRES_DB: hrnachapa_db
+      POSTGRES_USER: hrnachapa_user
+      POSTGRES_PASSWORD: hrnachapa_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - hrnachapa-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hrnachapa_user -d hrnachapa_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  angular-app:
+    build:
+      context: ./hrnachapa-app
+      dockerfile: Dockerfile
+    container_name: hrnachapa-angular
+    ports:
+      - "4200:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - hrnachapa-network
+
+volumes:
+  postgres_data:
+
+networks:
+  hrnachapa-network:
+    driver: bridge
