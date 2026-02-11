@@ -1,0 +1,20 @@
+<header class="bg-white shadow-sm px-4 md:px-6 py-4 flex justify-between items-center">
+  <div class="flex items-center gap-4">
+    <button
+      (click)="toggleSidebar()"
+      class="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+      aria-label="Toggle menu">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+    <h2 class="text-xl font-semibold text-gray-800">Painel Administrativo</h2>
+  </div>
+
+  <div class="flex items-center gap-4">
+    <span class="text-gray-600 hidden sm:inline">Olá, {{ adminName }}</span>
+    <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
+      Sair
+    </button>
+  </div>
+</header>
