@@ -1,0 +1,138 @@
+﻿# ROADMAP - HRNachapa
+
+## Como usar este arquivo
+- Status disponiveis: `todo`, `in-progress`, `done`
+- Prioridade: `P0` (critico), `P1` (importante), `P2` (melhoria)
+- Este roadmap cobre `Admin Panel` e `Site Cliente` da Fase 1 (MVP)
+
+## Baseline atual (ja feito no repositorio)
+- [x] (`done`) [P0] Base frontend Angular com home publica e catalogo mock
+- [x] (`done`) [P1] Layout inicial de `/admin` com dashboard de exemplo
+- [x] (`done`) [P0] Docker compose com frontend + PostgreSQL
+- [ ] (`todo`) [P0] Backend/API real ainda nao existe
+- [ ] (`todo`) [P0] Fluxo de pedido real ainda nao existe
+
+## Visao geral da Fase 1
+- Operacao inicial: `delivery`
+- Perfis: `admin` e `cozinha`
+- Tempo real obrigatorio para pedidos/cozinha
+- Estoque por insumos (baixa automatica por receita/extras)
+- Promocoes: cupons + combos automaticos + primeiro pedido + valor minimo
+- Integracao WhatsApp
+
+## Sprints sugeridas (4-6 semanas)
+1. Semana 1: Fundacao tecnica + inicio cardapio/estoque
+2. Semana 2: Pedidos backend + status + baixa de estoque
+3. Semana 3: Site cliente (compra) + admin pedidos/cozinha
+4. Semana 4: Promocoes + clientes + configuracoes
+5. Semana 5: WhatsApp + refinamentos de UX + hardening
+6. Semana 6: Qualidade final + deploy/go-live
+
+---
+
+## E1 - Fundacao Tecnica
+- Status: `in-progress`
+- [x] (`done`) [P0] Stack frontend + Postgres via Docker operacional
+- [ ] (`todo`) [P0] Definir arquitetura backend (modulos, camadas, convencoes)
+- [ ] (`todo`) [P0] Configurar backend base com migracoes e seed inicial
+- [ ] (`todo`) [P0] Implementar autenticacao JWT
+- [ ] (`todo`) [P0] Implementar autorizacao por perfil (`admin`, `cozinha`)
+- [ ] (`todo`) [P0] Configurar tempo real para eventos de pedido
+- [ ] (`todo`) [P1] Configurar tratamento global de erros/validacoes
+- [ ] (`todo`) [P1] Configurar logs estruturados e rastreabilidade
+
+## E2 - Cardapio e Estoque (Insumos)
+- Status: `todo`
+- [ ] (`todo`) [P0] CRUD de categorias
+- [ ] (`todo`) [P0] CRUD de produtos finais
+- [ ] (`todo`) [P0] CRUD de insumos
+- [ ] (`todo`) [P0] Receita por produto (insumos obrigatorios + quantidade/unidade)
+- [ ] (`todo`) [P0] Extras com impacto em estoque
+- [ ] (`todo`) [P0] Disponibilidade automatica por estoque
+- [ ] (`todo`) [P1] Historico de movimentacao de estoque
+- [ ] (`todo`) [P1] Alertas de estoque minimo
+
+## E3 - Pedidos e Operacao
+- Status: `todo`
+- [ ] (`todo`) [P0] Endpoint de criacao de pedido (site -> backend)
+- [ ] (`todo`) [P0] Fluxo de status: `novo`, `confirmado`, `em preparo`, `pronto`, `saiu para entrega`, `entregue`, `cancelado`
+- [ ] (`todo`) [P0] Auditoria por mudanca de status (quem/quando)
+- [ ] (`todo`) [P0] Baixa automatica de estoque ao confirmar pedido
+- [ ] (`todo`) [P0] Lista admin de pedidos com filtros
+- [ ] (`todo`) [P0] Tela cozinha (modo monitor) com acao `marcar pronto`
+- [ ] (`todo`) [P0] Atualizacao em tempo real de pedidos/cozinha
+
+## E4 - Promocoes e Motor de Preco
+- Status: `todo`
+- [ ] (`todo`) [P0] Cupons com validade, valor minimo e limites de uso
+- [ ] (`todo`) [P0] Regra de primeiro pedido
+- [ ] (`todo`) [P0] Combos automaticos por combinacao de itens/categorias
+- [ ] (`todo`) [P1] Politica de acumulo de promocoes
+- [ ] (`todo`) [P0] Motor de calculo final (itens + extras + taxa + desconto)
+- [ ] (`todo`) [P1] Registro da promocao aplicada no pedido
+
+## E5 - Clientes e Configuracoes de Loja
+- Status: `todo`
+- [ ] (`todo`) [P0] Cadastro/atualizacao automatica de cliente no checkout
+- [ ] (`todo`) [P0] Deduplicacao por telefone
+- [ ] (`todo`) [P1] Historico de pedidos por cliente
+- [ ] (`todo`) [P0] Configuracoes de delivery (taxa, pedido minimo, area atendida)
+- [ ] (`todo`) [P1] Configuracoes de horario e operacao
+- [ ] (`todo`) [P1] Configuracoes institucionais da loja
+
+## E6 - Integracao WhatsApp
+- Status: `todo`
+- [ ] (`todo`) [P0] Definir provedor de envio (API/servico)
+- [ ] (`todo`) [P0] Implementar mensagens de confirmacao e status do pedido
+- [ ] (`todo`) [P1] Implementar templates configuraveis
+- [ ] (`todo`) [P1] Logs de envio e retry em falha
+
+## E7 - Frontend Site (Cliente)
+- Status: `in-progress`
+- [x] (`done`) [P1] Base visual publica com categorias/cards (mock)
+- [ ] (`todo`) [P0] Cardapio dinamico consumindo API
+- [ ] (`todo`) [P0] Detalhe de produto com extras e observacoes
+- [ ] (`todo`) [P0] Carrinho (edicao de itens, totais e descontos)
+- [ ] (`todo`) [P0] Checkout (cliente, endereco, pagamento, cupom)
+- [ ] (`todo`) [P0] Criacao de pedido e retorno com numero de acompanhamento
+- [ ] (`todo`) [P0] Tela de acompanhamento de status do pedido
+- [ ] (`todo`) [P1] Botao/fluxo de contato via WhatsApp
+
+## E8 - Frontend Admin
+- Status: `in-progress`
+- [x] (`done`) [P2] Esboco inicial de layout `/admin` (sidebar/header/footer/dashboard)
+- [ ] (`todo`) [P0] Redesenhar `/admin` para o fluxo real da operacao
+- [ ] (`todo`) [P0] Modulo de pedidos (admin)
+- [ ] (`todo`) [P0] Modulo cozinha (visualizacao para monitor)
+- [ ] (`todo`) [P0] Modulo cardapio (produtos/categorias/receitas/extras)
+- [ ] (`todo`) [P0] Modulo estoque (insumos + movimentacoes + alertas)
+- [ ] (`todo`) [P0] Modulo promocoes (cupons + combos)
+- [ ] (`todo`) [P1] Modulo clientes
+- [ ] (`todo`) [P1] Modulo configuracoes
+- [ ] (`todo`) [P0] Guards por perfil e protecao de rotas
+
+## E9 - Qualidade e Go-live
+- Status: `todo`
+- [ ] (`todo`) [P0] Testes unitarios de dominios criticos
+- [ ] (`todo`) [P0] Testes de integracao (pedido, estoque, promocoes)
+- [ ] (`todo`) [P1] Teste E2E do fluxo completo (site -> admin -> cozinha -> entrega)
+- [ ] (`todo`) [P0] Checklist de producao (migrations, backup, observabilidade)
+- [ ] (`todo`) [P0] Deploy final e smoke test pos-deploy
+
+---
+
+## Dependencias principais
+- E1 antes de E3/E4/E5/E6
+- E2 antes de disponibilidade real no E7
+- E3 antes da tela cozinha completa no E8
+- E4 influencia fechamento do checkout no E7
+- E9 depende de todos os anteriores
+
+## Criterios de conclusao do MVP
+- [ ] (`todo`) [P0] Cliente consegue fechar pedido completo pelo site
+- [ ] (`todo`) [P0] Pedido aparece em tempo real no admin/cozinha
+- [ ] (`todo`) [P0] Cozinha consegue marcar pedido como pronto
+- [ ] (`todo`) [P0] Estoque de insumos e baixado corretamente
+- [ ] (`todo`) [P0] Cupons e combos aplicam regras corretamente
+- [ ] (`todo`) [P1] Cliente e historico ficam salvos
+- [ ] (`todo`) [P0] WhatsApp envia confirmacao e atualizacoes essenciais

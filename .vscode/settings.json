@@ -11,5 +11,6 @@
   },
   "editor.quickSuggestions": {
     "strings": true
-  }
+  },
+  "chatgpt.openOnStartup": true
 }

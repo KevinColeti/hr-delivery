@@ -1,176 +1,110 @@
-# HRNachapa - Projeto Angular com Docker e PostgreSQL
+﻿# HRNachapa
 
-## Tecnologias
+Projeto de sistema para hamburgueria com:
+- Site cliente para pedidos de delivery
+- Painel administrativo para operacao da loja
+- Controle de estoque por insumos
+- Promocoes, clientes e integracao WhatsApp
 
-- **Angular 21** - Framework frontend
-- **TailwindCSS v3** - Framework CSS utility-first
-- **PostgreSQL 16** - Banco de dados
-- **Docker** - Containerização
-- **Nginx** - Servidor web para produção
+## Status atual do repositorio
 
-## Estrutura do Projeto
+O que ja existe hoje:
+- Frontend Angular base do site publico com catalogo mock
+- Estrutura inicial de `/admin` (apenas esboco visual)
+- Docker com frontend + PostgreSQL
 
-```
+O que ainda nao existe:
+- Backend/API real
+- Fluxo real de pedidos
+- Persistencia de dados de negocio (alem do banco subir via Docker)
+- Tempo real de pedidos/cozinha
+
+## Visao da Fase 1 (MVP)
+
+Escopo fechado para primeira entrega:
+1. Operacao apenas `delivery`
+2. Perfis `admin` e `cozinha`
+3. Pedidos com atualizacao em tempo real
+4. Estoque por insumos com baixa automatica por receita/extras
+5. Cupons e combos automaticos (incluindo primeiro pedido e valor minimo)
+6. Integracao WhatsApp para eventos essenciais do pedido
+
+## Fase 1 - Modulos do Admin
+
+1. Dashboard operacional
+2. Pedidos (gestao completa de status)
+3. Tela cozinha (modo monitor + marcar pronto)
+4. Cardapio (produtos, categorias, receitas e extras)
+5. Estoque (insumos, movimentacoes e alertas)
+6. Promocoes (cupons e combos)
+7. Clientes (historico e dados)
+8. Configuracoes de loja/delivery
+9. Usuarios e permissoes (admin/cozinha)
+
+## Fase 1 - Modulos do Site Cliente
+
+1. Home com cardapio dinamico
+2. Detalhe de produto com extras/observacoes
+3. Carrinho com calculo completo
+4. Checkout de delivery (dados cliente/endereco/pagamento/cupom)
+5. Criacao de pedido e retorno de numero
+6. Acompanhamento de status do pedido
+7. Contato/atualizacoes via WhatsApp
+
+## Estrutura do projeto
+
+```text
 hrnachapa/
-├── hrnachapa-app/          # Aplicação Angular
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── components/
-│   │   │   │   ├── header/           # Header com logo e navegação
-│   │   │   │   ├── footer/           # Footer com contatos e redes sociais
-│   │   │   │   ├── product-card/     # Card de produto
-│   │   │   │   └── category-section/ # Seção de categoria
-│   │   │   └── data/
-│   │   │       └── products.ts       # Dados de produtos (mock)
-│   ├── Dockerfile          # Dockerfile da aplicação
-│   ├── .dockerignore       # Arquivos ignorados no build
-│   └── tailwind.config.js  # Configuração do TailwindCSS
-├── docker-compose.yml      # Orquestração dos containers
-└── .vscode/
-    └── settings.json       # Configuração do Tailwind IntelliSense
+|- hrnachapa-app/        # Frontend Angular (site + esboco admin)
+|- docker-compose.yml    # Frontend + PostgreSQL
+|- README.md
+|- ROADMAP.md            # Plano de execucao da Fase 1
 ```
 
-## Funcionalidades Implementadas
+## Stack atual
 
-### Interface do Usuário
-- ✅ Header responsivo com logo, nome da loja e menu hambúrguer (mobile)
-- ✅ Catálogo de produtos organizado por categorias
-- ✅ Cards de produtos com imagem, descrição e preço
-- ✅ Footer com informações de contato e redes sociais
-- ✅ Design mobile-first com TailwindCSS
+- Angular 21
+- TailwindCSS v3
+- PostgreSQL 16
+- Docker / Docker Compose
+- Nginx (container de producao do frontend)
 
-### Dados Dinâmicos (Preparados para API)
+## Como rodar o projeto atual
 
-Os seguintes dados estão atualmente em mock, mas preparados para serem substituídos por chamadas de API:
+### Sem Docker
 
-#### Header (`HeaderComponent`)
-- `storeName` - Nome da loja
-- `logoUrl` - URL da logo
-
-#### Footer (`FooterComponent`)
-- `storeName` - Nome da loja
-- `address` - Endereço completo
-- `phone` - Telefone de contato
-- `email` - Email de contato
-- `instagramUrl` - Link do Instagram
-- `whatsappUrl` - Link do WhatsApp
-- `currentYear` - Ano atual (gerado automaticamente)
-
-#### Produtos (`products.ts`)
-- `products[]` - Array de produtos com:
-  - `id` - ID único
-  - `name` - Nome do produto
-  - `description` - Descrição
-  - `price` - Preço
-  - `image` - URL da imagem
-  - `category` - Categoria do produto
-- `categories[]` - Array de categorias disponíveis
-
-## Pré-requisitos
-
-- Node.js 22+
-- npm 10+
-- Docker e Docker Compose
-
-## Desenvolvimento Local (sem Docker)
-
-1. Instalar dependências:
 ```bash
 cd hrnachapa-app
 npm install
-```
-
-2. Executar em modo desenvolvimento:
-```bash
 npm start
 ```
 
-A aplicação estará disponível em `http://localhost:4200`
+App em: `http://localhost:4200`
 
-## Executar com Docker
+### Com Docker
 
-1. Build e iniciar os containers:
 ```bash
 docker compose up --build
 ```
 
-2. Acessar a aplicação:
-- **Frontend**: http://localhost:4200
-- **PostgreSQL**: localhost:5432
+Servicos:
+- Frontend: `http://localhost:4200`
+- PostgreSQL: `localhost:5432`
 
-### Credenciais do PostgreSQL
+Credenciais do banco (ambiente local atual):
+- Database: `hrnachapa_db`
+- User: `hrnachapa_user`
+- Password: `hrnachapa_pass`
 
-- **Database**: hrnachapa_db
-- **User**: hrnachapa_user
-- **Password**: hrnachapa_pass
+## Planejamento
 
-## Comandos Úteis
+O plano detalhado por epicos, stories, prioridade e status esta em:
+- `ROADMAP.md`
 
-### Docker
+## Proximos passos imediatos (P0)
 
-```bash
-# Iniciar containers
-docker compose up
-
-# Iniciar em background
-docker compose up -d
-
-# Parar containers
-docker compose down
-
-# Rebuild containers
-docker compose up --build
-
-# Ver logs
-docker compose logs -f
-
-# Acessar PostgreSQL
-docker exec -it hrnachapa-postgres psql -U hrnachapa_user -d hrnachapa_db
-```
-
-### Angular
-
-```bash
-# Desenvolvimento
-npm start
-
-# Build de produção
-npm run build
-
-# Testes
-npm test
-
-# Linting
-npm run lint
-```
-
-## TailwindCSS
-
-O TailwindCSS v3 está configurado e pronto para uso. O IntelliSense está habilitado para arquivos `.html` e `.ts`.
-
-```html
-<div class="bg-blue-500 text-white p-4 rounded-lg">
-  Hello TailwindCSS!
-</div>
-```
-
-## Próximos Passos
-
-### Backend Integration
-1. Criar API REST ou GraphQL para servir dados dinâmicos
-2. Implementar serviços Angular para consumir a API:
-   - `ProductService` - Gerenciar produtos e categorias
-   - `StoreService` - Gerenciar informações da loja (header/footer)
-3. Conectar PostgreSQL com o backend
-4. Substituir dados mock por chamadas de API
-
-### Funcionalidades Futuras
-- Sistema de carrinho de compras
-- Autenticação de usuários
-- Painel administrativo
-- Sistema de pedidos
-- Integração com pagamento
-
-## Desenvolvido por
-
-[KelvinColeti](https://kelvincoleti.com)
+1. Definir e iniciar backend/API
+2. Modelar banco para pedidos, produtos, insumos, promocoes e clientes
+3. Implementar autenticacao/autorizacao por perfil
+4. Implementar fluxo de pedidos + tempo real
+5. Integrar frontend (site/admin) com API
