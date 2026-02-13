@@ -9,7 +9,7 @@
 - [x] (`done`) [P0] Base frontend Angular com home publica e catalogo mock
 - [x] (`done`) [P1] Layout inicial de `/admin` com dashboard de exemplo
 - [x] (`done`) [P0] Docker compose com frontend + PostgreSQL
-- [ ] (`todo`) [P0] Backend/API real ainda nao existe
+- [x] (`done`) [P0] Backend/API real inicial criada (NestJS + TypeORM)
 - [ ] (`todo`) [P0] Fluxo de pedido real ainda nao existe
 
 ## Visao geral da Fase 1
@@ -33,12 +33,12 @@
 ## E1 - Fundacao Tecnica
 - Status: `in-progress`
 - [x] (`done`) [P0] Stack frontend + Postgres via Docker operacional
-- [ ] (`todo`) [P0] Definir arquitetura backend (modulos, camadas, convencoes)
-- [ ] (`todo`) [P0] Configurar backend base com migracoes e seed inicial
-- [ ] (`todo`) [P0] Implementar autenticacao JWT
-- [ ] (`todo`) [P0] Implementar autorizacao por perfil (`admin`, `cozinha`)
+- [x] (`done`) [P0] Definir arquitetura backend (NestJS + TypeORM + modulo auth)
+- [x] (`done`) [P0] Configurar backend base com migracoes e seed inicial
+- [x] (`done`) [P0] Implementar autenticacao JWT
+- [x] (`done`) [P0] Implementar autorizacao por perfil (`admin`, `cozinha`)
 - [ ] (`todo`) [P0] Configurar tempo real para eventos de pedido
-- [ ] (`todo`) [P1] Configurar tratamento global de erros/validacoes
+- [x] (`done`) [P1] Configurar tratamento global de validacoes (ValidationPipe)
 - [ ] (`todo`) [P1] Configurar logs estruturados e rastreabilidade
 
 ## E2 - Cardapio e Estoque (Insumos)
@@ -150,11 +150,11 @@ Objetivo: entregar o MVP funcional sem travar em complexidade desnecessaria.
 - Sempre manter sistema executavel ao final do dia.
 
 ### Semana 1 - Base backend e autenticacao
-- [ ] (`todo`) Dia 1: criar backend base, estrutura de pastas e conexao com PostgreSQL
-- [ ] (`todo`) Dia 2: criar migracoes iniciais (usuarios, clientes, categorias, produtos, insumos)
-- [ ] (`todo`) Dia 3: implementar login JWT e perfil `admin`
-- [ ] (`todo`) Dia 4: implementar perfil `cozinha` e protecao de rotas no backend
-- [ ] (`todo`) Dia 5: criar endpoints basicos de teste e documentar no README tecnico
+- [x] (`done`) Dia 1: criar backend base, estrutura de pastas e conexao com PostgreSQL
+- [x] (`done`) Dia 2: criar migracoes iniciais (usuarios, clientes, categorias, produtos, insumos)
+- [x] (`done`) Dia 3: implementar login JWT e perfil `admin`
+- [x] (`done`) Dia 4: implementar perfil `cozinha` e protecao de rotas no backend
+- [x] (`done`) Dia 5: criar endpoints basicos de teste e documentar no README tecnico
 
 Saida da semana:
 - Backend sobe localmente
