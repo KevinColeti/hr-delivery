@@ -136,3 +136,89 @@
 - [ ] (`todo`) [P0] Cupons e combos aplicam regras corretamente
 - [ ] (`todo`) [P1] Cliente e historico ficam salvos
 - [ ] (`todo`) [P0] WhatsApp envia confirmacao e atualizacoes essenciais
+
+---
+
+## Plano de execucao P0 (solo iniciante)
+
+Objetivo: entregar o MVP funcional sem travar em complexidade desnecessaria.
+
+### Regras de trabalho para este projeto
+- Trabalhar em blocos pequenos e testaveis.
+- Fechar uma feature por vez (fim a fim) antes da proxima.
+- Evitar refatoracao grande no inicio.
+- Sempre manter sistema executavel ao final do dia.
+
+### Semana 1 - Base backend e autenticacao
+- [ ] (`todo`) Dia 1: criar backend base, estrutura de pastas e conexao com PostgreSQL
+- [ ] (`todo`) Dia 2: criar migracoes iniciais (usuarios, clientes, categorias, produtos, insumos)
+- [ ] (`todo`) Dia 3: implementar login JWT e perfil `admin`
+- [ ] (`todo`) Dia 4: implementar perfil `cozinha` e protecao de rotas no backend
+- [ ] (`todo`) Dia 5: criar endpoints basicos de teste e documentar no README tecnico
+
+Saida da semana:
+- Backend sobe localmente
+- Login funciona
+- Banco com estrutura inicial pronta
+
+### Semana 2 - Cardapio + estoque por insumos
+- [ ] (`todo`) Dia 1: CRUD de categorias
+- [ ] (`todo`) Dia 2: CRUD de insumos
+- [ ] (`todo`) Dia 3: CRUD de produtos
+- [ ] (`todo`) Dia 4: receita do produto (insumos + quantidade + unidade)
+- [ ] (`todo`) Dia 5: extras e regra de disponibilidade por estoque
+
+Saida da semana:
+- Produto final pode ser criado com receita e extras
+- Estoque passa a determinar disponibilidade
+
+### Semana 3 - Pedido fim a fim (site -> admin)
+- [ ] (`todo`) Dia 1: carrinho no site (estado local)
+- [ ] (`todo`) Dia 2: checkout com cliente/endereco/pagamento
+- [ ] (`todo`) Dia 3: endpoint de criacao de pedido
+- [ ] (`todo`) Dia 4: lista de pedidos no admin
+- [ ] (`todo`) Dia 5: fluxo de status basico (`novo` -> `confirmado` -> `em preparo` -> `pronto`)
+
+Saida da semana:
+- Pedido real criado no site e visivel no admin
+
+### Semana 4 - Cozinha em tempo real + baixa de estoque
+- [ ] (`todo`) Dia 1: tela cozinha simplificada (apenas o essencial)
+- [ ] (`todo`) Dia 2: acao `marcar pronto`
+- [ ] (`todo`) Dia 3: atualizacao em tempo real de pedidos/cozinha
+- [ ] (`todo`) Dia 4: baixa automatica de estoque ao confirmar pedido
+- [ ] (`todo`) Dia 5: ajustes de erros e validacoes de transicao de status
+
+Saida da semana:
+- Fluxo operacional principal funciona para cozinha
+
+### Semana 5 - Promocoes P0 + WhatsApp
+- [ ] (`todo`) Dia 1: cupons (validade, minimo, limite)
+- [ ] (`todo`) Dia 2: regra de primeiro pedido
+- [ ] (`todo`) Dia 3: combos automaticos (versao simples)
+- [ ] (`todo`) Dia 4: integracao WhatsApp (confirmacao + atualizacao de status)
+- [ ] (`todo`) Dia 5: logs de envio e tratamento de falhas simples
+
+Saida da semana:
+- Pedido com desconto validado e comunicacao basica via WhatsApp
+
+### Semana 6 - Fechamento MVP
+- [ ] (`todo`) Dia 1: testes dos fluxos criticos (pedido, estoque, promocao)
+- [ ] (`todo`) Dia 2: correcao de bugs de ponta a ponta
+- [ ] (`todo`) Dia 3: revisar permissao por perfil (`admin`/`cozinha`)
+- [ ] (`todo`) Dia 4: checklist de deploy e backup
+- [ ] (`todo`) Dia 5: go-live controlado + smoke test
+
+Saida da semana:
+- MVP pronto para operacao inicial
+
+### Ordem tecnica recomendada (sempre que bater duvida)
+1. Dados e regras no backend
+2. Endpoint testado via ferramenta de API
+3. Integracao no frontend
+4. Validacao manual do fluxo completo
+
+### Escopo de simplificacao recomendado (para nao travar)
+- Tela cozinha minimalista primeiro, visual refinado depois.
+- Promocoes com regras basicas primeiro, regras avancadas depois.
+- Sem multi-loja, sem app nativo, sem BI na Fase 1.
