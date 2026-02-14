@@ -37,6 +37,26 @@ export class ProductsService {
   }
 
   /**
+   * Lista produtos ativos para catalogo publico com disponibilidade.
+   *
+   * Motivo:
+   * o site cliente nao deve depender de autenticacao administrativa e
+   * deve ocultar itens/categorias inativas para evitar venda indevida.
+   */
+  async findPublicCatalog() {
+    const products = await this.productsRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .where('product.is_active = :isActive', { isActive: true })
+      .andWhere('category.is_active = :categoryIsActive', { categoryIsActive: true })
+      .orderBy('category.sort_order', 'ASC')
+      .addOrderBy('product.name', 'ASC')
+      .getMany();
+
+    return Promise.all(products.map((product) => this.withAvailability(product)));
+  }
+
+  /**
    * Retorna produto por id com disponibilidade calculada.
    */
   async findOne(id: number) {

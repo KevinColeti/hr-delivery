@@ -41,6 +41,17 @@
       </div>
     </div>
 
+    @if (isCatalogLoading) {
+      <p class="mb-4 rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-2 text-sm text-[color:var(--hc-muted)]">
+        Carregando catalogo da API...
+      </p>
+    }
+    @if (catalogLoadError) {
+      <p class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+        {{ catalogLoadError }}
+      </p>
+    }
+
     <div class="mb-10 grid gap-4 md:grid-cols-3">
       @for (item of featuredItems; track item.id) {
         <article class="rounded-2xl border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] p-4 shadow-sm">
@@ -49,7 +60,10 @@
           <p class="mt-1 text-sm text-[color:var(--hc-muted)]">{{ item.description }}</p>
           <div class="mt-4 flex items-center justify-between">
             <span class="text-lg font-bold text-[color:var(--hc-accent)]">{{ item.price | currency:'BRL':'symbol':'1.2-2' }}</span>
-            <button class="rounded-full border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--hc-ink)]">
+            <button
+              type="button"
+              (click)="openProductDetails(item)"
+              class="rounded-full border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--hc-ink)]">
               Visualizar
             </button>
           </div>
@@ -61,7 +75,8 @@
       <app-category-section
         [title]="category.name"
         [products]="getProductsByCategory(category.id)"
-        (addProduct)="addToCart($event)"></app-category-section>
+        (addProduct)="addToCart($event)"
+        (viewProductDetails)="openProductDetails($event)"></app-category-section>
     }
   </section>
 
@@ -69,23 +84,29 @@
     <article class="rounded-2xl border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] p-5 shadow-sm">
       <h3 class="text-2xl font-bold text-[color:var(--hc-ink)]">Carrinho</h3>
       <div class="mt-4 space-y-3">
-        @for (item of cartItems(); track item.productId) {
+        @for (item of cartItems(); track item.key) {
           <div class="flex items-center justify-between rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-2">
             <div>
               <p class="text-sm font-semibold text-[color:var(--hc-ink)]">{{ item.name }}</p>
+              @if (item.extrasSummary && item.extrasSummary.length > 0) {
+                <p class="mt-1 text-xs text-[color:var(--hc-muted)]">Extras: {{ item.extrasSummary.join(', ') }}</p>
+              }
+              @if (item.notes) {
+                <p class="mt-1 text-xs text-[color:var(--hc-muted)]">Obs: {{ item.notes }}</p>
+              }
               <div class="mt-1 flex items-center gap-2 text-xs">
                 <button
                   type="button"
-                  (click)="changeItemQuantity(item.productId, item.quantity - 1)"
+                  (click)="changeItemQuantity(item.key, item.quantity - 1)"
                   class="h-6 w-6 rounded-md border border-[color:var(--hc-border)] text-[color:var(--hc-ink)]">-</button>
                 <span class="min-w-6 text-center font-semibold text-[color:var(--hc-ink)]">{{ item.quantity }}</span>
                 <button
                   type="button"
-                  (click)="changeItemQuantity(item.productId, item.quantity + 1)"
+                  (click)="changeItemQuantity(item.key, item.quantity + 1)"
                   class="h-6 w-6 rounded-md border border-[color:var(--hc-border)] text-[color:var(--hc-ink)]">+</button>
                 <button
                   type="button"
-                  (click)="removeFromCart(item.productId)"
+                  (click)="removeFromCart(item.key)"
                   class="ml-2 rounded-md px-2 py-1 text-[color:var(--hc-muted)] hover:bg-[color:var(--hc-paper)]">
                   Remover
                 </button>
@@ -260,5 +281,94 @@
     </article>
   </section>
 </main>
+
+@if (selectedProduct) {
+  <div class="fixed inset-0 z-50 flex items-end bg-black/40 p-3 md:items-center md:justify-center">
+    <article class="w-full max-w-xl rounded-2xl border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] p-5 shadow-xl">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h3 class="text-xl font-bold text-[color:var(--hc-ink)]">{{ selectedProduct.name }}</h3>
+          <p class="mt-1 text-sm text-[color:var(--hc-muted)]">{{ selectedProduct.description }}</p>
+        </div>
+        <button
+          type="button"
+          (click)="closeProductDetails()"
+          class="rounded-full border border-[color:var(--hc-border)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.1em] text-[color:var(--hc-ink)]">
+          Fechar
+        </button>
+      </div>
+
+      <div class="mt-4 rounded-xl border border-dashed border-[color:var(--hc-border)] px-3 py-2 text-sm text-[color:var(--hc-muted)]">
+        Preco base:
+        <strong class="text-[color:var(--hc-ink)]">{{ selectedProduct.price | currency:'BRL':'symbol':'1.2-2' }}</strong>
+      </div>
+
+      <div class="mt-4">
+        <p class="text-sm font-semibold text-[color:var(--hc-ink)]">Extras</p>
+        @if (productDetailsLoading) {
+          <p class="mt-2 text-sm text-[color:var(--hc-muted)]">Carregando extras...</p>
+        }
+        @if (productDetailsError) {
+          <p class="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {{ productDetailsError }}
+          </p>
+        }
+        @if (!productDetailsLoading && !productDetailsError) {
+          <div class="mt-2 space-y-2">
+            @for (extra of selectedProductExtras; track extra.id) {
+              <label class="flex items-center justify-between gap-3 rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-2 text-sm">
+                <div class="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    [disabled]="!extra.available"
+                    [checked]="selectedExtraIds.includes(extra.id)"
+                    (change)="toggleExtraSelection(extra.id, $any($event.target).checked)" />
+                  <span class="font-medium text-[color:var(--hc-ink)]">{{ extra.name }}</span>
+                  @if (!extra.available) {
+                    <span class="text-xs text-red-700">(indisponivel)</span>
+                  }
+                </div>
+                <span class="font-semibold text-[color:var(--hc-accent)]">
+                  + {{ extra.price | currency:'BRL':'symbol':'1.2-2' }}
+                </span>
+              </label>
+            }
+            @if (selectedProductExtras.length === 0) {
+              <p class="rounded-xl border border-dashed border-[color:var(--hc-border)] px-3 py-3 text-sm text-[color:var(--hc-muted)]">
+                Este produto nao possui extras cadastrados.
+              </p>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="mt-4">
+        <label class="text-sm font-semibold text-[color:var(--hc-ink)]" for="product-observation">Observacoes</label>
+        <textarea
+          id="product-observation"
+          [(ngModel)]="productObservation"
+          rows="3"
+          placeholder="Ex.: sem cebola, ponto da carne, etc."
+          class="mt-2 w-full rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-2 text-sm outline-none focus:border-[color:var(--hc-accent)]"></textarea>
+      </div>
+
+      <div class="mt-5 flex items-center justify-end gap-2">
+        <button
+          type="button"
+          (click)="closeProductDetails()"
+          class="rounded-xl border border-[color:var(--hc-border)] px-4 py-2 text-sm font-semibold text-[color:var(--hc-ink)]">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          (click)="addConfiguredProductToCart()"
+          [disabled]="selectedProduct.isAvailable === false"
+          class="rounded-xl bg-[color:var(--hc-accent)] px-4 py-2 text-sm font-semibold text-amber-50 disabled:cursor-not-allowed disabled:opacity-60">
+          Adicionar ao carrinho
+        </button>
+      </div>
+    </article>
+  </div>
+}
 
 <app-footer></app-footer>

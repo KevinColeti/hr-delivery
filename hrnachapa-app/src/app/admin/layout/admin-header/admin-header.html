@@ -12,8 +12,13 @@
   </div>
 
   <div class="flex items-center gap-4">
-    <span class="text-gray-600 hidden sm:inline">Olá, {{ adminName }}</span>
-    <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
+    <span class="text-gray-600 hidden sm:inline">
+      Ola, {{ authService.user()?.name || 'Operador' }} ({{ authService.user()?.role || 'sem-perfil' }})
+    </span>
+    <button
+      type="button"
+      (click)="logout()"
+      class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
       Sair
     </button>
   </div>

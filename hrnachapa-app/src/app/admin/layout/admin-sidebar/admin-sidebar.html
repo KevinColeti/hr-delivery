@@ -9,34 +9,36 @@
     <h1
       [class]="'text-2xl font-bold text-center transition-opacity duration-300 ' +
         (sidebarService.isMini() && !sidebarService.isMobile() ? 'opacity-0 hidden' : 'opacity-100')">
-      Admin Panel
+      Admin
     </h1>
     <div
-      [class]="'text-3xl text-center transition-opacity duration-300 ' +
+      [class]="'text-2xl text-center font-bold transition-opacity duration-300 ' +
         (sidebarService.isMini() && !sidebarService.isMobile() ? 'opacity-100' : 'opacity-0 hidden')">
-      ⚡
+      AD
     </div>
   </div>
 
   <nav>
     <ul class="space-y-2">
       @for (item of menuItems; track item.route) {
-        <li>
-          <a
-            [routerLink]="item.route"
-            routerLinkActive="bg-blue-600"
-            (click)="onLinkClick()"
-            [class]="'flex items-center rounded-lg hover:bg-gray-800 transition-colors ' +
-              (sidebarService.isMini() && !sidebarService.isMobile() ? 'justify-center py-3 px-2' : 'gap-3 px-4 py-3')"
-            [attr.title]="sidebarService.isMini() ? item.label : null">
-            <span class="text-xl">{{ item.icon }}</span>
-            <span
-              [class]="'transition-opacity duration-300 ' +
-                (sidebarService.isMini() && !sidebarService.isMobile() ? 'opacity-0 hidden' : 'opacity-100')">
-              {{ item.label }}
-            </span>
-          </a>
-        </li>
+        @if (canRenderMenuItem(item)) {
+          <li>
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="bg-blue-600"
+              (click)="onLinkClick()"
+              [class]="'flex items-center rounded-lg hover:bg-gray-800 transition-colors ' +
+                (sidebarService.isMini() && !sidebarService.isMobile() ? 'justify-center py-3 px-2' : 'gap-3 px-4 py-3')"
+              [attr.title]="sidebarService.isMini() ? item.label : null">
+              <span class="text-xs font-bold rounded bg-gray-700 px-2 py-1">{{ item.shortLabel }}</span>
+              <span
+                [class]="'transition-opacity duration-300 ' +
+                  (sidebarService.isMini() && !sidebarService.isMobile() ? 'opacity-0 hidden' : 'opacity-100')">
+                {{ item.label }}
+              </span>
+            </a>
+          </li>
+        }
       }
     </ul>
   </nav>

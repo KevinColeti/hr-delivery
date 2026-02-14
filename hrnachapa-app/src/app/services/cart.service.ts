@@ -2,10 +2,13 @@ import { Injectable, computed, signal } from '@angular/core';
 import { Product } from '../components/product-card/product-card';
 
 export interface CartItem {
+  key: string;
   productId: number;
   name: string;
   price: number;
   quantity: number;
+  notes?: string;
+  extrasSummary?: string[];
 }
 
 @Injectable({
@@ -34,13 +37,15 @@ export class CartService {
    * Adiciona produto ao carrinho acumulando quantidade.
    */
   addProduct(product: Product) {
+    const itemKey = this.buildItemKey(product.id);
     const current = this.itemsSignal();
-    const existing = current.find((item) => item.productId === product.id);
+    const existing = current.find((item) => item.key === itemKey);
 
     if (!existing) {
       this.setItems([
         ...current,
         {
+          key: itemKey,
           productId: product.id,
           name: product.name,
           price: product.price,
@@ -52,7 +57,7 @@ export class CartService {
 
     this.setItems(
       current.map((item) =>
-        item.productId === product.id
+        item.key === itemKey
           ? { ...item, quantity: item.quantity + 1 }
           : item,
       ),
@@ -60,17 +65,52 @@ export class CartService {
   }
 
   /**
+   * Adiciona produto personalizado (extras/observacao) sem colidir com item base.
+   */
+  addConfiguredProduct(product: Product, options: { notes?: string; extrasSummary?: string[] }) {
+    const normalizedNotes = options.notes?.trim() || undefined;
+    const normalizedExtras =
+      options.extrasSummary?.map((extra) => extra.trim()).filter((extra) => extra.length > 0) ??
+      [];
+    const itemKey = this.buildItemKey(product.id, normalizedNotes, normalizedExtras);
+    const current = this.itemsSignal();
+    const existing = current.find((item) => item.key === itemKey);
+
+    if (!existing) {
+      this.setItems([
+        ...current,
+        {
+          key: itemKey,
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: 1,
+          notes: normalizedNotes,
+          extrasSummary: normalizedExtras.length > 0 ? normalizedExtras : undefined,
+        },
+      ]);
+      return;
+    }
+
+    this.setItems(
+      current.map((item) =>
+        item.key === itemKey ? { ...item, quantity: item.quantity + 1 } : item,
+      ),
+    );
+  }
+
+  /**
    * Atualiza quantidade de item respeitando minimo de 1.
    */
-  updateQuantity(productId: number, quantity: number) {
+  updateQuantity(itemKey: string, quantity: number) {
     if (quantity <= 0) {
-      this.removeItem(productId);
+      this.removeItem(itemKey);
       return;
     }
 
     this.setItems(
       this.itemsSignal().map((item) =>
-        item.productId === productId ? { ...item, quantity } : item,
+        item.key === itemKey ? { ...item, quantity } : item,
       ),
     );
   }
@@ -78,8 +118,8 @@ export class CartService {
   /**
    * Remove item do carrinho.
    */
-  removeItem(productId: number) {
-    this.setItems(this.itemsSignal().filter((item) => item.productId !== productId));
+  removeItem(itemKey: string) {
+    this.setItems(this.itemsSignal().filter((item) => item.key !== itemKey));
   }
 
   /**
@@ -114,13 +154,24 @@ export class CartService {
 
       return parsed.filter(
         (item) =>
+          typeof item?.key === 'string' &&
           typeof item?.productId === 'number' &&
           typeof item?.name === 'string' &&
           typeof item?.price === 'number' &&
-          typeof item?.quantity === 'number',
+          typeof item?.quantity === 'number' &&
+          (item?.notes === undefined || typeof item?.notes === 'string') &&
+          (item?.extrasSummary === undefined || Array.isArray(item?.extrasSummary)),
       );
     } catch {
       return [];
     }
+  }
+
+  /**
+   * Gera chave deterministica para agrupar somente itens equivalentes.
+   */
+  private buildItemKey(productId: number, notes?: string, extrasSummary?: string[]) {
+    const extrasKey = extrasSummary?.join('|') ?? '';
+    return `${productId}::${notes ?? ''}::${extrasKey}`;
   }
 }

@@ -8,6 +8,7 @@ export interface Product {
   price: number;
   image: string;
   category: string;
+  isAvailable?: boolean;
 }
 
 @Component({
@@ -19,11 +20,19 @@ export interface Product {
 export class ProductCardComponent {
   @Input() product!: Product;
   @Output() add = new EventEmitter<Product>();
+  @Output() details = new EventEmitter<Product>();
 
   /**
    * Dispara evento de adicao para componente pai.
    */
   onAdd() {
     this.add.emit(this.product);
+  }
+
+  /**
+   * Dispara abertura do detalhe do produto.
+   */
+  onDetails() {
+    this.details.emit(this.product);
   }
 }

@@ -43,6 +43,40 @@ export class ProductExtrasService {
   }
 
   /**
+   * Lista extras ativos para catalogo publico do produto.
+   *
+   * Motivo:
+   * o site cliente precisa exibir opcoes de personalizacao sem depender
+   * de rotas administrativas protegidas.
+   */
+  async findPublicCatalogByProduct(productId: number) {
+    await this.ensureProductExists(productId);
+
+    const extras = await this.productExtrasRepository.find({
+      where: { productId, isActive: true },
+      relations: { ingredient: true },
+      order: { sortOrder: 'ASC', id: 'ASC' },
+    });
+
+    return extras.map((extra) => {
+      const available =
+        !extra.ingredientId ||
+        !extra.ingredientQuantity ||
+        (extra.ingredient !== null &&
+          Number(extra.ingredient.stockQuantity) >= Number(extra.ingredientQuantity));
+
+      return {
+        id: extra.id,
+        productId: extra.productId,
+        name: extra.name,
+        price: extra.price,
+        sortOrder: extra.sortOrder,
+        available,
+      };
+    });
+  }
+
+  /**
    * Retorna um extra especifico de um produto.
    */
   async findOne(productId: number, extraId: number) {

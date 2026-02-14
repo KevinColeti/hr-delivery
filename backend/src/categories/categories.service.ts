@@ -25,6 +25,16 @@ export class CategoriesService {
   }
 
   /**
+   * Lista somente categorias ativas para catalogo publico.
+   */
+  findPublicCatalog() {
+    return this.categoriesRepository.find({
+      where: { isActive: true },
+      order: { sortOrder: 'ASC', name: 'ASC' },
+    });
+  }
+
+  /**
    * Busca categoria por id.
    */
   async findOne(id: number) {

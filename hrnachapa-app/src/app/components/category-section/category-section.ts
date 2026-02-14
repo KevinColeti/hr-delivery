@@ -12,11 +12,19 @@ export class CategorySectionComponent {
   @Input() title: string = '';
   @Input() products: Product[] = [];
   @Output() addProduct = new EventEmitter<Product>();
+  @Output() viewProductDetails = new EventEmitter<Product>();
 
   /**
    * Repassa evento de adicionar para evitar acoplamento com estado global.
    */
   onAddProduct(product: Product) {
     this.addProduct.emit(product);
+  }
+
+  /**
+   * Repassa evento de visualizacao de detalhe do produto.
+   */
+  onViewProductDetails(product: Product) {
+    this.viewProductDetails.emit(product);
   }
 }

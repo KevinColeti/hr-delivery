@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { Public } from '../auth/public.decorator';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../entities/user.entity';
 import { CreateProductExtraDto } from './dto/create-product-extra.dto';
@@ -28,6 +29,15 @@ export class ProductExtrasController {
   @Roles(UserRole.ADMIN, UserRole.KITCHEN)
   findAll(@Param('productId', ParseIntPipe) productId: number) {
     return this.productExtrasService.findAllByProduct(productId);
+  }
+
+  /**
+   * Lista extras publicos para vitrine do site.
+   */
+  @Get('public/catalog')
+  @Public()
+  findPublicCatalog(@Param('productId', ParseIntPipe) productId: number) {
+    return this.productExtrasService.findPublicCatalogByProduct(productId);
   }
 
   /**

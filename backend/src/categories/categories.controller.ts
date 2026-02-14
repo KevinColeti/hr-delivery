@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Public } from '../auth/public.decorator';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../entities/user.entity';
 import { CategoriesService } from './categories.service';
@@ -19,6 +20,15 @@ export class CategoriesController {
   @Roles(UserRole.ADMIN, UserRole.KITCHEN)
   findAll() {
     return this.categoriesService.findAll();
+  }
+
+  /**
+   * Lista categorias publicas para vitrine do site.
+   */
+  @Get('public/catalog')
+  @Public()
+  findPublicCatalog() {
+    return this.categoriesService.findPublicCatalog();
   }
 
   /**

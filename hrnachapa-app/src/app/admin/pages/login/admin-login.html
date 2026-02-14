@@ -1,0 +1,49 @@
+<main class="min-h-screen bg-stone-100 px-4 py-10">
+  <section class="mx-auto w-full max-w-md rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+    <p class="text-xs font-semibold uppercase tracking-[0.15em] text-stone-500">Backoffice</p>
+    <h1 class="mt-2 text-2xl font-bold text-stone-900">Entrar no Admin</h1>
+    <p class="mt-1 text-sm text-stone-600">Use seu usuario com perfil `admin` ou `kitchen`.</p>
+
+    <form class="mt-5 space-y-3" (ngSubmit)="submit()">
+      <label class="block">
+        <span class="mb-1 block text-sm font-medium text-stone-700">E-mail</span>
+        <input
+          [(ngModel)]="credentials.email"
+          name="email"
+          type="email"
+          autocomplete="username"
+          required
+          class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+      </label>
+
+      <label class="block">
+        <span class="mb-1 block text-sm font-medium text-stone-700">Senha</span>
+        <input
+          [(ngModel)]="credentials.password"
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          required
+          class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+      </label>
+
+      @if (errorMessage) {
+        <p class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {{ errorMessage }}
+        </p>
+      }
+
+      <button
+        type="submit"
+        [disabled]="isSubmitting"
+        class="w-full rounded-xl bg-stone-900 px-4 py-2 text-sm font-semibold uppercase tracking-[0.08em] text-stone-100 disabled:opacity-60">
+        {{ isSubmitting ? 'Entrando...' : 'Entrar' }}
+      </button>
+    </form>
+
+    <a routerLink="/" class="mt-4 inline-block text-sm font-medium text-stone-600 hover:text-stone-900">
+      Voltar para o site
+    </a>
+  </section>
+</main>
+

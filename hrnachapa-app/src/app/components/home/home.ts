@@ -1,12 +1,18 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { HeaderComponent } from '../header/header';
 import { FooterComponent } from '../footer/footer';
 import { CategorySectionComponent } from '../category-section/category-section';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { products, categories } from '../../data/products';
+import { categories as mockCategories, products as mockProducts } from '../../data/products';
 import { Product } from '../product-card/product-card';
 import { CartService } from '../../services/cart.service';
+import {
+  CatalogApiService,
+  PublicCatalogCategoryResponse,
+  PublicCatalogProductExtraResponse,
+  PublicCatalogProductResponse,
+} from '../../services/catalog-api.service';
 import {
   OrderTrackingResponse,
   OrdersApiService,
@@ -19,10 +25,21 @@ import {
   styleUrl: './home.css',
 })
 export class HomeComponent {
+  private readonly defaultProductImage =
+    'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop';
   private readonly storeWhatsAppPhone = '5511987654321';
 
-  categories = categories;
-  featuredItems = products.slice(0, 3);
+  categories = mockCategories;
+  catalogProducts: Product[] = mockProducts;
+  featuredItems = this.catalogProducts.slice(0, 3);
+  isCatalogLoading = false;
+  catalogLoadError = '';
+  selectedProduct: Product | null = null;
+  productDetailsLoading = false;
+  productDetailsError = '';
+  selectedProductExtras: PublicCatalogProductExtraResponse[] = [];
+  selectedExtraIds: number[] = [];
+  productObservation = '';
 
   trackingOrderId = '';
   trackingLoading = false;
@@ -42,8 +59,16 @@ export class HomeComponent {
 
   constructor(
     private readonly cartService: CartService,
+    private readonly catalogApiService: CatalogApiService,
     private readonly ordersApiService: OrdersApiService,
   ) {}
+
+  /**
+   * Inicializa carga do catalogo real no primeiro render.
+   */
+  ngOnInit() {
+    this.loadPublicCatalog();
+  }
 
   /**
    * Exposicao do estado do carrinho para template.
@@ -67,7 +92,7 @@ export class HomeComponent {
   }
 
   getProductsByCategory(categoryId: string): Product[] {
-    return products.filter(product => product.category === categoryId);
+    return this.catalogProducts.filter(product => product.category === categoryId);
   }
 
   /**
@@ -78,17 +103,85 @@ export class HomeComponent {
   }
 
   /**
+   * Abre modal de detalhe do produto com extras publicos.
+   */
+  openProductDetails(product: Product) {
+    this.selectedProduct = product;
+    this.selectedProductExtras = [];
+    this.selectedExtraIds = [];
+    this.productObservation = '';
+    this.productDetailsError = '';
+    this.productDetailsLoading = true;
+
+    this.catalogApiService.getProductPublicExtras(product.id).subscribe({
+      next: (extras) => {
+        this.productDetailsLoading = false;
+        this.selectedProductExtras = extras;
+      },
+      error: () => {
+        this.productDetailsLoading = false;
+        this.selectedProductExtras = [];
+        this.productDetailsError = 'Nao foi possivel carregar os extras deste produto.';
+      },
+    });
+  }
+
+  /**
+   * Fecha modal de detalhe e limpa estado temporario.
+   */
+  closeProductDetails() {
+    this.selectedProduct = null;
+    this.selectedProductExtras = [];
+    this.selectedExtraIds = [];
+    this.productObservation = '';
+    this.productDetailsError = '';
+    this.productDetailsLoading = false;
+  }
+
+  /**
+   * Marca/desmarca extra no detalhe.
+   */
+  toggleExtraSelection(extraId: number, checked: boolean) {
+    if (checked) {
+      this.selectedExtraIds = [...this.selectedExtraIds, extraId];
+      return;
+    }
+
+    this.selectedExtraIds = this.selectedExtraIds.filter((id) => id !== extraId);
+  }
+
+  /**
+   * Adiciona ao carrinho usando configuracao escolhida no detalhe.
+   */
+  addConfiguredProductToCart() {
+    if (!this.selectedProduct) {
+      return;
+    }
+
+    const extrasSummary = this.selectedProductExtras
+      .filter((extra) => this.selectedExtraIds.includes(extra.id))
+      .map((extra) => extra.name);
+
+    this.cartService.addConfiguredProduct(this.selectedProduct, {
+      notes: this.productObservation.trim() || undefined,
+      extrasSummary,
+    });
+
+    this.closeProductDetails();
+  }
+
+  /**
    * Ajusta quantidade de item no carrinho.
    */
-  changeItemQuantity(productId: number, nextQuantity: number) {
-    this.cartService.updateQuantity(productId, nextQuantity);
+  changeItemQuantity(itemKey: string, nextQuantity: number) {
+    this.cartService.updateQuantity(itemKey, nextQuantity);
   }
 
   /**
    * Remove item do carrinho.
    */
-  removeFromCart(productId: number) {
-    this.cartService.removeItem(productId);
+  removeFromCart(itemKey: string) {
+    this.cartService.removeItem(itemKey);
   }
 
   /**
@@ -135,7 +228,7 @@ export class HomeComponent {
         })),
         deliveryFee: this.checkout.deliveryFee || 0,
         couponCode: this.checkout.couponCode.trim() || undefined,
-        notes: this.checkout.notes.trim() || undefined,
+        notes: this.buildOrderNotesForCheckout(),
       })
       .subscribe({
         next: (order) => {
@@ -175,6 +268,8 @@ export class HomeComponent {
 
     this.trackingLoading = true;
     this.trackingError = '';
+    // Evita exibir timeline do pedido anterior enquanto consulta o novo id.
+    this.trackingData = null;
 
     this.ordersApiService.getOrderTracking(orderId).subscribe({
       next: (response) => {
@@ -226,5 +321,92 @@ export class HomeComponent {
     }
 
     return 'Ola! Gostaria de atendimento sobre meu pedido.';
+  }
+
+  /**
+   * Consolida observacoes locais de itens em um campo unico de pedido.
+   *
+   * Motivo:
+   * o payload atual do backend ainda nao possui observacao por item,
+   * entao preservamos contexto operacional no `notes` geral do pedido.
+   */
+  private buildOrderNotesForCheckout() {
+    const notesBlocks = this.cartItems()
+      .map((item) => {
+        const details: string[] = [];
+        if (item.extrasSummary && item.extrasSummary.length > 0) {
+          details.push(`extras: ${item.extrasSummary.join(', ')}`);
+        }
+        if (item.notes) {
+          details.push(`obs: ${item.notes}`);
+        }
+        if (details.length === 0) {
+          return '';
+        }
+        return `${item.name} x${item.quantity} (${details.join(' | ')})`;
+      })
+      .filter((line) => line.length > 0);
+
+    const checkoutNotes = this.checkout.notes.trim();
+    const mergedNotes = [checkoutNotes, ...notesBlocks].filter((line) => line.length > 0);
+    return mergedNotes.length > 0 ? mergedNotes.join('\n') : undefined;
+  }
+
+  /**
+   * Carrega catalogo publico da API com fallback para dados mock.
+   *
+   * Motivo:
+   * manter a vitrine navegavel mesmo se backend estiver fora, evitando
+   * pagina vazia durante validacao local.
+   */
+  private loadPublicCatalog() {
+    this.isCatalogLoading = true;
+    this.catalogLoadError = '';
+
+    this.catalogApiService.getPublicCatalog().subscribe({
+      next: (response) => {
+        this.isCatalogLoading = false;
+        this.categories = response.categories.map((category) =>
+          this.mapCategoryFromApi(category),
+        );
+        this.catalogProducts = response.products.map((product) =>
+          this.mapProductFromApi(product),
+        );
+        this.featuredItems = this.catalogProducts.slice(0, 3);
+      },
+      error: () => {
+        this.isCatalogLoading = false;
+        this.categories = mockCategories;
+        this.catalogProducts = mockProducts;
+        this.featuredItems = this.catalogProducts.slice(0, 3);
+        this.catalogLoadError =
+          'Catalogo indisponivel no momento. Exibindo vitrine local temporaria.';
+      },
+    });
+  }
+
+  /**
+   * Normaliza categoria da API para o modelo visual do frontend.
+   */
+  private mapCategoryFromApi(category: PublicCatalogCategoryResponse) {
+    return {
+      id: category.slug,
+      name: category.name,
+    };
+  }
+
+  /**
+   * Normaliza produto da API para o modelo visual do frontend.
+   */
+  private mapProductFromApi(product: PublicCatalogProductResponse): Product {
+    return {
+      id: product.id,
+      name: product.name,
+      description: product.description ?? '',
+      price: Number(product.price),
+      image: product.imageUrl || this.defaultProductImage,
+      category: product.category.slug,
+      isAvailable: product.availability?.available ?? false,
+    };
   }
 }

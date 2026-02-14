@@ -90,8 +90,8 @@
 ## E7 - Frontend Site (Cliente)
 - Status: `in-progress`
 - [x] (`done`) [P1] Base visual publica com categorias/cards (mock)
-- [ ] (`todo`) [P0] Cardapio dinamico consumindo API
-- [ ] (`todo`) [P0] Detalhe de produto com extras e observacoes
+- [x] (`done`) [P0] Cardapio dinamico consumindo API
+- [x] (`done`) [P0] Detalhe de produto com extras e observacoes
 - [x] (`done`) [P0] Carrinho (edicao de itens, totais e descontos)
 - [x] (`done`) [P0] Checkout (cliente, endereco, pagamento, cupom)
 - [x] (`done`) [P0] Criacao de pedido e retorno com numero de acompanhamento
@@ -109,7 +109,7 @@
 - [ ] (`todo`) [P0] Modulo promocoes (cupons + combos)
 - [ ] (`todo`) [P1] Modulo clientes
 - [ ] (`todo`) [P1] Modulo configuracoes
-- [ ] (`todo`) [P0] Guards por perfil e protecao de rotas
+- [x] (`done`) [P0] Guards por perfil e protecao de rotas
 
 ## E9 - Qualidade e Go-live
 - Status: `todo`
