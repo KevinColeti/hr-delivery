@@ -11,6 +11,7 @@ import { OrderStatusHistory } from '../entities/order-status-history.entity';
 import { ProductIngredient } from '../entities/product-ingredient.entity';
 import { Product } from '../entities/product.entity';
 import { StockMovementsModule } from '../stock-movements/stock-movements.module';
+import { WhatsAppModule } from '../whatsapp/whatsapp.module';
 import { OrdersController } from './orders.controller';
 import { OrdersRealtimeService } from './orders-realtime.service';
 import { OrdersService } from './orders.service';
@@ -30,6 +31,7 @@ import { OrdersService } from './orders.service';
       OrderStatusHistory,
     ]),
     StockMovementsModule,
+    WhatsAppModule,
   ],
   controllers: [OrdersController],
   providers: [OrdersService, OrdersRealtimeService],

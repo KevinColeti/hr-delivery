@@ -16,6 +16,7 @@ import { OrderStatusHistory } from '../entities/order-status-history.entity';
 import { ProductIngredient } from '../entities/product-ingredient.entity';
 import { Product } from '../entities/product.entity';
 import { StockMovementsService } from '../stock-movements/stock-movements.service';
+import { WhatsAppService } from '../whatsapp/whatsapp.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ListKitchenBoardQueryDto } from './dto/list-kitchen-board-query.dto';
 import { OrdersRealtimeService } from './orders-realtime.service';
@@ -25,6 +26,14 @@ interface OrderStatusChangeActor {
   id: number | null;
   name: string | null;
   email: string | null;
+}
+
+interface DiscountResolutionResult {
+  discountAmount: number;
+  appliedCouponId: number | null;
+  appliedCouponCode: string | null;
+  appliedComboId: number | null;
+  appliedComboName: string | null;
 }
 
 @Injectable()
@@ -55,6 +64,7 @@ export class OrdersService {
     private readonly orderStatusHistoryRepository: Repository<OrderStatusHistory>,
     private readonly stockMovementsService: StockMovementsService,
     private readonly ordersRealtimeService: OrdersRealtimeService,
+    private readonly whatsAppService: WhatsAppService,
   ) {}
 
   /**
@@ -178,58 +188,27 @@ export class OrdersService {
       }
 
       const deliveryFee = dto.deliveryFee ?? 0;
-      let discountAmount = dto.discountAmount ?? 0;
-      let appliedCouponId: number | null = null;
-      let appliedCouponCode: string | null = null;
-      let appliedComboId: number | null = null;
-      let appliedComboName: string | null = null;
-
-      if (dto.couponCode) {
-        const coupon = await this.resolveAndValidateCoupon(
-          manager,
-          dto.couponCode,
-          subtotal,
-          dto.clientId,
-        );
-
-        discountAmount = this.calculateCouponDiscount(coupon, subtotal);
-        appliedCouponId = coupon.id;
-        appliedCouponCode = coupon.code;
-        coupon.usageCount += 1;
-        await manager.save(Coupon, coupon);
-      } else if (dto.discountAmount === undefined) {
-        const combo = await this.resolveBestCombo(
-          manager,
-          subtotal,
-          productQuantityMap,
-          categoryQuantityMap,
-        );
-
-        if (combo) {
-          discountAmount = this.calculateComboDiscount(combo, subtotal);
-          appliedComboId = combo.id;
-          appliedComboName = combo.name;
-        }
-      }
-
-      const total = subtotal + deliveryFee - discountAmount;
-
-      if (total < 0) {
-        throw new BadRequestException('Total do pedido nao pode ser negativo');
-      }
+      const discount = await this.resolveDiscountStrategy(
+        manager,
+        dto,
+        subtotal,
+        productQuantityMap,
+        categoryQuantityMap,
+      );
+      const total = this.calculateOrderTotal(subtotal, deliveryFee, discount.discountAmount);
 
       const order = manager.create(Order, {
         clientId: dto.clientId,
         status: OrderStatus.NEW,
         subtotal: this.toMoney(subtotal),
         deliveryFee: this.toMoney(deliveryFee),
-        discountAmount: this.toMoney(discountAmount),
+        discountAmount: this.toMoney(discount.discountAmount),
         total: this.toMoney(total),
         notes: dto.notes?.trim() || null,
-        appliedCouponId,
-        appliedCouponCode,
-        appliedComboId,
-        appliedComboName,
+        appliedCouponId: discount.appliedCouponId,
+        appliedCouponCode: discount.appliedCouponCode,
+        appliedComboId: discount.appliedComboId,
+        appliedComboName: discount.appliedComboName,
         items: orderItemsData,
       });
 
@@ -243,6 +222,7 @@ export class OrdersService {
       orderId: fullOrder.id,
       status: fullOrder.status,
     });
+    await this.whatsAppService.sendOrderCreated(fullOrder);
 
     return fullOrder;
   }
@@ -276,6 +256,7 @@ export class OrdersService {
         status: confirmedOrder.status,
         previousStatus,
       });
+      await this.whatsAppService.sendOrderStatusUpdated(confirmedOrder);
       return confirmedOrder;
     }
 
@@ -304,6 +285,7 @@ export class OrdersService {
       status: updatedOrder.status,
       previousStatus,
     });
+    await this.whatsAppService.sendOrderStatusUpdated(updatedOrder);
 
     return updatedOrder;
   }
@@ -604,6 +586,97 @@ export class OrdersService {
         : discountValue;
 
     return Number(Math.min(rawDiscount, subtotal).toFixed(2));
+  }
+
+  /**
+   * Resolve politica de desconto sem acumulo.
+   *
+   * Prioridade:
+   * 1) desconto manual (quando informado);
+   * 2) cupom (quando informado);
+   * 3) combo automatico (quando nao ha desconto manual/cupom).
+   */
+  private async resolveDiscountStrategy(
+    manager: EntityManager,
+    dto: CreateOrderDto,
+    subtotal: number,
+    productQuantityMap: Map<number, number>,
+    categoryQuantityMap: Map<number, number>,
+  ): Promise<DiscountResolutionResult> {
+    if (dto.discountAmount !== undefined) {
+      if (dto.discountAmount > subtotal) {
+        throw new BadRequestException(
+          'discountAmount manual nao pode ser maior que o subtotal',
+        );
+      }
+
+      return {
+        discountAmount: dto.discountAmount,
+        appliedCouponId: null,
+        appliedCouponCode: null,
+        appliedComboId: null,
+        appliedComboName: null,
+      };
+    }
+
+    if (dto.couponCode) {
+      const coupon = await this.resolveAndValidateCoupon(
+        manager,
+        dto.couponCode,
+        subtotal,
+        dto.clientId,
+      );
+      const discountAmount = this.calculateCouponDiscount(coupon, subtotal);
+      coupon.usageCount += 1;
+      await manager.save(Coupon, coupon);
+
+      return {
+        discountAmount,
+        appliedCouponId: coupon.id,
+        appliedCouponCode: coupon.code,
+        appliedComboId: null,
+        appliedComboName: null,
+      };
+    }
+
+    const combo = await this.resolveBestCombo(
+      manager,
+      subtotal,
+      productQuantityMap,
+      categoryQuantityMap,
+    );
+    if (!combo) {
+      return {
+        discountAmount: 0,
+        appliedCouponId: null,
+        appliedCouponCode: null,
+        appliedComboId: null,
+        appliedComboName: null,
+      };
+    }
+
+    return {
+      discountAmount: this.calculateComboDiscount(combo, subtotal),
+      appliedCouponId: null,
+      appliedCouponCode: null,
+      appliedComboId: combo.id,
+      appliedComboName: combo.name,
+    };
+  }
+
+  /**
+   * Calcula total final do pedido.
+   */
+  private calculateOrderTotal(
+    subtotal: number,
+    deliveryFee: number,
+    discountAmount: number,
+  ) {
+    const total = subtotal + deliveryFee - discountAmount;
+    if (total < 0) {
+      throw new BadRequestException('Total do pedido nao pode ser negativo');
+    }
+    return total;
   }
 
   /**
