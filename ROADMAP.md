@@ -37,7 +37,7 @@
 - [x] (`done`) [P0] Configurar backend base com migracoes e seed inicial
 - [x] (`done`) [P0] Implementar autenticacao JWT
 - [x] (`done`) [P0] Implementar autorizacao por perfil (`admin`, `cozinha`)
-- [ ] (`todo`) [P0] Configurar tempo real para eventos de pedido
+- [x] (`done`) [P0] Configurar tempo real para eventos de pedido
 - [x] (`done`) [P1] Configurar tratamento global de validacoes (ValidationPipe)
 - [ ] (`todo`) [P1] Configurar logs estruturados e rastreabilidade
 
@@ -49,18 +49,18 @@
 - [x] (`done`) [P0] Receita por produto (insumos obrigatorios + quantidade/unidade)
 - [x] (`done`) [P0] Extras com impacto em estoque
 - [x] (`done`) [P0] Disponibilidade automatica por estoque
-- [ ] (`todo`) [P1] Historico de movimentacao de estoque
-- [ ] (`todo`) [P1] Alertas de estoque minimo
+- [x] (`done`) [P1] Historico de movimentacao de estoque
+- [x] (`done`) [P1] Alertas de estoque minimo
 
 ## E3 - Pedidos e Operacao
 - Status: `in-progress`
 - [x] (`done`) [P0] Endpoint de criacao de pedido (site -> backend)
 - [x] (`done`) [P0] Fluxo de status: `novo`, `confirmado`, `em preparo`, `pronto`, `saiu para entrega`, `entregue`, `cancelado`
-- [ ] (`todo`) [P0] Auditoria por mudanca de status (quem/quando)
+- [x] (`done`) [P0] Auditoria por mudanca de status (quem/quando)
 - [x] (`done`) [P0] Baixa automatica de estoque ao confirmar pedido
 - [x] (`done`) [P0] Lista admin de pedidos com filtros
-- [ ] (`todo`) [P0] Tela cozinha (modo monitor) com acao `marcar pronto`
-- [ ] (`todo`) [P0] Atualizacao em tempo real de pedidos/cozinha
+- [x] (`done`) [P0] Tela cozinha (modo monitor) com acao `marcar pronto`
+- [x] (`done`) [P0] Atualizacao em tempo real de pedidos/cozinha
 
 ## E4 - Promocoes e Motor de Preco
 - Status: `todo`
@@ -183,9 +183,9 @@ Saida da semana:
 - Pedido real criado no site e visivel no admin
 
 ### Semana 4 - Cozinha em tempo real + baixa de estoque
-- [ ] (`todo`) Dia 1: tela cozinha simplificada (apenas o essencial)
-- [ ] (`todo`) Dia 2: acao `marcar pronto`
-- [ ] (`todo`) Dia 3: atualizacao em tempo real de pedidos/cozinha
+- [x] (`done`) Dia 1: tela cozinha simplificada (apenas o essencial)
+- [x] (`done`) Dia 2: acao `marcar pronto`
+- [x] (`done`) Dia 3: atualizacao em tempo real de pedidos/cozinha
 - [x] (`done`) Dia 4: baixa automatica de estoque ao confirmar pedido
 - [ ] (`todo`) Dia 5: ajustes de erros e validacoes de transicao de status
 

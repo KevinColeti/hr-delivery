@@ -4,16 +4,25 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import { Client } from '../entities/client.entity';
 import { Ingredient } from '../entities/ingredient.entity';
 import { OrderItem } from '../entities/order-item.entity';
 import { Order, OrderStatus } from '../entities/order.entity';
+import { OrderStatusHistory } from '../entities/order-status-history.entity';
 import { ProductIngredient } from '../entities/product-ingredient.entity';
 import { Product } from '../entities/product.entity';
 import { StockMovementsService } from '../stock-movements/stock-movements.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { ListKitchenBoardQueryDto } from './dto/list-kitchen-board-query.dto';
+import { OrdersRealtimeService } from './orders-realtime.service';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+
+interface OrderStatusChangeActor {
+  id: number | null;
+  name: string | null;
+  email: string | null;
+}
 
 @Injectable()
 /**
@@ -37,7 +46,10 @@ export class OrdersService {
     private readonly clientsRepository: Repository<Client>,
     @InjectRepository(ProductIngredient)
     private readonly productIngredientsRepository: Repository<ProductIngredient>,
+    @InjectRepository(OrderStatusHistory)
+    private readonly orderStatusHistoryRepository: Repository<OrderStatusHistory>,
     private readonly stockMovementsService: StockMovementsService,
+    private readonly ordersRealtimeService: OrdersRealtimeService,
   ) {}
 
   /**
@@ -47,6 +59,27 @@ export class OrdersService {
     return this.ordersRepository.find({
       relations: { items: true, client: true },
       order: { createdAt: 'DESC' },
+    });
+  }
+
+  /**
+   * Lista pedidos para o monitor da cozinha.
+   *
+   * Regra operacional:
+   * - sempre inclui pedidos `confirmed` e `in_preparation`;
+   * - inclui `ready` apenas quando solicitado por query.
+   */
+  findKitchenBoard(query: ListKitchenBoardQueryDto) {
+    const statuses = [OrderStatus.CONFIRMED, OrderStatus.IN_PREPARATION];
+    if (query.includeReady) {
+      statuses.push(OrderStatus.READY);
+    }
+
+    return this.ordersRepository.find({
+      where: { status: In(statuses) },
+      relations: { items: true, client: true },
+      order: { createdAt: 'ASC' },
+      take: query.limit ?? 100,
     });
   }
 
@@ -64,6 +97,19 @@ export class OrdersService {
     }
 
     return order;
+  }
+
+  /**
+   * Lista historico de status de um pedido em ordem cronologica.
+   */
+  async findStatusHistory(orderId: number) {
+    await this.findOne(orderId);
+
+    return this.orderStatusHistoryRepository.find({
+      where: { orderId },
+      order: { createdAt: 'ASC' },
+      relations: { changedByUser: true },
+    });
   }
 
   /**
@@ -126,7 +172,15 @@ export class OrdersService {
     });
 
     const saved = await this.ordersRepository.save(order);
-    return this.findOne(saved.id);
+    const fullOrder = await this.findOne(saved.id);
+
+    this.ordersRealtimeService.publish({
+      type: 'order_created',
+      orderId: fullOrder.id,
+      status: fullOrder.status,
+    });
+
+    return fullOrder;
   }
 
   /**
@@ -135,7 +189,11 @@ export class OrdersService {
    * Quando o status alvo e `confirmed`, a confirmacao roda em transacao
    * para garantir consistencia entre pedido e estoque.
    */
-  async updateStatus(id: number, dto: UpdateOrderStatusDto) {
+  async updateStatus(
+    id: number,
+    dto: UpdateOrderStatusDto,
+    actor: OrderStatusChangeActor = { id: null, name: null, email: null },
+  ) {
     const order = await this.findOne(id);
     const previousStatus = order.status;
 
@@ -146,13 +204,51 @@ export class OrdersService {
     this.validateStatusTransition(previousStatus, dto.status);
 
     if (dto.status === OrderStatus.CONFIRMED) {
-      await this.confirmOrderAndDeductStock(id);
-      return this.findOne(id);
+      await this.confirmOrderAndDeductStock(id, actor);
+      const confirmedOrder = await this.findOne(id);
+      this.ordersRealtimeService.publish({
+        type: 'order_status_changed',
+        orderId: confirmedOrder.id,
+        status: confirmedOrder.status,
+        previousStatus,
+      });
+      return confirmedOrder;
     }
 
-    order.status = dto.status;
-    await this.ordersRepository.save(order);
-    return this.findOne(id);
+    await this.dataSource.transaction(async (manager) => {
+      const managedOrder = await manager.findOne(Order, { where: { id } });
+
+      if (!managedOrder) {
+        throw new NotFoundException('Pedido nao encontrado');
+      }
+
+      managedOrder.status = dto.status;
+      await manager.save(Order, managedOrder);
+
+      await this.recordStatusChangeWithManager(manager, {
+        orderId: managedOrder.id,
+        previousStatus,
+        nextStatus: dto.status,
+        actor,
+      });
+    });
+
+    const updatedOrder = await this.findOne(id);
+    this.ordersRealtimeService.publish({
+      type: 'order_status_changed',
+      orderId: updatedOrder.id,
+      status: updatedOrder.status,
+      previousStatus,
+    });
+
+    return updatedOrder;
+  }
+
+  /**
+   * Atalho operacional da cozinha para marcar pedido como pronto.
+   */
+  markReady(orderId: number, actor: OrderStatusChangeActor) {
+    return this.updateStatus(orderId, { status: OrderStatus.READY }, actor);
   }
 
   /**
@@ -162,7 +258,10 @@ export class OrdersService {
    * evitar cenarios onde parte do estoque e baixada e o pedido nao e confirmado
    * (ou vice-versa) em caso de erro no meio do processo.
    */
-  private async confirmOrderAndDeductStock(orderId: number) {
+  private async confirmOrderAndDeductStock(
+    orderId: number,
+    actor: OrderStatusChangeActor,
+  ) {
     await this.dataSource.transaction(async (manager) => {
       const order = await manager.findOne(Order, {
         where: { id: orderId },
@@ -233,7 +332,41 @@ export class OrdersService {
 
       order.status = OrderStatus.CONFIRMED;
       await manager.save(Order, order);
+
+      await this.recordStatusChangeWithManager(manager, {
+        orderId: order.id,
+        previousStatus: OrderStatus.NEW,
+        nextStatus: OrderStatus.CONFIRMED,
+        actor,
+      });
     });
+  }
+
+  /**
+   * Persiste auditoria de mudanca de status com snapshot do usuario.
+   *
+   * Snapshot de nome/email e mantido para preservar trilha mesmo que o usuario
+   * seja alterado ou removido no futuro.
+   */
+  private async recordStatusChangeWithManager(
+    manager: EntityManager,
+    params: {
+      orderId: number;
+      previousStatus: OrderStatus;
+      nextStatus: OrderStatus;
+      actor: OrderStatusChangeActor;
+    },
+  ) {
+    const audit = manager.create(OrderStatusHistory, {
+      orderId: params.orderId,
+      previousStatus: params.previousStatus,
+      nextStatus: params.nextStatus,
+      changedByUserId: params.actor.id,
+      changedByName: params.actor.name,
+      changedByEmail: params.actor.email,
+    });
+
+    await manager.save(OrderStatusHistory, audit);
   }
 
   /**

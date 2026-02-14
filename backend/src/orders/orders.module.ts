@@ -4,20 +4,30 @@ import { Client } from '../entities/client.entity';
 import { Ingredient } from '../entities/ingredient.entity';
 import { OrderItem } from '../entities/order-item.entity';
 import { Order } from '../entities/order.entity';
+import { OrderStatusHistory } from '../entities/order-status-history.entity';
 import { ProductIngredient } from '../entities/product-ingredient.entity';
 import { Product } from '../entities/product.entity';
 import { StockMovementsModule } from '../stock-movements/stock-movements.module';
 import { OrdersController } from './orders.controller';
+import { OrdersRealtimeService } from './orders-realtime.service';
 import { OrdersService } from './orders.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Order, OrderItem, Product, Client, ProductIngredient, Ingredient]),
+    TypeOrmModule.forFeature([
+      Order,
+      OrderItem,
+      Product,
+      Client,
+      ProductIngredient,
+      Ingredient,
+      OrderStatusHistory,
+    ]),
     StockMovementsModule,
   ],
   controllers: [OrdersController],
-  providers: [OrdersService],
-  exports: [OrdersService],
+  providers: [OrdersService, OrdersRealtimeService],
+  exports: [OrdersService, OrdersRealtimeService],
 })
 /**
  * Modulo de pedidos.

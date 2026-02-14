@@ -33,7 +33,12 @@ export class Order {
   @JoinColumn({ name: 'client_id' })
   client: Client;
 
-  @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.NEW })
+  @Column({
+    type: 'enum',
+    enum: OrderStatus,
+    enumName: 'orders_status_enum',
+    default: OrderStatus.NEW,
+  })
   status: OrderStatus;
 
   @Column({ type: 'numeric', precision: 12, scale: 2 })

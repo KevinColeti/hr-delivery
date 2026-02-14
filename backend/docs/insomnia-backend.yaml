@@ -296,6 +296,50 @@ collection:
             send: true
             store: true
           rebuildPath: true
+      - url: "{{ _.base_url }}/ingredients/alerts/minimum"
+        name: List Minimum Stock Alerts
+        meta:
+          id: req_ingredients_alerts_minimum_hrnachapa_001
+          created: 1771035600001
+          modified: 1771035600001
+          isPrivate: false
+          description: Lista alertas de estoque minimo (admin e kitchen)
+          sortKey: -17710000000415
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/ingredients/alerts/minimum?includeInactive=true&limit=50"
+        name: List Minimum Stock Alerts (With Query)
+        meta:
+          id: req_ingredients_alerts_minimum_hrnachapa_002
+          created: 1771035600002
+          modified: 1771035600002
+          isPrivate: false
+          description: Lista alertas incluindo inativos com limite customizado
+          sortKey: -17710000000416
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
       - url: "{{ _.base_url }}/ingredients/1"
         name: Get Ingredient By Id
         meta:
@@ -463,6 +507,28 @@ collection:
             send: true
             store: true
           rebuildPath: true
+      - url: "{{ _.base_url }}/products/1/availability"
+        name: Get Product Availability
+        meta:
+          id: req_products_availability_hrnachapa_001
+          created: 1771035600003
+          modified: 1771035600003
+          isPrivate: false
+          description: Retorna disponibilidade do produto por estoque
+          sortKey: -17710000000725
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
       - url: "{{ _.base_url }}/products"
         name: Create Product
         meta:
@@ -542,6 +608,676 @@ collection:
           description: Remove produto (admin)
           sortKey: -1771000000075
         method: DELETE
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+
+  - name: Product Ingredients
+    meta:
+      id: fld_product_ingredients_hrnachapa_001
+      created: 1771035600020
+      modified: 1771035600020
+      sortKey: -1771000000078
+      description: Receita base por produto
+    children:
+      - url: "{{ _.base_url }}/products/1/ingredients"
+        name: List Product Ingredients
+        meta:
+          id: req_product_ingredients_list_hrnachapa_001
+          created: 1771035600021
+          modified: 1771035600021
+          isPrivate: false
+          description: Lista receita de um produto (admin e kitchen)
+          sortKey: -1771035600021
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/products/1/ingredients/1"
+        name: Get Product Ingredient By Id
+        meta:
+          id: req_product_ingredients_get_hrnachapa_001
+          created: 1771035600022
+          modified: 1771035600022
+          isPrivate: false
+          description: Busca item de receita por ID
+          sortKey: -1771035600022
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/products/1/ingredients"
+        name: Create Product Ingredient
+        meta:
+          id: req_product_ingredients_create_hrnachapa_001
+          created: 1771035600023
+          modified: 1771035600023
+          isPrivate: false
+          description: Cria item de receita (admin)
+          sortKey: -1771035600023
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "ingredientId": 1,
+              "quantity": 150,
+              "unit": "g"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/products/1/ingredients/1"
+        name: Update Product Ingredient
+        meta:
+          id: req_product_ingredients_update_hrnachapa_001
+          created: 1771035600024
+          modified: 1771035600024
+          isPrivate: false
+          description: Atualiza item de receita (admin)
+          sortKey: -1771035600024
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "quantity": 160,
+              "unit": "g"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/products/1/ingredients/1"
+        name: Delete Product Ingredient
+        meta:
+          id: req_product_ingredients_delete_hrnachapa_001
+          created: 1771035600025
+          modified: 1771035600025
+          isPrivate: false
+          description: Remove item de receita (admin)
+          sortKey: -1771035600025
+        method: DELETE
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+
+  - name: Product Extras
+    meta:
+      id: fld_product_extras_hrnachapa_001
+      created: 1771035600030
+      modified: 1771035600030
+      sortKey: -1771000000079
+      description: Extras por produto
+    children:
+      - url: "{{ _.base_url }}/products/1/extras"
+        name: List Product Extras
+        meta:
+          id: req_product_extras_list_hrnachapa_001
+          created: 1771035600031
+          modified: 1771035600031
+          isPrivate: false
+          description: Lista extras de um produto (admin e kitchen)
+          sortKey: -1771035600031
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/products/1/extras/1"
+        name: Get Product Extra By Id
+        meta:
+          id: req_product_extras_get_hrnachapa_001
+          created: 1771035600032
+          modified: 1771035600032
+          isPrivate: false
+          description: Busca extra por ID
+          sortKey: -1771035600032
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/products/1/extras"
+        name: Create Product Extra
+        meta:
+          id: req_product_extras_create_hrnachapa_001
+          created: 1771035600033
+          modified: 1771035600033
+          isPrivate: false
+          description: Cria extra para produto (admin)
+          sortKey: -1771035600033
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "name": "Bacon Extra",
+              "price": 4.5,
+              "sortOrder": 1,
+              "isActive": true,
+              "ingredientId": 2,
+              "ingredientQuantity": 40,
+              "ingredientUnit": "g"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/products/1/extras/1"
+        name: Update Product Extra
+        meta:
+          id: req_product_extras_update_hrnachapa_001
+          created: 1771035600034
+          modified: 1771035600034
+          isPrivate: false
+          description: Atualiza extra (admin)
+          sortKey: -1771035600034
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "name": "Bacon Crocante Extra",
+              "price": 5.0,
+              "isActive": true
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/products/1/extras/1"
+        name: Delete Product Extra
+        meta:
+          id: req_product_extras_delete_hrnachapa_001
+          created: 1771035600035
+          modified: 1771035600035
+          isPrivate: false
+          description: Remove extra (admin)
+          sortKey: -1771035600035
+        method: DELETE
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+
+  - name: Orders
+    meta:
+      id: fld_orders_hrnachapa_001
+      created: 1771035600040
+      modified: 1771035600040
+      sortKey: -1771000000081
+      description: Pedidos e fluxo de status
+    children:
+      - url: "{{ _.base_url }}/orders"
+        name: List Orders
+        meta:
+          id: req_orders_list_hrnachapa_001
+          created: 1771035600041
+          modified: 1771035600041
+          isPrivate: false
+          description: Lista pedidos (admin e kitchen)
+          sortKey: -1771035600041
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/orders/1"
+        name: Get Order By Id
+        meta:
+          id: req_orders_get_hrnachapa_001
+          created: 1771035600042
+          modified: 1771035600042
+          isPrivate: false
+          description: Busca pedido por ID
+          sortKey: -1771035600042
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/orders"
+        name: Create Order
+        meta:
+          id: req_orders_create_hrnachapa_001
+          created: 1771035600043
+          modified: 1771035600043
+          isPrivate: false
+          description: Cria pedido (admin no estado atual)
+          sortKey: -1771035600043
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "clientId": 1,
+              "items": [
+                {
+                  "productId": 1,
+                  "quantity": 2
+                }
+              ],
+              "deliveryFee": 5,
+              "discountAmount": 0,
+              "notes": "Sem cebola"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/orders/1/status"
+        name: Update Order Status
+        meta:
+          id: req_orders_status_update_hrnachapa_001
+          created: 1771035600044
+          modified: 1771035600044
+          isPrivate: false
+          description: Atualiza status (new, confirmed, in_preparation, ready, out_for_delivery, delivered, canceled)
+          sortKey: -1771035600044
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "status": "confirmed"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/orders/1/status-history"
+        name: Get Order Status History
+        meta:
+          id: req_orders_status_history_hrnachapa_001
+          created: 1771039200001
+          modified: 1771039200001
+          isPrivate: false
+          description: Lista auditoria de mudancas de status do pedido
+          sortKey: -17710356000445
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/orders/kitchen/board"
+        name: Kitchen Board
+        meta:
+          id: req_orders_kitchen_board_hrnachapa_001
+          created: 1771039200002
+          modified: 1771039200002
+          isPrivate: false
+          description: Monitor da cozinha (confirmed e in_preparation)
+          sortKey: -17710356000446
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/orders/kitchen/board?includeReady=true&limit=50"
+        name: Kitchen Board (With Query)
+        meta:
+          id: req_orders_kitchen_board_hrnachapa_002
+          created: 1771039200003
+          modified: 1771039200003
+          isPrivate: false
+          description: Monitor da cozinha incluindo ready
+          sortKey: -17710356000447
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/orders/1/kitchen/ready"
+        name: Mark Order Ready (Kitchen)
+        meta:
+          id: req_orders_kitchen_ready_hrnachapa_001
+          created: 1771039200004
+          modified: 1771039200004
+          isPrivate: false
+          description: Acao de cozinha para marcar pedido como pronto
+          sortKey: -17710356000448
+        method: PATCH
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/orders/stream"
+        name: Orders Stream (SSE)
+        meta:
+          id: req_orders_stream_hrnachapa_001
+          created: 1771039200005
+          modified: 1771039200005
+          isPrivate: false
+          description: Stream geral de eventos de pedidos em tempo real
+          sortKey: -17710356000449
+        method: GET
+        headers:
+          - name: Accept
+            value: text/event-stream
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/orders/kitchen/stream"
+        name: Kitchen Stream (SSE)
+        meta:
+          id: req_orders_kitchen_stream_hrnachapa_001
+          created: 1771039200006
+          modified: 1771039200006
+          isPrivate: false
+          description: Stream SSE de eventos relevantes para cozinha
+          sortKey: -17710356000450
+        method: GET
+        headers:
+          - name: Accept
+            value: text/event-stream
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+
+  - name: Stock Movements
+    meta:
+      id: fld_stock_movements_hrnachapa_001
+      created: 1771035600010
+      modified: 1771035600010
+      sortKey: -1771000000080
+      description: Historico e movimentacao manual de estoque
+    children:
+      - url: "{{ _.base_url }}/stock-movements"
+        name: List Stock Movements
+        meta:
+          id: req_stock_movements_list_hrnachapa_001
+          created: 1771035600011
+          modified: 1771035600011
+          isPrivate: false
+          description: Lista historico de movimentacoes (admin e kitchen)
+          sortKey: -1771035600011
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/stock-movements?ingredientId=1&source=order_confirmation&limit=50"
+        name: List Stock Movements (With Query)
+        meta:
+          id: req_stock_movements_list_hrnachapa_002
+          created: 1771035600012
+          modified: 1771035600012
+          isPrivate: false
+          description: Lista por filtros (ingredientId, source, limit)
+          sortKey: -1771035600012
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/stock-movements"
+        name: Create Stock Movement (Entry)
+        meta:
+          id: req_stock_movements_create_hrnachapa_001
+          created: 1771035600013
+          modified: 1771035600013
+          isPrivate: false
+          description: Cria entrada manual de estoque (admin)
+          sortKey: -1771035600013
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "ingredientId": 1,
+              "type": "entry",
+              "quantity": 2.5,
+              "reason": "Reposicao de fornecedor",
+              "notes": "Lote recebido no turno da manha"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/stock-movements"
+        name: Create Stock Movement (Adjustment)
+        meta:
+          id: req_stock_movements_create_hrnachapa_002
+          created: 1771035600014
+          modified: 1771035600014
+          isPrivate: false
+          description: Cria ajuste manual de estoque para saldo alvo (admin)
+          sortKey: -1771035600014
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "ingredientId": 1,
+              "type": "adjustment",
+              "targetQuantity": 10,
+              "reason": "Ajuste de inventario",
+              "notes": "Contagem fisica mensal"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
         authentication:
           type: bearer
           prefix: Bearer

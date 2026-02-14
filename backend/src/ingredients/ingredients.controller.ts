@@ -1,7 +1,8 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../entities/user.entity';
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
+import { ListLowStockAlertsQueryDto } from './dto/list-low-stock-alerts-query.dto';
 import { UpdateIngredientDto } from './dto/update-ingredient.dto';
 import { IngredientsService } from './ingredients.service';
 
@@ -19,6 +20,15 @@ export class IngredientsController {
   @Roles(UserRole.ADMIN, UserRole.KITCHEN)
   findAll() {
     return this.ingredientsService.findAll();
+  }
+
+  /**
+   * Lista alertas de estoque minimo.
+   */
+  @Get('alerts/minimum')
+  @Roles(UserRole.ADMIN, UserRole.KITCHEN)
+  findLowStockAlerts(@Query() query: ListLowStockAlertsQueryDto) {
+    return this.ingredientsService.findLowStockAlerts(query);
   }
 
   /**

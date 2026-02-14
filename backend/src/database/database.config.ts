@@ -4,6 +4,7 @@ import { Client } from '../entities/client.entity';
 import { Ingredient } from '../entities/ingredient.entity';
 import { OrderItem } from '../entities/order-item.entity';
 import { Order } from '../entities/order.entity';
+import { OrderStatusHistory } from '../entities/order-status-history.entity';
 import { ProductExtra } from '../entities/product-extra.entity';
 import { ProductIngredient } from '../entities/product-ingredient.entity';
 import { Product } from '../entities/product.entity';
@@ -22,6 +23,7 @@ export const entities = [
   StockMovement,
   Order,
   OrderItem,
+  OrderStatusHistory,
 ];
 
 export function getDatabaseConfig(): TypeOrmModuleOptions {
