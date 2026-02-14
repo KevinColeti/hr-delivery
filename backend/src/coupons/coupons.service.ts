@@ -61,6 +61,7 @@ export class CouponsService {
       startsAt: dto.startsAt ? new Date(dto.startsAt) : null,
       endsAt: dto.endsAt ? new Date(dto.endsAt) : null,
       isActive: dto.isActive ?? true,
+      firstOrderOnly: dto.firstOrderOnly ?? false,
     });
 
     return this.couponsRepository.save(coupon);
@@ -119,6 +120,10 @@ export class CouponsService {
       endsAt:
         dto.endsAt !== undefined ? (dto.endsAt ? new Date(dto.endsAt) : null) : coupon.endsAt,
       isActive: dto.isActive !== undefined ? dto.isActive : coupon.isActive,
+      firstOrderOnly:
+        dto.firstOrderOnly !== undefined
+          ? dto.firstOrderOnly
+          : coupon.firstOrderOnly,
     });
 
     return this.couponsRepository.save(merged);

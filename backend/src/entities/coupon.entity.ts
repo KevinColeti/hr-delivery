@@ -61,6 +61,9 @@ export class Coupon {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
+  @Column({ name: 'first_order_only', type: 'boolean', default: false })
+  firstOrderOnly: boolean;
+
   @OneToMany(() => Order, (order) => order.appliedCoupon)
   orders: Order[];
 

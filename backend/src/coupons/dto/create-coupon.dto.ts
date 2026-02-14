@@ -53,4 +53,8 @@ export class CreateCouponDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  firstOrderOnly?: boolean;
 }

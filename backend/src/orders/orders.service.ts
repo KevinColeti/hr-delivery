@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, In, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, Not, Repository } from 'typeorm';
 import { Client } from '../entities/client.entity';
 import { Coupon, CouponDiscountType } from '../entities/coupon.entity';
 import { Ingredient } from '../entities/ingredient.entity';
@@ -127,7 +127,7 @@ export class OrdersService {
     }
 
     const saved = await this.dataSource.transaction(async (manager) => {
-      await this.ensureClientExists(dto.clientId, manager);
+      await this.ensureClientExists(dto.clientId, manager, true);
 
       const orderItemsData: OrderItem[] = [];
       let subtotal = 0;
@@ -172,6 +172,7 @@ export class OrdersService {
           manager,
           dto.couponCode,
           subtotal,
+          dto.clientId,
         );
 
         discountAmount = this.calculateCouponDiscount(coupon, subtotal);
@@ -426,9 +427,16 @@ export class OrdersService {
   /**
    * Garante que o cliente informado existe antes de criar o pedido.
    */
-  private async ensureClientExists(clientId: number, manager?: EntityManager) {
+  private async ensureClientExists(
+    clientId: number,
+    manager?: EntityManager,
+    lockForUpdate = false,
+  ) {
     const client = manager
-      ? await manager.findOne(Client, { where: { id: clientId } })
+      ? await manager.findOne(Client, {
+          where: { id: clientId },
+          lock: lockForUpdate ? { mode: 'pessimistic_write' } : undefined,
+        })
       : await this.clientsRepository.findOne({ where: { id: clientId } });
     if (!client) {
       throw new BadRequestException('Cliente informado nao existe');
@@ -442,6 +450,7 @@ export class OrdersService {
     manager: EntityManager,
     couponCode: string,
     subtotal: number,
+    clientId: number,
   ) {
     const normalizedCode = couponCode.trim().toUpperCase();
 
@@ -475,6 +484,21 @@ export class OrdersService {
 
     if (coupon.usageLimit !== null && coupon.usageCount >= coupon.usageLimit) {
       throw new BadRequestException('Cupom atingiu limite de uso');
+    }
+
+    if (coupon.firstOrderOnly) {
+      const previousOrdersCount = await manager.count(Order, {
+        where: {
+          clientId,
+          status: Not(OrderStatus.CANCELED),
+        },
+      });
+
+      if (previousOrdersCount > 0) {
+        throw new BadRequestException(
+          'Cupom valido apenas para primeiro pedido do cliente',
+        );
+      }
     }
 
     return coupon;
