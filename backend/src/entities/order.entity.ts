@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Client } from './client.entity';
+import { Combo } from './combo.entity';
 import { Coupon } from './coupon.entity';
 import { OrderItem } from './order-item.entity';
 
@@ -71,6 +72,21 @@ export class Order {
     nullable: true,
   })
   appliedCouponCode: string | null;
+
+  @Column({ name: 'applied_combo_id', type: 'integer', nullable: true })
+  appliedComboId: number | null;
+
+  @ManyToOne(() => Combo, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'applied_combo_id' })
+  appliedCombo: Combo | null;
+
+  @Column({
+    name: 'applied_combo_name',
+    type: 'varchar',
+    length: 120,
+    nullable: true,
+  })
+  appliedComboName: string | null;
 
   @OneToMany(() => OrderItem, (item) => item.order, { cascade: true })
   items: OrderItem[];

@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 import { CategoriesModule } from './categories/categories.module';
+import { CombosModule } from './combos/combos.module';
 import { RequestLoggingInterceptor } from './common/logging/request-logging.interceptor';
 import { StructuredLoggerService } from './common/logging/structured-logger.service';
 import { RequestContextMiddleware } from './common/request-context/request-context.middleware';
@@ -26,6 +27,7 @@ import { StockMovementsModule } from './stock-movements/stock-movements.module';
     TypeOrmModule.forRoot(getDatabaseConfig()),
     AuthModule,
     CategoriesModule,
+    CombosModule,
     CouponsModule,
     IngredientsModule,
     ProductsModule,

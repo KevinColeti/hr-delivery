@@ -1,6 +1,8 @@
 import { DataSource } from 'typeorm';
 import { Category } from '../entities/category.entity';
 import { Client } from '../entities/client.entity';
+import { ComboRule } from '../entities/combo-rule.entity';
+import { Combo } from '../entities/combo.entity';
 import { Coupon } from '../entities/coupon.entity';
 import { Ingredient } from '../entities/ingredient.entity';
 import { OrderItem } from '../entities/order-item.entity';
@@ -23,6 +25,8 @@ const dataSource = new DataSource({
   entities: [
     User,
     Client,
+    Combo,
+    ComboRule,
     Coupon,
     Category,
     Ingredient,

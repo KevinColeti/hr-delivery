@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Client } from '../entities/client.entity';
+import { ComboRule } from '../entities/combo-rule.entity';
+import { Combo } from '../entities/combo.entity';
 import { Coupon } from '../entities/coupon.entity';
 import { Ingredient } from '../entities/ingredient.entity';
 import { OrderItem } from '../entities/order-item.entity';
@@ -20,6 +22,8 @@ import { OrdersService } from './orders.service';
       OrderItem,
       Product,
       Client,
+      Combo,
+      ComboRule,
       Coupon,
       ProductIngredient,
       Ingredient,

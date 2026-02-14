@@ -6,6 +6,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, In, Not, Repository } from 'typeorm';
 import { Client } from '../entities/client.entity';
+import { ComboRuleType } from '../entities/combo-rule.entity';
+import { Combo, ComboDiscountType } from '../entities/combo.entity';
 import { Coupon, CouponDiscountType } from '../entities/coupon.entity';
 import { Ingredient } from '../entities/ingredient.entity';
 import { OrderItem } from '../entities/order-item.entity';
@@ -45,6 +47,8 @@ export class OrdersService {
     private readonly productsRepository: Repository<Product>,
     @InjectRepository(Client)
     private readonly clientsRepository: Repository<Client>,
+    @InjectRepository(Combo)
+    private readonly combosRepository: Repository<Combo>,
     @InjectRepository(ProductIngredient)
     private readonly productIngredientsRepository: Repository<ProductIngredient>,
     @InjectRepository(OrderStatusHistory)
@@ -58,7 +62,7 @@ export class OrdersService {
    */
   findAll() {
     return this.ordersRepository.find({
-      relations: { items: true, client: true, appliedCoupon: true },
+      relations: { items: true, client: true, appliedCoupon: true, appliedCombo: true },
       order: { createdAt: 'DESC' },
     });
   }
@@ -78,7 +82,7 @@ export class OrdersService {
 
     return this.ordersRepository.find({
       where: { status: In(statuses) },
-      relations: { items: true, client: true, appliedCoupon: true },
+      relations: { items: true, client: true, appliedCoupon: true, appliedCombo: true },
       order: { createdAt: 'ASC' },
       take: query.limit ?? 100,
     });
@@ -90,7 +94,7 @@ export class OrdersService {
   async findOne(id: number) {
     const order = await this.ordersRepository.findOne({
       where: { id },
-      relations: { items: true, client: true, appliedCoupon: true },
+      relations: { items: true, client: true, appliedCoupon: true, appliedCombo: true },
     });
 
     if (!order) {
@@ -131,6 +135,8 @@ export class OrdersService {
 
       const orderItemsData: OrderItem[] = [];
       let subtotal = 0;
+      const productQuantityMap = new Map<number, number>();
+      const categoryQuantityMap = new Map<number, number>();
 
       for (const item of dto.items) {
         const product = await manager.findOne(Product, {
@@ -160,12 +166,23 @@ export class OrdersService {
             lineTotal: this.toMoney(lineTotal),
           }),
         );
+
+        productQuantityMap.set(
+          product.id,
+          (productQuantityMap.get(product.id) ?? 0) + item.quantity,
+        );
+        categoryQuantityMap.set(
+          product.categoryId,
+          (categoryQuantityMap.get(product.categoryId) ?? 0) + item.quantity,
+        );
       }
 
       const deliveryFee = dto.deliveryFee ?? 0;
       let discountAmount = dto.discountAmount ?? 0;
       let appliedCouponId: number | null = null;
       let appliedCouponCode: string | null = null;
+      let appliedComboId: number | null = null;
+      let appliedComboName: string | null = null;
 
       if (dto.couponCode) {
         const coupon = await this.resolveAndValidateCoupon(
@@ -180,6 +197,19 @@ export class OrdersService {
         appliedCouponCode = coupon.code;
         coupon.usageCount += 1;
         await manager.save(Coupon, coupon);
+      } else if (dto.discountAmount === undefined) {
+        const combo = await this.resolveBestCombo(
+          manager,
+          subtotal,
+          productQuantityMap,
+          categoryQuantityMap,
+        );
+
+        if (combo) {
+          discountAmount = this.calculateComboDiscount(combo, subtotal);
+          appliedComboId = combo.id;
+          appliedComboName = combo.name;
+        }
       }
 
       const total = subtotal + deliveryFee - discountAmount;
@@ -198,6 +228,8 @@ export class OrdersService {
         notes: dto.notes?.trim() || null,
         appliedCouponId,
         appliedCouponCode,
+        appliedComboId,
+        appliedComboName,
         items: orderItemsData,
       });
 
@@ -502,6 +534,76 @@ export class OrdersService {
     }
 
     return coupon;
+  }
+
+  /**
+   * Resolve o melhor combo valido para o carrinho atual.
+   *
+   * Politica atual:
+   * - aplica apenas um combo;
+   * - escolhe o combo com maior desconto monetario.
+   */
+  private async resolveBestCombo(
+    manager: EntityManager,
+    subtotal: number,
+    productQuantityMap: Map<number, number>,
+    categoryQuantityMap: Map<number, number>,
+  ) {
+    const combos = await manager.find(Combo, {
+      where: { isActive: true },
+      relations: { rules: true },
+    });
+
+    let bestCombo: Combo | null = null;
+    let bestDiscount = 0;
+
+    const now = new Date();
+    for (const combo of combos) {
+      if (combo.startsAt && now < combo.startsAt) {
+        continue;
+      }
+      if (combo.endsAt && now > combo.endsAt) {
+        continue;
+      }
+      if (!combo.rules || combo.rules.length === 0) {
+        continue;
+      }
+
+      const isMatched = combo.rules.every((rule) => {
+        if (rule.type === ComboRuleType.PRODUCT) {
+          const currentQuantity = productQuantityMap.get(rule.productId ?? -1) ?? 0;
+          return currentQuantity >= rule.minimumQuantity;
+        }
+
+        const currentQuantity = categoryQuantityMap.get(rule.categoryId ?? -1) ?? 0;
+        return currentQuantity >= rule.minimumQuantity;
+      });
+
+      if (!isMatched) {
+        continue;
+      }
+
+      const discount = this.calculateComboDiscount(combo, subtotal);
+      if (discount > bestDiscount) {
+        bestDiscount = discount;
+        bestCombo = combo;
+      }
+    }
+
+    return bestCombo;
+  }
+
+  /**
+   * Calcula desconto de combo respeitando teto do subtotal.
+   */
+  private calculateComboDiscount(combo: Combo, subtotal: number) {
+    const discountValue = Number(combo.discountValue);
+    const rawDiscount =
+      combo.discountType === ComboDiscountType.PERCENTAGE
+        ? (subtotal * discountValue) / 100
+        : discountValue;
+
+    return Number(Math.min(rawDiscount, subtotal).toFixed(2));
   }
 
   /**
