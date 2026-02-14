@@ -63,12 +63,12 @@
 - [x] (`done`) [P0] Atualizacao em tempo real de pedidos/cozinha
 
 ## E4 - Promocoes e Motor de Preco
-- Status: `todo`
+- Status: `in-progress`
 - [x] (`done`) [P0] Cupons com validade, valor minimo e limites de uso
-- [ ] (`todo`) [P0] Regra de primeiro pedido
-- [ ] (`todo`) [P0] Combos automaticos por combinacao de itens/categorias
-- [ ] (`todo`) [P1] Politica de acumulo de promocoes
-- [ ] (`todo`) [P0] Motor de calculo final (itens + extras + taxa + desconto)
+- [x] (`done`) [P0] Regra de primeiro pedido
+- [x] (`done`) [P0] Combos automaticos por combinacao de itens/categorias
+- [x] (`done`) [P1] Politica de acumulo de promocoes
+- [x] (`done`) [P0] Motor de calculo final (itens + extras + taxa + desconto)
 - [x] (`done`) [P1] Registro da promocao aplicada no pedido
 
 ## E5 - Clientes e Configuracoes de Loja
@@ -81,9 +81,9 @@
 - [ ] (`todo`) [P1] Configuracoes institucionais da loja
 
 ## E6 - Integracao WhatsApp
-- Status: `todo`
+- Status: `in-progress`
 - [ ] (`todo`) [P0] Definir provedor de envio (API/servico)
-- [ ] (`todo`) [P0] Implementar mensagens de confirmacao e status do pedido
+- [x] (`done`) [P0] Implementar mensagens de confirmacao e status do pedido
 - [ ] (`todo`) [P1] Implementar templates configuraveis
 - [ ] (`todo`) [P1] Logs de envio e retry em falha
 
@@ -194,9 +194,9 @@ Saida da semana:
 
 ### Semana 5 - Promocoes P0 + WhatsApp
 - [x] (`done`) Dia 1: cupons (validade, minimo, limite)
-- [ ] (`todo`) Dia 2: regra de primeiro pedido
-- [ ] (`todo`) Dia 3: combos automaticos (versao simples)
-- [ ] (`todo`) Dia 4: integracao WhatsApp (confirmacao + atualizacao de status)
+- [x] (`done`) Dia 2: regra de primeiro pedido
+- [x] (`done`) Dia 3: combos automaticos (versao simples)
+- [x] (`done`) Dia 4: integracao WhatsApp (confirmacao + atualizacao de status)
 - [ ] (`todo`) Dia 5: logs de envio e tratamento de falhas simples
 
 Saida da semana:
