@@ -64,12 +64,12 @@
 
 ## E4 - Promocoes e Motor de Preco
 - Status: `todo`
-- [ ] (`todo`) [P0] Cupons com validade, valor minimo e limites de uso
+- [x] (`done`) [P0] Cupons com validade, valor minimo e limites de uso
 - [ ] (`todo`) [P0] Regra de primeiro pedido
 - [ ] (`todo`) [P0] Combos automaticos por combinacao de itens/categorias
 - [ ] (`todo`) [P1] Politica de acumulo de promocoes
 - [ ] (`todo`) [P0] Motor de calculo final (itens + extras + taxa + desconto)
-- [ ] (`todo`) [P1] Registro da promocao aplicada no pedido
+- [x] (`done`) [P1] Registro da promocao aplicada no pedido
 
 ## E5 - Clientes e Configuracoes de Loja
 - Status: `todo`
@@ -193,7 +193,7 @@ Saida da semana:
 - Fluxo operacional principal funciona para cozinha
 
 ### Semana 5 - Promocoes P0 + WhatsApp
-- [ ] (`todo`) Dia 1: cupons (validade, minimo, limite)
+- [x] (`done`) Dia 1: cupons (validade, minimo, limite)
 - [ ] (`todo`) Dia 2: regra de primeiro pedido
 - [ ] (`todo`) Dia 3: combos automaticos (versao simples)
 - [ ] (`todo`) Dia 4: integracao WhatsApp (confirmacao + atualizacao de status)

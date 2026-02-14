@@ -44,6 +44,11 @@ export class CreateOrderDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(40)
+  couponCode?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(1000)
   notes?: string;
 }

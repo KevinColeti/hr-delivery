@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import { Client } from '../entities/client.entity';
+import { Coupon, CouponDiscountType } from '../entities/coupon.entity';
 import { Ingredient } from '../entities/ingredient.entity';
 import { OrderItem } from '../entities/order-item.entity';
 import { Order, OrderStatus } from '../entities/order.entity';
@@ -57,7 +58,7 @@ export class OrdersService {
    */
   findAll() {
     return this.ordersRepository.find({
-      relations: { items: true, client: true },
+      relations: { items: true, client: true, appliedCoupon: true },
       order: { createdAt: 'DESC' },
     });
   }
@@ -77,7 +78,7 @@ export class OrdersService {
 
     return this.ordersRepository.find({
       where: { status: In(statuses) },
-      relations: { items: true, client: true },
+      relations: { items: true, client: true, appliedCoupon: true },
       order: { createdAt: 'ASC' },
       take: query.limit ?? 100,
     });
@@ -89,7 +90,7 @@ export class OrdersService {
   async findOne(id: number) {
     const order = await this.ordersRepository.findOne({
       where: { id },
-      relations: { items: true, client: true },
+      relations: { items: true, client: true, appliedCoupon: true },
     });
 
     if (!order) {
@@ -119,59 +120,89 @@ export class OrdersService {
    * e evitar divergencia entre clientes.
    */
   async create(dto: CreateOrderDto) {
-    await this.ensureClientExists(dto.clientId);
-
-    const orderItemsData: OrderItem[] = [];
-    let subtotal = 0;
-
-    for (const item of dto.items) {
-      const product = await this.productsRepository.findOne({
-        where: { id: item.productId },
-      });
-
-      if (!product) {
-        throw new BadRequestException(`Produto ${item.productId} nao encontrado`);
-      }
-
-      if (!product.isActive) {
-        throw new BadRequestException(`Produto ${product.name} esta inativo`);
-      }
-
-      const unitPrice = Number(product.price);
-      const lineTotal = unitPrice * item.quantity;
-      subtotal += lineTotal;
-
-      orderItemsData.push(
-        this.orderItemsRepository.create({
-          productId: product.id,
-          productName: product.name,
-          quantity: item.quantity,
-          unitPrice: this.toMoney(unitPrice),
-          lineTotal: this.toMoney(lineTotal),
-        }),
+    if (dto.couponCode && dto.discountAmount !== undefined) {
+      throw new BadRequestException(
+        'Nao e permitido informar discountAmount manual quando couponCode e usado',
       );
     }
 
-    const deliveryFee = dto.deliveryFee ?? 0;
-    const discountAmount = dto.discountAmount ?? 0;
-    const total = subtotal + deliveryFee - discountAmount;
+    const saved = await this.dataSource.transaction(async (manager) => {
+      await this.ensureClientExists(dto.clientId, manager);
 
-    if (total < 0) {
-      throw new BadRequestException('Total do pedido nao pode ser negativo');
-    }
+      const orderItemsData: OrderItem[] = [];
+      let subtotal = 0;
 
-    const order = this.ordersRepository.create({
-      clientId: dto.clientId,
-      status: OrderStatus.NEW,
-      subtotal: this.toMoney(subtotal),
-      deliveryFee: this.toMoney(deliveryFee),
-      discountAmount: this.toMoney(discountAmount),
-      total: this.toMoney(total),
-      notes: dto.notes?.trim() || null,
-      items: orderItemsData,
+      for (const item of dto.items) {
+        const product = await manager.findOne(Product, {
+          where: { id: item.productId },
+        });
+
+        if (!product) {
+          throw new BadRequestException(
+            `Produto ${item.productId} nao encontrado`,
+          );
+        }
+
+        if (!product.isActive) {
+          throw new BadRequestException(`Produto ${product.name} esta inativo`);
+        }
+
+        const unitPrice = Number(product.price);
+        const lineTotal = unitPrice * item.quantity;
+        subtotal += lineTotal;
+
+        orderItemsData.push(
+          manager.create(OrderItem, {
+            productId: product.id,
+            productName: product.name,
+            quantity: item.quantity,
+            unitPrice: this.toMoney(unitPrice),
+            lineTotal: this.toMoney(lineTotal),
+          }),
+        );
+      }
+
+      const deliveryFee = dto.deliveryFee ?? 0;
+      let discountAmount = dto.discountAmount ?? 0;
+      let appliedCouponId: number | null = null;
+      let appliedCouponCode: string | null = null;
+
+      if (dto.couponCode) {
+        const coupon = await this.resolveAndValidateCoupon(
+          manager,
+          dto.couponCode,
+          subtotal,
+        );
+
+        discountAmount = this.calculateCouponDiscount(coupon, subtotal);
+        appliedCouponId = coupon.id;
+        appliedCouponCode = coupon.code;
+        coupon.usageCount += 1;
+        await manager.save(Coupon, coupon);
+      }
+
+      const total = subtotal + deliveryFee - discountAmount;
+
+      if (total < 0) {
+        throw new BadRequestException('Total do pedido nao pode ser negativo');
+      }
+
+      const order = manager.create(Order, {
+        clientId: dto.clientId,
+        status: OrderStatus.NEW,
+        subtotal: this.toMoney(subtotal),
+        deliveryFee: this.toMoney(deliveryFee),
+        discountAmount: this.toMoney(discountAmount),
+        total: this.toMoney(total),
+        notes: dto.notes?.trim() || null,
+        appliedCouponId,
+        appliedCouponCode,
+        items: orderItemsData,
+      });
+
+      return manager.save(Order, order);
     });
 
-    const saved = await this.ordersRepository.save(order);
     const fullOrder = await this.findOne(saved.id);
 
     this.ordersRealtimeService.publish({
@@ -395,11 +426,71 @@ export class OrdersService {
   /**
    * Garante que o cliente informado existe antes de criar o pedido.
    */
-  private async ensureClientExists(clientId: number) {
-    const client = await this.clientsRepository.findOne({ where: { id: clientId } });
+  private async ensureClientExists(clientId: number, manager?: EntityManager) {
+    const client = manager
+      ? await manager.findOne(Client, { where: { id: clientId } })
+      : await this.clientsRepository.findOne({ where: { id: clientId } });
     if (!client) {
       throw new BadRequestException('Cliente informado nao existe');
     }
+  }
+
+  /**
+   * Resolve cupom por codigo aplicando lock para controlar limite de uso.
+   */
+  private async resolveAndValidateCoupon(
+    manager: EntityManager,
+    couponCode: string,
+    subtotal: number,
+  ) {
+    const normalizedCode = couponCode.trim().toUpperCase();
+
+    const coupon = await manager.findOne(Coupon, {
+      where: { code: normalizedCode },
+      lock: { mode: 'pessimistic_write' },
+    });
+
+    if (!coupon) {
+      throw new BadRequestException('Cupom informado nao existe');
+    }
+
+    if (!coupon.isActive) {
+      throw new BadRequestException('Cupom informado esta inativo');
+    }
+
+    const now = new Date();
+    if (coupon.startsAt && now < coupon.startsAt) {
+      throw new BadRequestException('Cupom ainda nao iniciou vigencia');
+    }
+
+    if (coupon.endsAt && now > coupon.endsAt) {
+      throw new BadRequestException('Cupom expirado');
+    }
+
+    if (subtotal < Number(coupon.minimumOrderAmount)) {
+      throw new BadRequestException(
+        `Cupom exige pedido minimo de ${Number(coupon.minimumOrderAmount).toFixed(2)}`,
+      );
+    }
+
+    if (coupon.usageLimit !== null && coupon.usageCount >= coupon.usageLimit) {
+      throw new BadRequestException('Cupom atingiu limite de uso');
+    }
+
+    return coupon;
+  }
+
+  /**
+   * Calcula desconto de cupom respeitando teto do subtotal.
+   */
+  private calculateCouponDiscount(coupon: Coupon, subtotal: number) {
+    const discountValue = Number(coupon.discountValue);
+    const rawDiscount =
+      coupon.discountType === CouponDiscountType.PERCENTAGE
+        ? (subtotal * discountValue) / 100
+        : discountValue;
+
+    return Number(Math.min(rawDiscount, subtotal).toFixed(2));
   }
 
   /**

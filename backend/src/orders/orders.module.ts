@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Client } from '../entities/client.entity';
+import { Coupon } from '../entities/coupon.entity';
 import { Ingredient } from '../entities/ingredient.entity';
 import { OrderItem } from '../entities/order-item.entity';
 import { Order } from '../entities/order.entity';
@@ -19,6 +20,7 @@ import { OrdersService } from './orders.service';
       OrderItem,
       Product,
       Client,
+      Coupon,
       ProductIngredient,
       Ingredient,
       OrderStatusHistory,
