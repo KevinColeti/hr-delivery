@@ -57,14 +57,19 @@ export class Order {
   @Column({ type: 'text', nullable: true })
   notes: string | null;
 
-  @Column({ name: 'applied_coupon_id', nullable: true })
+  @Column({ name: 'applied_coupon_id', type: 'integer', nullable: true })
   appliedCouponId: number | null;
 
   @ManyToOne(() => Coupon, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'applied_coupon_id' })
   appliedCoupon: Coupon | null;
 
-  @Column({ name: 'applied_coupon_code', length: 40, nullable: true })
+  @Column({
+    name: 'applied_coupon_code',
+    type: 'varchar',
+    length: 40,
+    nullable: true,
+  })
   appliedCouponCode: string | null;
 
   @OneToMany(() => OrderItem, (item) => item.order, { cascade: true })
