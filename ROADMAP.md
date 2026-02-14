@@ -39,7 +39,7 @@
 - [x] (`done`) [P0] Implementar autorizacao por perfil (`admin`, `cozinha`)
 - [x] (`done`) [P0] Configurar tempo real para eventos de pedido
 - [x] (`done`) [P1] Configurar tratamento global de validacoes (ValidationPipe)
-- [ ] (`todo`) [P1] Configurar logs estruturados e rastreabilidade
+- [x] (`done`) [P1] Configurar logs estruturados e rastreabilidade
 
 ## E2 - Cardapio e Estoque (Insumos)
 - Status: `in-progress`
