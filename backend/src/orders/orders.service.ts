@@ -15,6 +15,7 @@ import { Order, OrderStatus } from '../entities/order.entity';
 import { OrderStatusHistory } from '../entities/order-status-history.entity';
 import { ProductIngredient } from '../entities/product-ingredient.entity';
 import { Product } from '../entities/product.entity';
+import { UserRole } from '../entities/user.entity';
 import { StockMovementsService } from '../stock-movements/stock-movements.service';
 import { WhatsAppService } from '../whatsapp/whatsapp.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -26,6 +27,7 @@ interface OrderStatusChangeActor {
   id: number | null;
   name: string | null;
   email: string | null;
+  role: UserRole | null;
 }
 
 interface DiscountResolutionResult {
@@ -34,6 +36,21 @@ interface DiscountResolutionResult {
   appliedCouponCode: string | null;
   appliedComboId: number | null;
   appliedComboName: string | null;
+}
+
+export interface TrackingStep {
+  status: OrderStatus;
+  label: string;
+  done: boolean;
+}
+
+export interface PublicOrderTrackingResponse {
+  id: number;
+  status: OrderStatus;
+  total: string;
+  createdAt: Date;
+  updatedAt: Date;
+  timeline: TrackingStep[];
 }
 
 @Injectable()
@@ -125,6 +142,29 @@ export class OrdersService {
       order: { createdAt: 'ASC' },
       relations: { changedByUser: true },
     });
+  }
+
+  /**
+   * Retorna visao publica de acompanhamento do pedido.
+   */
+  async findPublicTracking(orderId: number): Promise<PublicOrderTrackingResponse> {
+    const order = await this.ordersRepository.findOne({
+      where: { id: orderId },
+      relations: { items: true },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Pedido nao encontrado');
+    }
+
+    return {
+      id: order.id,
+      status: order.status,
+      total: order.total,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+      timeline: this.buildTrackingTimeline(order.status),
+    };
   }
 
   /**
@@ -236,7 +276,12 @@ export class OrdersService {
   async updateStatus(
     id: number,
     dto: UpdateOrderStatusDto,
-    actor: OrderStatusChangeActor = { id: null, name: null, email: null },
+    actor: OrderStatusChangeActor = {
+      id: null,
+      name: null,
+      email: null,
+      role: null,
+    },
   ) {
     const order = await this.findOne(id);
     const previousStatus = order.status;
@@ -245,6 +290,7 @@ export class OrdersService {
       return order;
     }
 
+    this.validateActorTransitionPermission(previousStatus, dto.status, actor.role);
     this.validateStatusTransition(previousStatus, dto.status);
 
     if (dto.status === OrderStatus.CONFIRMED) {
@@ -295,6 +341,35 @@ export class OrdersService {
    */
   markReady(orderId: number, actor: OrderStatusChangeActor) {
     return this.updateStatus(orderId, { status: OrderStatus.READY }, actor);
+  }
+
+  /**
+   * Restringe transicoes por papel operacional.
+   *
+   * Regra:
+   * - `admin`: pode operar todas as transicoes validas;
+   * - `kitchen`: atua somente em preparo/cozinha.
+   */
+  private validateActorTransitionPermission(
+    current: OrderStatus,
+    next: OrderStatus,
+    actorRole: UserRole | null,
+  ) {
+    if (actorRole !== UserRole.KITCHEN) {
+      return;
+    }
+
+    const kitchenAllowedTransitions = new Set<string>([
+      `${OrderStatus.CONFIRMED}->${OrderStatus.IN_PREPARATION}`,
+      `${OrderStatus.IN_PREPARATION}->${OrderStatus.READY}`,
+    ]);
+
+    const signature = `${current}->${next}`;
+    if (!kitchenAllowedTransitions.has(signature)) {
+      throw new BadRequestException(
+        'Perfil cozinha so pode mover pedidos de confirmado para em_preparo e de em_preparo para pronto',
+      );
+    }
   }
 
   /**
@@ -697,5 +772,32 @@ export class OrdersService {
    */
   private toMoney(value: number): string {
     return value.toFixed(2);
+  }
+
+  /**
+   * Monta timeline de acompanhamento a partir do status atual.
+   */
+  private buildTrackingTimeline(currentStatus: OrderStatus): TrackingStep[] {
+    const flow: Array<{ status: OrderStatus; label: string }> = [
+      { status: OrderStatus.NEW, label: 'Pedido recebido' },
+      { status: OrderStatus.CONFIRMED, label: 'Pedido confirmado' },
+      { status: OrderStatus.IN_PREPARATION, label: 'Em preparo na cozinha' },
+      { status: OrderStatus.READY, label: 'Pedido pronto' },
+      { status: OrderStatus.OUT_FOR_DELIVERY, label: 'Saiu para entrega' },
+      { status: OrderStatus.DELIVERED, label: 'Entregue' },
+    ];
+
+    if (currentStatus === OrderStatus.CANCELED) {
+      return [
+        { status: OrderStatus.NEW, label: 'Pedido recebido', done: true },
+        { status: OrderStatus.CANCELED, label: 'Pedido cancelado', done: true },
+      ];
+    }
+
+    const currentIndex = flow.findIndex((step) => step.status === currentStatus);
+    return flow.map((step, index) => ({
+      ...step,
+      done: currentIndex >= 0 ? index <= currentIndex : false,
+    }));
   }
 }

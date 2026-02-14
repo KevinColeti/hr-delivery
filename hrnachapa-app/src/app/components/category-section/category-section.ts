@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ProductCardComponent, Product } from '../product-card/product-card';
 
@@ -11,4 +11,12 @@ import { ProductCardComponent, Product } from '../product-card/product-card';
 export class CategorySectionComponent {
   @Input() title: string = '';
   @Input() products: Product[] = [];
+  @Output() addProduct = new EventEmitter<Product>();
+
+  /**
+   * Repassa evento de adicionar para evitar acoplamento com estado global.
+   */
+  onAddProduct(product: Product) {
+    this.addProduct.emit(product);
+  }
 }

@@ -13,6 +13,7 @@ import { ProductIngredient } from '../entities/product-ingredient.entity';
 import { Product } from '../entities/product.entity';
 import { StockMovement } from '../entities/stock-movement.entity';
 import { User } from '../entities/user.entity';
+import { WhatsAppNotificationLog } from '../entities/whatsapp-notification-log.entity';
 import { getEnvValue } from './env';
 
 export const entities = [
@@ -30,6 +31,7 @@ export const entities = [
   Order,
   OrderItem,
   OrderStatusHistory,
+  WhatsAppNotificationLog,
 ];
 
 export function getDatabaseConfig(): TypeOrmModuleOptions {

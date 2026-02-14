@@ -85,18 +85,18 @@
 - [ ] (`todo`) [P0] Definir provedor de envio (API/servico)
 - [x] (`done`) [P0] Implementar mensagens de confirmacao e status do pedido
 - [ ] (`todo`) [P1] Implementar templates configuraveis
-- [ ] (`todo`) [P1] Logs de envio e retry em falha
+- [x] (`done`) [P1] Logs de envio e retry em falha
 
 ## E7 - Frontend Site (Cliente)
 - Status: `in-progress`
 - [x] (`done`) [P1] Base visual publica com categorias/cards (mock)
 - [ ] (`todo`) [P0] Cardapio dinamico consumindo API
 - [ ] (`todo`) [P0] Detalhe de produto com extras e observacoes
-- [ ] (`todo`) [P0] Carrinho (edicao de itens, totais e descontos)
-- [ ] (`todo`) [P0] Checkout (cliente, endereco, pagamento, cupom)
-- [ ] (`todo`) [P0] Criacao de pedido e retorno com numero de acompanhamento
-- [ ] (`todo`) [P0] Tela de acompanhamento de status do pedido
-- [ ] (`todo`) [P1] Botao/fluxo de contato via WhatsApp
+- [x] (`done`) [P0] Carrinho (edicao de itens, totais e descontos)
+- [x] (`done`) [P0] Checkout (cliente, endereco, pagamento, cupom)
+- [x] (`done`) [P0] Criacao de pedido e retorno com numero de acompanhamento
+- [x] (`done`) [P0] Tela de acompanhamento de status do pedido
+- [x] (`done`) [P1] Botao/fluxo de contato via WhatsApp
 
 ## E8 - Frontend Admin
 - Status: `in-progress`
@@ -173,11 +173,11 @@ Saida da semana:
 - Estoque passa a determinar disponibilidade
 
 ### Semana 3 - Pedido fim a fim (site -> admin)
-- [ ] (`todo`) Dia 1: carrinho no site (estado local)
-- [ ] (`todo`) Dia 2: checkout com cliente/endereco/pagamento
+- [x] (`done`) Dia 1: carrinho no site (estado local)
+- [x] (`done`) Dia 2: checkout com cliente/endereco/pagamento
 - [x] (`done`) Dia 3: endpoint de criacao de pedido
 - [x] (`done`) Dia 4: lista de pedidos no admin
-- [ ] (`todo`) Dia 5: fluxo de status basico (`novo` -> `confirmado` -> `em preparo` -> `pronto`)
+- [x] (`done`) Dia 5: fluxo de status basico (`novo` -> `confirmado` -> `em preparo` -> `pronto`)
 
 Saida da semana:
 - Pedido real criado no site e visivel no admin
@@ -187,7 +187,7 @@ Saida da semana:
 - [x] (`done`) Dia 2: acao `marcar pronto`
 - [x] (`done`) Dia 3: atualizacao em tempo real de pedidos/cozinha
 - [x] (`done`) Dia 4: baixa automatica de estoque ao confirmar pedido
-- [ ] (`todo`) Dia 5: ajustes de erros e validacoes de transicao de status
+- [x] (`done`) Dia 5: ajustes de erros e validacoes de transicao de status
 
 Saida da semana:
 - Fluxo operacional principal funciona para cozinha
@@ -197,7 +197,7 @@ Saida da semana:
 - [x] (`done`) Dia 2: regra de primeiro pedido
 - [x] (`done`) Dia 3: combos automaticos (versao simples)
 - [x] (`done`) Dia 4: integracao WhatsApp (confirmacao + atualizacao de status)
-- [ ] (`todo`) Dia 5: logs de envio e tratamento de falhas simples
+- [x] (`done`) Dia 5: logs de envio e tratamento de falhas simples
 
 Saida da semana:
 - Pedido com desconto validado e comunicacao basica via WhatsApp

@@ -13,13 +13,14 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { Observable } from 'rxjs';
+import { Public } from '../auth/public.decorator';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../entities/user.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ListKitchenBoardQueryDto } from './dto/list-kitchen-board-query.dto';
 import { OrdersRealtimeService } from './orders-realtime.service';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
-import { OrdersService } from './orders.service';
+import { OrdersService, PublicOrderTrackingResponse } from './orders.service';
 
 @Controller('orders')
 /**
@@ -36,13 +37,14 @@ export class OrdersController {
    */
   private getAuthenticatedUser(req: Request) {
     const request = req as Request & {
-      user?: { id?: number; name?: string; email?: string };
+      user?: { id?: number; name?: string; email?: string; role?: UserRole };
     };
 
     return {
       id: request.user?.id ?? null,
       name: request.user?.name ?? null,
       email: request.user?.email ?? null,
+      role: request.user?.role ?? null,
     };
   }
 
@@ -92,6 +94,15 @@ export class OrdersController {
   }
 
   /**
+   * Retorna acompanhamento publico de pedido por id.
+   */
+  @Get(':id/tracking')
+  @Public()
+  findTracking(@Param('id', ParseIntPipe) id: number): Promise<PublicOrderTrackingResponse> {
+    return this.ordersService.findPublicTracking(id);
+  }
+
+  /**
    * Retorna historico de mudancas de status de um pedido.
    */
   @Get(':id/status-history')
@@ -101,10 +112,10 @@ export class OrdersController {
   }
 
   /**
-   * Cria pedido (admin no estado atual do backend).
+   * Cria pedido (site cliente/publico no estado atual).
    */
   @Post()
-  @Roles(UserRole.ADMIN)
+  @Public()
   create(@Body() dto: CreateOrderDto) {
     return this.ordersService.create(dto);
   }

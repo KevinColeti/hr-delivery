@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { StructuredLoggerService } from '../common/logging/structured-logger.service';
 import { Order, OrderStatus } from '../entities/order.entity';
+import { WhatsAppNotificationLog } from '../entities/whatsapp-notification-log.entity';
 
 @Injectable()
 /**
@@ -15,6 +18,8 @@ export class WhatsAppService {
   constructor(
     private readonly configService: ConfigService,
     private readonly logger: StructuredLoggerService,
+    @InjectRepository(WhatsAppNotificationLog)
+    private readonly whatsappNotificationLogsRepository: Repository<WhatsAppNotificationLog>,
   ) {}
 
   /**
@@ -64,54 +69,112 @@ export class WhatsAppService {
 
     const token = this.configService.get<string>('WHATSAPP_AUTH_TOKEN', '');
     const timeoutMs = Number(this.configService.get<string>('WHATSAPP_TIMEOUT_MS', '5000'));
+    const maxAttempts = Math.max(
+      1,
+      Number(this.configService.get<string>('WHATSAPP_MAX_ATTEMPTS', '2')),
+    );
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-    try {
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          ...(token ? { authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          channel: 'whatsapp',
-          to: order.client.phone,
-          message,
-          eventType,
-          order: {
-            id: order.id,
-            status: order.status,
-            total: order.total,
+      try {
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            ...(token ? { authorization: `Bearer ${token}` } : {}),
           },
-        }),
-        signal: controller.signal,
-      });
+          body: JSON.stringify({
+            channel: 'whatsapp',
+            to: order.client.phone,
+            message,
+            eventType,
+            order: {
+              id: order.id,
+              status: order.status,
+              total: order.total,
+            },
+          }),
+          signal: controller.signal,
+        });
 
-      if (!response.ok) {
+        if (!response.ok) {
+          await this.recordDeliveryAttempt({
+            orderId: order.id,
+            eventType,
+            toPhone: order.client.phone,
+            message,
+            attempt,
+            success: false,
+            providerStatusCode: response.status,
+            errorMessage: `${response.status} ${response.statusText}`,
+          });
+
+          const shouldRetry = attempt < maxAttempts;
+          this.logger.error('whatsapp.notification.failed', {
+            orderId: order.id,
+            eventType,
+            attempt,
+            maxAttempts,
+            statusCode: response.status,
+            statusText: response.statusText,
+            retryScheduled: shouldRetry,
+          });
+
+          if (!shouldRetry) {
+            return;
+          }
+          continue;
+        }
+
+        await this.recordDeliveryAttempt({
+          orderId: order.id,
+          eventType,
+          toPhone: order.client.phone,
+          message,
+          attempt,
+          success: true,
+          providerStatusCode: response.status,
+          errorMessage: null,
+        });
+
+        this.logger.info('whatsapp.notification.sent', {
+          orderId: order.id,
+          eventType,
+          attempt,
+          providerStatusCode: response.status,
+        });
+        return;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        await this.recordDeliveryAttempt({
+          orderId: order.id,
+          eventType,
+          toPhone: order.client.phone,
+          message,
+          attempt,
+          success: false,
+          providerStatusCode: null,
+          errorMessage,
+        });
+
+        const shouldRetry = attempt < maxAttempts;
         this.logger.error('whatsapp.notification.failed', {
           orderId: order.id,
           eventType,
-          statusCode: response.status,
-          statusText: response.statusText,
+          attempt,
+          maxAttempts,
+          errorMessage,
+          retryScheduled: shouldRetry,
         });
-        return;
-      }
 
-      this.logger.info('whatsapp.notification.sent', {
-        orderId: order.id,
-        eventType,
-        providerStatusCode: response.status,
-      });
-    } catch (error) {
-      this.logger.error('whatsapp.notification.failed', {
-        orderId: order.id,
-        eventType,
-        errorMessage: error instanceof Error ? error.message : String(error),
-      });
-    } finally {
-      clearTimeout(timeout);
+        if (!shouldRetry) {
+          return;
+        }
+      } finally {
+        clearTimeout(timeout);
+      }
     }
   }
 
@@ -130,5 +193,33 @@ export class WhatsAppService {
     };
 
     return labels[status];
+  }
+
+  /**
+   * Persiste trilha de envio para auditoria operacional.
+   */
+  private async recordDeliveryAttempt(params: {
+    orderId: number | null;
+    eventType: 'order_created' | 'order_status_changed';
+    toPhone: string | null;
+    message: string;
+    attempt: number;
+    success: boolean;
+    providerStatusCode: number | null;
+    errorMessage: string | null;
+  }) {
+    const log = this.whatsappNotificationLogsRepository.create({
+      orderId: params.orderId,
+      channel: 'whatsapp',
+      eventType: params.eventType,
+      toPhone: params.toPhone,
+      message: params.message,
+      attempt: params.attempt,
+      success: params.success,
+      providerStatusCode: params.providerStatusCode,
+      errorMessage: params.errorMessage,
+    });
+
+    await this.whatsappNotificationLogsRepository.save(log);
   }
 }

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface Product {
@@ -18,4 +18,12 @@ export interface Product {
 })
 export class ProductCardComponent {
   @Input() product!: Product;
+  @Output() add = new EventEmitter<Product>();
+
+  /**
+   * Dispara evento de adicao para componente pai.
+   */
+  onAdd() {
+    this.add.emit(this.product);
+  }
 }

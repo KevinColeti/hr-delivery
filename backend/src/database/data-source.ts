@@ -13,6 +13,7 @@ import { ProductIngredient } from '../entities/product-ingredient.entity';
 import { Product } from '../entities/product.entity';
 import { StockMovement } from '../entities/stock-movement.entity';
 import { User } from '../entities/user.entity';
+import { WhatsAppNotificationLog } from '../entities/whatsapp-notification-log.entity';
 import { getEnvValue } from './env';
 
 const dataSource = new DataSource({
@@ -37,6 +38,7 @@ const dataSource = new DataSource({
     Order,
     OrderItem,
     OrderStatusHistory,
+    WhatsAppNotificationLog,
   ],
   migrations: ['src/database/migrations/*.ts'],
   synchronize: false,
