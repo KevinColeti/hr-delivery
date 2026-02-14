@@ -1,5 +1,6 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Category } from './category.entity';
+import { ProductExtra } from './product-extra.entity';
 import { ProductIngredient } from './product-ingredient.entity';
 
 @Entity({ name: 'products' })
@@ -31,6 +32,9 @@ export class Product {
 
   @OneToMany(() => ProductIngredient, (productIngredient) => productIngredient.product)
   productIngredients: ProductIngredient[];
+
+  @OneToMany(() => ProductExtra, (productExtra) => productExtra.product)
+  extras: ProductExtra[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

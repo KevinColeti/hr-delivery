@@ -1,19 +1,19 @@
-<header class="bg-white shadow-md sticky top-0 z-50">
+<header class="sticky top-0 z-50 border-b border-[var(--hc-border)] bg-[color:var(--hc-surface)]/95 backdrop-blur-sm">
   <div class="container mx-auto px-4">
-    <div class="flex items-center justify-between h-20">
-      <div class="flex items-center gap-3 justify-center md:justify-start w-full md:w-auto">
+    <div class="flex items-center justify-between py-3">
+      <div class="flex items-center gap-3">
         <img
           [src]="logoUrl"
           [alt]="storeName + ' logo'"
-          class="w-12 h-12 md:w-14 md:h-14 rounded-full object-cover border-2 border-gray-200 shadow-sm">
-        <h1 class="text-xl md:text-3xl font-bold bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
+          class="h-12 w-12 rounded-full object-cover ring-2 ring-[color:var(--hc-gold)]/35 md:h-14 md:w-14">
+        <h1 class="text-xl font-bold text-[color:var(--hc-ink)] md:text-3xl">
           {{ storeName }}
         </h1>
       </div>
 
       <button
         (click)="toggleMenu()"
-        class="md:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
+        class="rounded-md p-2 text-[color:var(--hc-muted)] hover:bg-[color:var(--hc-paper)] md:hidden"
         aria-label="Toggle menu">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path *ngIf="!isMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
@@ -21,20 +21,19 @@
         </svg>
       </button>
 
-      <nav class="hidden md:flex space-x-8">
-        <a href="#" class="text-gray-700 hover:text-orange-600 font-medium transition-colors">Produtos</a>
-        <a href="#" class="text-gray-700 hover:text-orange-600 font-medium transition-colors">Categorias</a>
-        <a href="#" class="text-gray-700 hover:text-orange-600 font-medium relative transition-colors">
-          Carrinho
-          <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+      <nav class="hidden items-center gap-6 md:flex">
+        <a href="#cardapio" class="text-sm font-semibold uppercase tracking-[0.12em] text-[color:var(--hc-muted)] hover:text-[color:var(--hc-accent)]">Cardápio</a>
+        <a href="#checkout" class="text-sm font-semibold uppercase tracking-[0.12em] text-[color:var(--hc-muted)] hover:text-[color:var(--hc-accent)]">Checkout</a>
+        <a href="#acompanhar" class="rounded-full bg-[color:var(--hc-accent)] px-4 py-2 text-sm font-semibold text-amber-50 transition hover:bg-[color:var(--hc-accent-dark)]">
+          Acompanhar pedido
         </a>
       </nav>
     </div>
 
-    <nav *ngIf="isMenuOpen" class="md:hidden pb-4 space-y-2">
-      <a href="#" class="block py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded px-2 transition-colors">Produtos</a>
-      <a href="#" class="block py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded px-2 transition-colors">Categorias</a>
-      <a href="#" class="block py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded px-2 transition-colors">Carrinho (0)</a>
+    <nav *ngIf="isMenuOpen" class="space-y-2 pb-4 md:hidden">
+      <a href="#cardapio" class="block rounded-md px-3 py-2 text-sm font-semibold text-[color:var(--hc-muted)] hover:bg-[color:var(--hc-paper)]">Cardápio</a>
+      <a href="#checkout" class="block rounded-md px-3 py-2 text-sm font-semibold text-[color:var(--hc-muted)] hover:bg-[color:var(--hc-paper)]">Checkout</a>
+      <a href="#acompanhar" class="block rounded-md bg-[color:var(--hc-accent)] px-3 py-2 text-sm font-semibold text-amber-50">Acompanhar pedido</a>
     </nav>
   </div>
 </header>

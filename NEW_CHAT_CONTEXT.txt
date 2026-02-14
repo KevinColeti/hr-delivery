@@ -1,0 +1,190 @@
+ARQUIVOS-BASE PARA RETOMAR NO NOVO CHAT
+1. README.md
+2. ROADMAP.md
+3. AI_CONTEXT.md
+4. NEW_CHAT_CONTEXT.txt
+
+Instrucao para a IA:
+"Use estes arquivos como fonte principal de contexto e priorize o que esta em ROADMAP.md e AI_CONTEXT.md para os proximos passos."
+
+============================================================
+Resumo Tecnico Completo (cole no novo chat)
+
+1) Contexto e direcao do projeto
+- Projeto: HR Na Chapa (hamburgueria).
+- Objetivo Fase 1: site de delivery + painel admin + estoque por insumos + pedidos + promocoes + WhatsApp.
+- Direcao de design escolhida para o site: rustico artesanal, tom premium, mobile-first.
+- Documento de bussola criado: AI_CONTEXT.md (stack, estrutura, filosofia e checklist de retomada).
+
+2) Stack e arquitetura
+- Frontend: Angular 21 standalone + Tailwind v3.
+- Backend: NestJS 11 + TypeORM + PostgreSQL 16 + JWT/roles.
+- Infra: docker-compose.yml com postgres + frontend.
+- Banco controlado por migration (backend/src/database/migrations/*).
+- Backend modular por dominio (auth, categories, ingredients, products, product-ingredients, product-extras, orders).
+
+3) Estado atual do backend (implementado)
+
+3.1 Auth e seguranca
+- JWT + roles (admin, kitchen) implementado.
+- Guards globais no AppModule.
+- Bootstrap de admin default por env (ADMIN_EMAIL, ADMIN_PASSWORD).
+- Arquivos principais:
+  - backend/src/auth/auth.module.ts
+  - backend/src/auth/auth.service.ts
+  - backend/src/auth/auth.controller.ts
+  - backend/src/auth/jwt.strategy.ts
+  - backend/src/auth/jwt-auth.guard.ts
+  - backend/src/auth/roles.guard.ts
+  - backend/src/auth/public.decorator.ts
+  - backend/src/auth/roles.decorator.ts
+  - backend/src/users/users.service.ts
+- Rotas:
+  - POST /auth/login
+  - GET /auth/me
+  - GET /health (public)
+  - GET /admin/ping (admin)
+
+3.2 Catalogo e estoque base
+- Categorias: CRUD completo.
+- Insumos: CRUD completo.
+- Produtos: CRUD completo.
+- Receita de produto (insumos obrigatorios): CRUD completo em rota aninhada.
+- Extras de produto (com possivel consumo de insumo): CRUD completo em rota aninhada.
+- Disponibilidade automatica de produto por estoque da receita (para 1 unidade) implementada.
+- Arquivos principais:
+  - backend/src/categories/*
+  - backend/src/ingredients/*
+  - backend/src/products/*
+  - backend/src/product-ingredients/*
+  - backend/src/product-extras/*
+  - Entidades:
+    - backend/src/entities/category.entity.ts
+    - backend/src/entities/ingredient.entity.ts
+    - backend/src/entities/product.entity.ts
+    - backend/src/entities/product-ingredient.entity.ts
+    - backend/src/entities/product-extra.entity.ts
+- Rotas principais:
+  - GET/POST/PATCH/DELETE /categories
+  - GET/POST/PATCH/DELETE /ingredients
+  - GET/POST/PATCH/DELETE /products
+  - GET /products/:id/availability
+  - GET/POST/PATCH/DELETE /products/:productId/ingredients
+  - GET/POST/PATCH/DELETE /products/:productId/extras
+
+3.3 Pedidos e baixa de estoque
+- Pedidos implementados com itens, status e calculo de totais.
+- Transicao de status validada por maquina de estados.
+- Ao confirmar (status=confirmed), baixa automatica de estoque por receita com transacao (all-or-nothing).
+- Arquivos principais:
+  - backend/src/orders/*
+  - Entidades:
+    - backend/src/entities/order.entity.ts
+    - backend/src/entities/order-item.entity.ts
+- Rotas:
+  - POST /orders
+  - GET /orders
+  - GET /orders/:id
+  - PATCH /orders/:id/status
+- Status suportados:
+  - new, confirmed, in_preparation, ready, out_for_delivery, delivered, canceled.
+
+4) Migracoes ja geradas/aplicadas
+- 1771008934721-InitialSchema.ts (base inicial)
+- 1771031136829-OrdersSchema.ts (orders + order_items)
+- 1771033224037-ProductExtrasSchema.ts (product_extras)
+- Configuracao TypeORM:
+  - backend/src/database/data-source.ts
+  - backend/src/database/database.config.ts
+- Scripts em backend/package.json:
+  - migration:generate, migration:run, migration:revert.
+
+5) Estado atual do frontend (visual/prototipo)
+- Foi feito prototipo visual para apresentacao ao cliente, sem integracao backend:
+  - hero + secoes de cardapio
+  - mock de carrinho
+  - mock de checkout
+  - mock de timeline de acompanhamento
+- Marca ajustada para HR Na Chapa, usando logo local /logo.jpg.
+- Arquivos principais alterados:
+  - hrnachapa-app/src/styles.css (tema global artesanal premium)
+  - hrnachapa-app/src/app/components/header/header.ts
+  - hrnachapa-app/src/app/components/header/header.html
+  - hrnachapa-app/src/app/components/home/home.ts
+  - hrnachapa-app/src/app/components/home/home.html
+  - hrnachapa-app/src/app/components/home/home.css
+  - hrnachapa-app/src/app/components/category-section/category-section.html
+  - hrnachapa-app/src/app/components/product-card/product-card.html
+  - hrnachapa-app/src/app/components/footer/footer.ts
+  - hrnachapa-app/src/app/components/footer/footer.html
+  - hrnachapa-app/public/logo.jpg
+
+6) Insomnia
+- Padrao preferido pelo usuario: colecao nativa Insomnia.
+- Arquivo criado: backend/docs/insomnia-backend.yaml.
+- Arquivo antigo OpenAPI ainda existe por decisao do usuario (nao apagar).
+
+7) Documentacao e contexto
+- README.md atualizado para visao Fase 1 (feito antes).
+- ROADMAP.md atualizado com progresso.
+- AI_CONTEXT.md criado e atualizado com:
+  - stack
+  - estrutura de pastas
+  - filosofia design/implementacao
+  - checklist "como retomar sessao".
+
+8) Roadmap: posicao atual
+- Semana 1: concluida.
+- Semana 2: concluida (incluindo Dia 5 extras + disponibilidade).
+- Adiantamentos ja feitos:
+  - Semana 3 Dia 3 (endpoint criacao de pedido) concluido.
+  - Semana 3 Dia 4 (lista de pedidos no admin) concluido.
+  - Semana 4 Dia 4 (baixa automatica ao confirmar) concluido.
+- Status geral:
+  - E1: in-progress (falta realtime/logs estruturados).
+  - E2: in-progress com principais P0 concluidos.
+  - E3: in-progress (faltam auditoria, tela cozinha, realtime).
+- Proximo alvo natural: historico de movimentacao de estoque + alertas de minimo + tela cozinha/realtime.
+
+9) Decisao de engenharia recente importante
+- Novo requisito do usuario: toda funcao/componente novo deve ter docstring detalhada; logica complexa deve ter comentario de porque.
+- Aplicado retroativamente nos modulos backend recem-criados:
+  - controllers, services, modules, guards, decorators e bootstrap (main.ts).
+- Padrao ja esta em uso.
+
+10) Estado de Git (importante)
+- Ha muitas alteracoes locais nao commitadas (backend + frontend + docs).
+- Em git status, aparecem arquivos modificados e muitos novos em backend/src/... e backend/docs/.
+- Tambem ha alteracoes frontend visuais em massa.
+- Recomenda-se separar commits por tema:
+  1. docs/context (AI_CONTEXT.md, ROADMAP.md etc.)
+  2. backend/core (auth + catalogo + pedidos + migrations)
+  3. frontend/prototipo-visual
+
+11) Comandos para retomada rapida
+- Banco:
+  - docker compose up -d postgres
+- Backend:
+  - cd backend
+  - npm install
+  - npm run migration:run
+  - npm run start:dev
+- Frontend:
+  - cd hrnachapa-app
+  - npm install
+  - npm start
+- Endpoints basicos:
+  - GET http://localhost:3000/health
+  - POST http://localhost:3000/auth/login
+
+12) Pendencias tecnicas imediatas (recomendadas)
+1. Implementar stock_movements (entrada/saida/ajuste + log de baixa por pedido confirmado).
+2. Criar alerta de estoque minimo.
+3. Completar auditoria de mudanca de status de pedido (quem/quando).
+4. Implementar tela cozinha no backend/frontend admin.
+5. Implementar atualizacao em tempo real (pedidos/cozinha).
+6. So depois avancar para promocoes e integracao WhatsApp operacional.
+
+Instrucao sugerida para proximo chat:
+"Continue a partir do item 1 das pendencias tecnicas imediatas, mantendo docstrings e comentarios de porque."
+

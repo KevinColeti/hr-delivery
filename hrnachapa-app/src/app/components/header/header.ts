@@ -9,8 +9,8 @@ import { CommonModule } from '@angular/common';
 })
 export class HeaderComponent {
   isMenuOpen = false;
-  storeName = 'HRNachapa';
-  logoUrl = 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=200&h=200&fit=crop';
+  storeName = 'HR Na Chapa';
+  logoUrl = '/logo.jpg';
 
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;

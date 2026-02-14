@@ -10,7 +10,7 @@
 - [x] (`done`) [P1] Layout inicial de `/admin` com dashboard de exemplo
 - [x] (`done`) [P0] Docker compose com frontend + PostgreSQL
 - [x] (`done`) [P0] Backend/API real inicial criada (NestJS + TypeORM)
-- [ ] (`todo`) [P0] Fluxo de pedido real ainda nao existe
+- [x] (`done`) [P0] Fluxo inicial de pedido no backend criado (orders + status + baixa de estoque)
 
 ## Visao geral da Fase 1
 - Operacao inicial: `delivery`
@@ -42,23 +42,23 @@
 - [ ] (`todo`) [P1] Configurar logs estruturados e rastreabilidade
 
 ## E2 - Cardapio e Estoque (Insumos)
-- Status: `todo`
-- [ ] (`todo`) [P0] CRUD de categorias
-- [ ] (`todo`) [P0] CRUD de produtos finais
-- [ ] (`todo`) [P0] CRUD de insumos
-- [ ] (`todo`) [P0] Receita por produto (insumos obrigatorios + quantidade/unidade)
-- [ ] (`todo`) [P0] Extras com impacto em estoque
-- [ ] (`todo`) [P0] Disponibilidade automatica por estoque
+- Status: `in-progress`
+- [x] (`done`) [P0] CRUD de categorias
+- [x] (`done`) [P0] CRUD de produtos finais
+- [x] (`done`) [P0] CRUD de insumos
+- [x] (`done`) [P0] Receita por produto (insumos obrigatorios + quantidade/unidade)
+- [x] (`done`) [P0] Extras com impacto em estoque
+- [x] (`done`) [P0] Disponibilidade automatica por estoque
 - [ ] (`todo`) [P1] Historico de movimentacao de estoque
 - [ ] (`todo`) [P1] Alertas de estoque minimo
 
 ## E3 - Pedidos e Operacao
-- Status: `todo`
-- [ ] (`todo`) [P0] Endpoint de criacao de pedido (site -> backend)
-- [ ] (`todo`) [P0] Fluxo de status: `novo`, `confirmado`, `em preparo`, `pronto`, `saiu para entrega`, `entregue`, `cancelado`
+- Status: `in-progress`
+- [x] (`done`) [P0] Endpoint de criacao de pedido (site -> backend)
+- [x] (`done`) [P0] Fluxo de status: `novo`, `confirmado`, `em preparo`, `pronto`, `saiu para entrega`, `entregue`, `cancelado`
 - [ ] (`todo`) [P0] Auditoria por mudanca de status (quem/quando)
-- [ ] (`todo`) [P0] Baixa automatica de estoque ao confirmar pedido
-- [ ] (`todo`) [P0] Lista admin de pedidos com filtros
+- [x] (`done`) [P0] Baixa automatica de estoque ao confirmar pedido
+- [x] (`done`) [P0] Lista admin de pedidos com filtros
 - [ ] (`todo`) [P0] Tela cozinha (modo monitor) com acao `marcar pronto`
 - [ ] (`todo`) [P0] Atualizacao em tempo real de pedidos/cozinha
 
@@ -162,11 +162,11 @@ Saida da semana:
 - Banco com estrutura inicial pronta
 
 ### Semana 2 - Cardapio + estoque por insumos
-- [ ] (`todo`) Dia 1: CRUD de categorias
-- [ ] (`todo`) Dia 2: CRUD de insumos
-- [ ] (`todo`) Dia 3: CRUD de produtos
-- [ ] (`todo`) Dia 4: receita do produto (insumos + quantidade + unidade)
-- [ ] (`todo`) Dia 5: extras e regra de disponibilidade por estoque
+- [x] (`done`) Dia 1: CRUD de categorias
+- [x] (`done`) Dia 2: CRUD de insumos
+- [x] (`done`) Dia 3: CRUD de produtos
+- [x] (`done`) Dia 4: receita do produto (insumos + quantidade + unidade)
+- [x] (`done`) Dia 5: extras e regra de disponibilidade por estoque
 
 Saida da semana:
 - Produto final pode ser criado com receita e extras
@@ -175,8 +175,8 @@ Saida da semana:
 ### Semana 3 - Pedido fim a fim (site -> admin)
 - [ ] (`todo`) Dia 1: carrinho no site (estado local)
 - [ ] (`todo`) Dia 2: checkout com cliente/endereco/pagamento
-- [ ] (`todo`) Dia 3: endpoint de criacao de pedido
-- [ ] (`todo`) Dia 4: lista de pedidos no admin
+- [x] (`done`) Dia 3: endpoint de criacao de pedido
+- [x] (`done`) Dia 4: lista de pedidos no admin
 - [ ] (`todo`) Dia 5: fluxo de status basico (`novo` -> `confirmado` -> `em preparo` -> `pronto`)
 
 Saida da semana:
@@ -186,7 +186,7 @@ Saida da semana:
 - [ ] (`todo`) Dia 1: tela cozinha simplificada (apenas o essencial)
 - [ ] (`todo`) Dia 2: acao `marcar pronto`
 - [ ] (`todo`) Dia 3: atualizacao em tempo real de pedidos/cozinha
-- [ ] (`todo`) Dia 4: baixa automatica de estoque ao confirmar pedido
+- [x] (`done`) Dia 4: baixa automatica de estoque ao confirmar pedido
 - [ ] (`todo`) Dia 5: ajustes de erros e validacoes de transicao de status
 
 Saida da semana:

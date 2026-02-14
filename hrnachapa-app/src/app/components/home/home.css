@@ -1,1 +1,25 @@
-/* Home Component Styles */
+.container section,
+.container article {
+  animation: fadeUp 0.55s ease both;
+}
+
+.container section:nth-of-type(2),
+.container article:nth-of-type(2) {
+  animation-delay: 0.12s;
+}
+
+.container section:nth-of-type(3),
+.container article:nth-of-type(3) {
+  animation-delay: 0.2s;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,576 @@
+type: collection.insomnia.rest/5.0
+name: HRNachapa Backend
+meta:
+  id: wrk_hrnachapa_backend_001
+  created: 1771000000000
+  modified: 1771000000000
+  description: Colecao de testes da API backend HRNachapa
+collection:
+  - name: Base
+    meta:
+      id: fld_base_hrnachapa_001
+      created: 1771000000001
+      modified: 1771000000001
+      sortKey: -1771000000001
+      description: Endpoints publicos de base
+    children:
+      - url: "{{ _.base_url }}/health"
+        name: Health
+        meta:
+          id: req_health_hrnachapa_001
+          created: 1771000000002
+          modified: 1771000000002
+          isPrivate: false
+          description: Verifica se a API esta no ar
+          sortKey: -1771000000002
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+
+  - name: Auth
+    meta:
+      id: fld_auth_hrnachapa_001
+      created: 1771000000010
+      modified: 1771000000010
+      sortKey: -1771000000010
+      description: Login e usuario autenticado
+    children:
+      - url: "{{ _.base_url }}/auth/login"
+        name: Login
+        meta:
+          id: req_auth_login_hrnachapa_001
+          created: 1771000000011
+          modified: 1771000000011
+          isPrivate: false
+          description: Faz login e retorna JWT
+          sortKey: -1771000000011
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "email": "{{ _.admin_email }}",
+              "password": "{{ _.admin_password }}"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/auth/me"
+        name: Me
+        meta:
+          id: req_auth_me_hrnachapa_001
+          created: 1771000000012
+          modified: 1771000000012
+          isPrivate: false
+          description: Retorna usuario autenticado
+          sortKey: -1771000000012
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+
+  - name: Admin
+    meta:
+      id: fld_admin_hrnachapa_001
+      created: 1771000000020
+      modified: 1771000000020
+      sortKey: -1771000000020
+      description: Rotas protegidas de admin
+    children:
+      - url: "{{ _.base_url }}/admin/ping"
+        name: Admin Ping
+        meta:
+          id: req_admin_ping_hrnachapa_001
+          created: 1771000000021
+          modified: 1771000000021
+          isPrivate: false
+          description: Testa acesso admin
+          sortKey: -1771000000021
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+
+  - name: Categories
+    meta:
+      id: fld_categories_hrnachapa_001
+      created: 1771000000030
+      modified: 1771000000030
+      sortKey: -1771000000030
+      description: CRUD de categorias
+    children:
+      - url: "{{ _.base_url }}/categories"
+        name: List Categories
+        meta:
+          id: req_categories_list_hrnachapa_001
+          created: 1771000000031
+          modified: 1771000000031
+          isPrivate: false
+          description: Lista categorias (admin e kitchen)
+          sortKey: -1771000000031
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/categories/1"
+        name: Get Category By Id
+        meta:
+          id: req_categories_get_hrnachapa_001
+          created: 1771000000032
+          modified: 1771000000032
+          isPrivate: false
+          description: Busca categoria por ID
+          sortKey: -1771000000032
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/categories"
+        name: Create Category
+        meta:
+          id: req_categories_create_hrnachapa_001
+          created: 1771000000033
+          modified: 1771000000033
+          isPrivate: false
+          description: Cria categoria (admin)
+          sortKey: -1771000000033
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "name": "Hamburgueres",
+              "slug": "hamburgueres",
+              "sortOrder": 1,
+              "isActive": true
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/categories/1"
+        name: Update Category
+        meta:
+          id: req_categories_update_hrnachapa_001
+          created: 1771000000034
+          modified: 1771000000034
+          isPrivate: false
+          description: Atualiza categoria (admin)
+          sortKey: -1771000000034
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "name": "Burgers",
+              "slug": "burgers",
+              "sortOrder": 2,
+              "isActive": true
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/categories/1"
+        name: Delete Category
+        meta:
+          id: req_categories_delete_hrnachapa_001
+          created: 1771000000035
+          modified: 1771000000035
+          isPrivate: false
+          description: Remove categoria (admin)
+          sortKey: -1771000000035
+        method: DELETE
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+
+  - name: Ingredients
+    meta:
+      id: fld_ingredients_hrnachapa_001
+      created: 1771000000040
+      modified: 1771000000040
+      sortKey: -1771000000040
+      description: CRUD de insumos
+    children:
+      - url: "{{ _.base_url }}/ingredients"
+        name: List Ingredients
+        meta:
+          id: req_ingredients_list_hrnachapa_001
+          created: 1771000000041
+          modified: 1771000000041
+          isPrivate: false
+          description: Lista insumos (admin e kitchen)
+          sortKey: -1771000000041
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/ingredients/1"
+        name: Get Ingredient By Id
+        meta:
+          id: req_ingredients_get_hrnachapa_001
+          created: 1771000000042
+          modified: 1771000000042
+          isPrivate: false
+          description: Busca insumo por ID
+          sortKey: -1771000000042
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/ingredients"
+        name: Create Ingredient
+        meta:
+          id: req_ingredients_create_hrnachapa_001
+          created: 1771000000043
+          modified: 1771000000043
+          isPrivate: false
+          description: Cria insumo (admin)
+          sortKey: -1771000000043
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "name": "Carne bovina",
+              "unit": "g",
+              "stockQuantity": 5000,
+              "minimumQuantity": 1000,
+              "isActive": true
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/ingredients/1"
+        name: Update Ingredient
+        meta:
+          id: req_ingredients_update_hrnachapa_001
+          created: 1771000000044
+          modified: 1771000000044
+          isPrivate: false
+          description: Atualiza insumo (admin)
+          sortKey: -1771000000044
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "name": "Carne bovina premium",
+              "unit": "g",
+              "stockQuantity": 4500,
+              "minimumQuantity": 900,
+              "isActive": true
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/ingredients/1"
+        name: Delete Ingredient
+        meta:
+          id: req_ingredients_delete_hrnachapa_001
+          created: 1771000000045
+          modified: 1771000000045
+          isPrivate: false
+          description: Remove insumo (admin)
+          sortKey: -1771000000045
+        method: DELETE
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+
+  - name: Products
+    meta:
+      id: fld_products_hrnachapa_001
+      created: 1771000000070
+      modified: 1771000000070
+      sortKey: -1771000000070
+      description: CRUD de produtos
+    children:
+      - url: "{{ _.base_url }}/products"
+        name: List Products
+        meta:
+          id: req_products_list_hrnachapa_001
+          created: 1771000000071
+          modified: 1771000000071
+          isPrivate: false
+          description: Lista produtos (admin e kitchen)
+          sortKey: -1771000000071
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/products/1"
+        name: Get Product By Id
+        meta:
+          id: req_products_get_hrnachapa_001
+          created: 1771000000072
+          modified: 1771000000072
+          isPrivate: false
+          description: Busca produto por ID
+          sortKey: -1771000000072
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/products"
+        name: Create Product
+        meta:
+          id: req_products_create_hrnachapa_001
+          created: 1771000000073
+          modified: 1771000000073
+          isPrivate: false
+          description: Cria produto (admin)
+          sortKey: -1771000000073
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "name": "X-Burger Classico",
+              "description": "Hamburguer artesanal com queijo",
+              "price": 25.9,
+              "imageUrl": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd",
+              "categoryId": 1,
+              "isActive": true
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/products/1"
+        name: Update Product
+        meta:
+          id: req_products_update_hrnachapa_001
+          created: 1771000000074
+          modified: 1771000000074
+          isPrivate: false
+          description: Atualiza produto (admin)
+          sortKey: -1771000000074
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "name": "X-Burger Premium",
+              "price": 29.9,
+              "isActive": true
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/products/1"
+        name: Delete Product
+        meta:
+          id: req_products_delete_hrnachapa_001
+          created: 1771000000075
+          modified: 1771000000075
+          isPrivate: false
+          description: Remove produto (admin)
+          sortKey: -1771000000075
+        method: DELETE
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_hrnachapa_backend_001
+    created: 1771000000050
+    modified: 1771000000050
+
+environments:
+  name: Base Environment
+  meta:
+    id: env_hrnachapa_backend_001
+    created: 1771000000060
+    modified: 1771000000060
+    isPrivate: false
+  data:
+    base_url: http://localhost:3000
+    token: ""
+    admin_email: admin@hrnachapa.local
+    admin_password: admin123

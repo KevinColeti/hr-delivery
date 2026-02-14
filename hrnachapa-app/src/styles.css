@@ -3,3 +3,33 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --hc-bg: #f5ede1;
+  --hc-surface: #fff8ed;
+  --hc-paper: #fdf5e8;
+  --hc-ink: #2f2218;
+  --hc-muted: #735b49;
+  --hc-accent: #b64926;
+  --hc-accent-dark: #8f3116;
+  --hc-gold: #c18a3a;
+  --hc-border: #e7d7c3;
+}
+
+html,
+body {
+  background:
+    radial-gradient(circle at 10% 10%, rgba(193, 138, 58, 0.16), transparent 42%),
+    radial-gradient(circle at 90% 20%, rgba(182, 73, 38, 0.12), transparent 45%),
+    linear-gradient(180deg, #f7efe5 0%, var(--hc-bg) 100%);
+  color: var(--hc-ink);
+  font-family: "Avenir Next", "Trebuchet MS", "Segoe UI", sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  letter-spacing: 0.01em;
+}
