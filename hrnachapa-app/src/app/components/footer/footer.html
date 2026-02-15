@@ -4,7 +4,7 @@
       <div>
         <h3 class="text-2xl font-bold text-[color:var(--hc-gold)]">{{ storeName }}</h3>
         <p class="mt-3 text-sm leading-relaxed text-amber-100/80">
-          Hamburgueria artesanal com preparo na chapa, ingredientes selecionados e entrega rapida.
+          {{ storeDescription }}
         </p>
       </div>
 
@@ -20,7 +20,7 @@
       <div>
         <h4 class="text-lg font-semibold">Atendimento</h4>
         <div class="mt-3 space-y-2 text-sm text-amber-100/85">
-          <p>Seg a Dom: 18h as 23h30</p>
+          <p>{{ operatingHoursDescription }}</p>
           <p>Delivery em ate 45 minutos</p>
           <a [href]="whatsappUrl" target="_blank" rel="noopener noreferrer" class="inline-flex rounded-full bg-[color:var(--hc-accent)] px-4 py-2 font-semibold text-amber-50 hover:bg-[color:var(--hc-accent-dark)]">
             Pedir no WhatsApp

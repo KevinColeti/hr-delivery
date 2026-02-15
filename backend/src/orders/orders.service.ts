@@ -17,6 +17,7 @@ import { OrderStatusHistory } from '../entities/order-status-history.entity';
 import { ProductExtra } from '../entities/product-extra.entity';
 import { ProductIngredient } from '../entities/product-ingredient.entity';
 import { Product } from '../entities/product.entity';
+import { StoreSettings } from '../entities/store-settings.entity';
 import { UserRole } from '../entities/user.entity';
 import { StockMovementsService } from '../stock-movements/stock-movements.service';
 import { WhatsAppService } from '../whatsapp/whatsapp.service';
@@ -60,6 +61,12 @@ interface CreateOrderWithResolvedClientInput {
   discountAmount?: number;
   couponCode?: string;
   notes?: string;
+}
+
+interface OrderOperationalSettings {
+  deliveryFeeDefault: number;
+  minimumOrderAmount: number;
+  isStoreOpen: boolean;
 }
 
 export interface TrackingStep {
@@ -472,6 +479,7 @@ export class OrdersService {
 
     const orderItemsData: OrderItem[] = [];
     let subtotal = 0;
+    const operationalSettings = await this.resolveOperationalSettingsWithManager(manager);
     const productQuantityMap = new Map<number, number>();
     const categoryQuantityMap = new Map<number, number>();
 
@@ -523,7 +531,17 @@ export class OrdersService {
       );
     }
 
-    const deliveryFee = input.deliveryFee ?? 0;
+    if (!operationalSettings.isStoreOpen) {
+      throw new BadRequestException('Loja fechada no momento para novos pedidos');
+    }
+
+    if (subtotal < operationalSettings.minimumOrderAmount) {
+      throw new BadRequestException(
+        `Pedido minimo de R$ ${operationalSettings.minimumOrderAmount.toFixed(2)} para finalizar`,
+      );
+    }
+
+    const deliveryFee = input.deliveryFee ?? operationalSettings.deliveryFeeDefault;
     const discount = await this.resolveDiscountStrategy(
       manager,
       {
@@ -615,6 +633,37 @@ export class OrdersService {
     }
 
     return orderItemExtras;
+  }
+
+  /**
+   * Resolve configuracao operacional aplicada na criacao de pedidos.
+   *
+   * Motivo:
+   * regras como taxa padrao, pedido minimo e loja aberta devem ser validadas
+   * no servidor para nao depender apenas do comportamento do frontend.
+   */
+  private async resolveOperationalSettingsWithManager(
+    manager: EntityManager,
+  ): Promise<OrderOperationalSettings> {
+    const settings = await manager.find(StoreSettings, {
+      order: { id: 'ASC' },
+      take: 1,
+    });
+    const currentSettings = settings[0] ?? null;
+
+    if (!currentSettings) {
+      return {
+        deliveryFeeDefault: 0,
+        minimumOrderAmount: 0,
+        isStoreOpen: true,
+      };
+    }
+
+    return {
+      deliveryFeeDefault: Number(currentSettings.deliveryFeeDefault),
+      minimumOrderAmount: Number(currentSettings.minimumOrderAmount),
+      isStoreOpen: currentSettings.isStoreOpen,
+    };
   }
 
   /**

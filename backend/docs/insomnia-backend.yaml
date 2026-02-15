@@ -381,6 +381,94 @@ collection:
             store: true
           rebuildPath: true
 
+  - name: Store Settings
+    meta:
+      id: fld_store_settings_hrnachapa_001
+      created: 1771052300000
+      modified: 1771052300000
+      sortKey: -1771000000026
+      description: Configuracoes operacionais da loja
+    children:
+      - url: "{{ _.base_url }}/store-settings/public"
+        name: Get Store Settings Public
+        meta:
+          id: req_store_settings_public_get_hrnachapa_001
+          created: 1771052300001
+          modified: 1771052300001
+          isPrivate: false
+          description: Retorna configuracao publica para site/checkout
+          sortKey: -1771052300001
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/store-settings"
+        name: Get Store Settings Admin
+        meta:
+          id: req_store_settings_admin_get_hrnachapa_001
+          created: 1771052300002
+          modified: 1771052300002
+          isPrivate: false
+          description: Retorna configuracao completa da loja (admin)
+          sortKey: -1771052300002
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/store-settings"
+        name: Update Store Settings Admin
+        meta:
+          id: req_store_settings_admin_patch_hrnachapa_001
+          created: 1771052300003
+          modified: 1771052300003
+          isPrivate: false
+          description: Atualiza configuracao da loja (admin)
+          sortKey: -1771052300003
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "storeName": "HR Na Chapa",
+              "storeDescription": "Hamburgueria artesanal premium.",
+              "contactPhone": "(11) 3333-4444",
+              "contactWhatsApp": "(11) 98888-7777",
+              "deliveryFeeDefault": 6,
+              "minimumOrderAmount": 25,
+              "serviceAreaDescription": "Atendemos bairros centrais e regioes proximas.",
+              "operatingHoursDescription": "Seg a Dom, 18h as 23h.",
+              "isStoreOpen": true
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+
   - name: Ingredients
     meta:
       id: fld_ingredients_hrnachapa_001

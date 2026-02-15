@@ -12,6 +12,7 @@ import { OrderStatusHistory } from '../entities/order-status-history.entity';
 import { ProductExtra } from '../entities/product-extra.entity';
 import { ProductIngredient } from '../entities/product-ingredient.entity';
 import { Product } from '../entities/product.entity';
+import { StoreSettings } from '../entities/store-settings.entity';
 import { StockMovementsModule } from '../stock-movements/stock-movements.module';
 import { WhatsAppModule } from '../whatsapp/whatsapp.module';
 import { OrdersController } from './orders.controller';
@@ -33,6 +34,7 @@ import { OrdersService } from './orders.service';
       Ingredient,
       OrderStatusHistory,
       OrderItemExtra,
+      StoreSettings,
     ]),
     StockMovementsModule,
     WhatsAppModule,

@@ -77,13 +77,13 @@
 - [x] (`done`) [P1] Registro da promocao aplicada no pedido
 
 ## E5 - Clientes e Configuracoes de Loja
-- Status: `in-progress`
+- Status: `done`
 - [x] (`done`) [P0] Cadastro/atualizacao automatica de cliente no checkout
 - [x] (`done`) [P0] Deduplicacao por telefone
 - [x] (`done`) [P1] Historico de pedidos por cliente
-- [ ] (`todo`) [P0] Configuracoes de delivery (taxa, pedido minimo, area atendida)
-- [ ] (`todo`) [P1] Configuracoes de horario e operacao
-- [ ] (`todo`) [P1] Configuracoes institucionais da loja
+- [x] (`done`) [P0] Configuracoes de delivery (taxa, pedido minimo, area atendida)
+- [x] (`done`) [P1] Configuracoes de horario e operacao
+- [x] (`done`) [P1] Configuracoes institucionais da loja
 
 ## E6 - Integracao WhatsApp
 - Status: `in-progress`
@@ -113,7 +113,7 @@
 - [ ] (`todo`) [P0] Modulo estoque (insumos + movimentacoes + alertas)
 - [ ] (`todo`) [P0] Modulo promocoes (cupons + combos)
 - [x] (`done`) [P1] Modulo clientes
-- [ ] (`todo`) [P1] Modulo configuracoes
+- [x] (`done`) [P1] Modulo configuracoes
 - [x] (`done`) [P0] Guards por perfil e protecao de rotas
 
 ## E9 - Qualidade e Go-live

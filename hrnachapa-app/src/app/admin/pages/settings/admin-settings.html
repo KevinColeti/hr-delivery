@@ -1,0 +1,152 @@
+<section class="space-y-4">
+  <header class="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">Backoffice</p>
+        <h1 class="text-2xl font-bold text-stone-900">Configuracoes da loja</h1>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="loadSettings()"
+          class="rounded-xl border border-stone-300 px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100">
+          Recarregar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  @if (errorMessage) {
+    <p class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+      {{ errorMessage }}
+    </p>
+  }
+
+  @if (successMessage) {
+    <p class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+      {{ successMessage }}
+    </p>
+  }
+
+  @if (isLoadingSettings) {
+    <p class="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-600">
+      Carregando configuracoes...
+    </p>
+  }
+
+  <form class="space-y-4" (ngSubmit)="saveSettings()">
+    <article class="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+      <h2 class="text-sm font-semibold uppercase tracking-[0.12em] text-stone-500">
+        Dados institucionais
+      </h2>
+
+      <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+        <label class="block text-sm text-stone-700">
+          Nome da loja
+          <input
+            [(ngModel)]="form.storeName"
+            name="storeName"
+            type="text"
+            class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+        </label>
+
+        <label class="block text-sm text-stone-700">
+          Telefone de contato
+          <input
+            [(ngModel)]="form.contactPhone"
+            name="contactPhone"
+            type="text"
+            class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+        </label>
+
+        <label class="block text-sm text-stone-700 md:col-span-2">
+          WhatsApp de contato
+          <input
+            [(ngModel)]="form.contactWhatsApp"
+            name="contactWhatsApp"
+            type="text"
+            class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+        </label>
+
+        <label class="block text-sm text-stone-700 md:col-span-2">
+          Descricao da loja
+          <textarea
+            [(ngModel)]="form.storeDescription"
+            name="storeDescription"
+            rows="3"
+            class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500"></textarea>
+        </label>
+      </div>
+    </article>
+
+    <article class="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+      <h2 class="text-sm font-semibold uppercase tracking-[0.12em] text-stone-500">
+        Delivery e operacao
+      </h2>
+
+      <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+        <label class="block text-sm text-stone-700">
+          Taxa de entrega padrao (R$)
+          <input
+            [(ngModel)]="form.deliveryFeeDefault"
+            name="deliveryFeeDefault"
+            type="number"
+            min="0"
+            step="0.01"
+            class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+        </label>
+
+        <label class="block text-sm text-stone-700">
+          Pedido minimo (R$)
+          <input
+            [(ngModel)]="form.minimumOrderAmount"
+            name="minimumOrderAmount"
+            type="number"
+            min="0"
+            step="0.01"
+            class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+        </label>
+
+        <label class="block text-sm text-stone-700 md:col-span-2">
+          Area atendida
+          <textarea
+            [(ngModel)]="form.serviceAreaDescription"
+            name="serviceAreaDescription"
+            rows="3"
+            class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500"></textarea>
+        </label>
+
+        <label class="block text-sm text-stone-700 md:col-span-2">
+          Horario de funcionamento
+          <textarea
+            [(ngModel)]="form.operatingHoursDescription"
+            name="operatingHoursDescription"
+            rows="3"
+            class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500"></textarea>
+        </label>
+
+        <label class="inline-flex items-center gap-2 rounded-xl border border-stone-300 px-3 py-2 text-sm text-stone-700">
+          <input [(ngModel)]="form.isStoreOpen" name="isStoreOpen" type="checkbox" />
+          Loja aberta para pedidos
+        </label>
+      </div>
+    </article>
+
+    <div class="flex flex-wrap justify-end gap-2">
+      <button
+        type="button"
+        (click)="resetFormToLastSaved()"
+        [disabled]="isSavingSettings"
+        class="rounded-xl border border-stone-300 px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-60">
+        Descartar alteracoes
+      </button>
+      <button
+        type="submit"
+        [disabled]="isSavingSettings"
+        class="rounded-xl border border-stone-900 bg-stone-900 px-4 py-2 text-sm font-semibold text-stone-100 hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-60">
+        {{ isSavingSettings ? 'Salvando...' : 'Salvar configuracoes' }}
+      </button>
+    </div>
+  </form>
+</section>

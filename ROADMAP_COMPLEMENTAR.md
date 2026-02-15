@@ -50,7 +50,7 @@
 ---
 
 ## C2 - E5 (Clientes e Configuracoes) - Subtopicos de Backoffice/Checkout
-- Status: `in-progress`
+- Status: `done`
 - Referencia principal: `E5 - Clientes e Configuracoes de Loja` no `ROADMAP.md`
 
 ### C2.1 [Subtopico de E5] Cliente automatico no checkout
@@ -63,9 +63,9 @@
 - [x] (`done`) [P1] Endpoint admin para consulta de cliente e dados consolidados.
 
 ### C2.3 [Subtopico de E5] Configuracoes operacionais de loja
-- [ ] (`todo`) [P0] Entidade/config de delivery (taxa padrao, pedido minimo, area atendida).
-- [ ] (`todo`) [P1] Entidade/config de horario operacional.
-- [ ] (`todo`) [P1] Entidade/config institucional (nome, descricao, contato, politicas).
+- [x] (`done`) [P0] Entidade/config de delivery (taxa padrao, pedido minimo, area atendida).
+- [x] (`done`) [P1] Entidade/config de horario operacional.
+- [x] (`done`) [P1] Entidade/config institucional (nome, descricao, contato, politicas).
 
 ---
 
@@ -113,7 +113,7 @@
 ### C4.5 [Subtopico de E8] Modulos promocoes, clientes e configuracoes
 - [ ] (`todo`) [P0] Tela de cupons e combos com validacoes.
 - [x] (`done`) [P1] Tela de clientes com historico de pedidos.
-- [ ] (`todo`) [P1] Tela de configuracoes de loja.
+- [x] (`done`) [P1] Tela de configuracoes de loja.
 
 ---
 

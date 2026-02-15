@@ -1,7 +1,10 @@
 <header class="sticky top-0 z-50 border-b border-[var(--hc-border)] bg-[color:var(--hc-surface)]/95 backdrop-blur-sm">
   <div class="container mx-auto px-4">
     <div class="flex items-center justify-between py-3">
-      <div class="flex items-center gap-3">
+      <a
+        routerLink="/"
+        (click)="closeMenu()"
+        class="flex items-center gap-3 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--hc-accent)]/40">
         <img
           [src]="logoUrl"
           [alt]="storeName + ' logo'"
@@ -9,7 +12,7 @@
         <h1 class="text-xl font-bold text-[color:var(--hc-ink)] md:text-3xl">
           {{ storeName }}
         </h1>
-      </div>
+      </a>
 
       <button
         (click)="toggleMenu()"

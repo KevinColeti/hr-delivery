@@ -27,12 +27,14 @@ export interface CheckoutFormState {
  * - concentrar feedback operacional do envio de pedido.
  */
 export class CheckoutStateService {
+  private deliveryFeeDefault = 6;
+
   checkout: CheckoutFormState = {
     name: '',
     whatsapp: '',
     address: '',
     couponCode: '',
-    deliveryFee: 6,
+    deliveryFee: this.deliveryFeeDefault,
     notes: '',
   };
   isSubmittingOrder = false;
@@ -53,6 +55,18 @@ export class CheckoutStateService {
   }
 
   /**
+   * Atualiza taxa de entrega padrao da loja no estado do checkout.
+   *
+   * Motivo:
+   * mantemos um valor padrao centralizado para garantir que resumos, reset do
+   * checkout e primeiro preenchimento usem a mesma referencia operacional.
+   */
+  setDeliveryFeeDefault(nextDeliveryFeeDefault: number) {
+    this.deliveryFeeDefault = nextDeliveryFeeDefault;
+    this.checkout.deliveryFee = nextDeliveryFeeDefault;
+  }
+
+  /**
    * Limpa formulario apos criacao de pedido com sucesso.
    */
   resetAfterSuccessfulCheckout() {
@@ -61,7 +75,7 @@ export class CheckoutStateService {
       whatsapp: '',
       address: '',
       couponCode: '',
-      deliveryFee: 6,
+      deliveryFee: this.deliveryFeeDefault,
       notes: '',
     };
     this.orderFeedback = null;

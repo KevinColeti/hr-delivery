@@ -21,6 +21,7 @@ import { ProductExtrasModule } from './product-extras/product-extras.module';
 import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
 import { StockMovementsModule } from './stock-movements/stock-movements.module';
+import { StoreSettingsModule } from './store-settings/store-settings.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { StockMovementsModule } from './stock-movements/stock-movements.module';
     ProductExtrasModule,
     OrdersModule,
     StockMovementsModule,
+    StoreSettingsModule,
   ],
   controllers: [AppController],
   providers: [

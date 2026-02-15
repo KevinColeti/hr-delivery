@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, effect } from '@angular/core';
 import { HeaderComponent } from '../header/header';
 import { FooterComponent } from '../footer/footer';
 import { CategorySectionComponent } from '../category-section/category-section';
@@ -18,6 +18,7 @@ import { CartService } from '../../services/cart.service';
 import { CatalogStateService } from '../../services/catalog-state.service';
 import { CheckoutStateService } from '../../services/checkout-state.service';
 import { OrdersApiService } from '../../services/orders-api.service';
+import { PublicStoreSettingsService } from '../../services/public-store-settings.service';
 import { TrackingStateService } from '../../services/tracking-state.service';
 
 type HomeViewMode = 'landing' | 'catalog' | 'cart' | 'checkout' | 'tracking' | 'order-status';
@@ -44,7 +45,7 @@ type HomeViewMode = 'landing' | 'catalog' | 'cart' | 'checkout' | 'tracking' | '
  * - orquestrar envio de pedido e redirecionamento pos-checkout.
  */
 export class HomeComponent implements OnInit {
-  private readonly storeWhatsAppPhone = '5511987654321';
+  private readonly fallbackStoreWhatsAppPhone = '5511987654321';
   private readonly defaultCancellationTrackingMessage =
     'Tivemos um problema com o seu pedido, e precisamos cancelar.';
   currentViewMode: HomeViewMode = 'landing';
@@ -57,17 +58,45 @@ export class HomeComponent implements OnInit {
     private readonly cartService: CartService,
     private readonly catalogState: CatalogStateService,
     private readonly checkoutState: CheckoutStateService,
+    private readonly publicStoreSettingsService: PublicStoreSettingsService,
     private readonly trackingState: TrackingStateService,
     private readonly ordersApiService: OrdersApiService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
-  ) {}
+  ) {
+    effect(() => {
+      const settings = this.publicStoreSettingsService.settings();
+      this.checkoutState.setDeliveryFeeDefault(this.toNumber(settings.deliveryFeeDefault));
+    });
+  }
 
   /**
    * Inicializa contexto de rota para separar fluxo publico por pagina.
    */
   ngOnInit() {
+    this.publicStoreSettingsService.ensureLoaded();
     this.bindRouteViewContext();
+  }
+
+  /**
+   * Exposicao de configuracoes publicas da loja para fluxo cliente.
+   */
+  get storeSettings() {
+    return this.publicStoreSettingsService.settings();
+  }
+
+  /**
+   * Informa se loja esta aberta para receber pedidos.
+   */
+  get isStoreOpen() {
+    return this.storeSettings.isStoreOpen;
+  }
+
+  /**
+   * Retorna valor minimo de pedido definido pela operacao.
+   */
+  get minimumOrderAmount() {
+    return this.toNumber(this.storeSettings.minimumOrderAmount);
   }
 
   /**
@@ -412,10 +441,26 @@ export class HomeComponent implements OnInit {
    * - endereco segue como campo simplificado (`addressLine`) neste estagio.
    */
   submitOrder() {
+    if (!this.isStoreOpen) {
+      this.checkoutState.setOrderFeedback({
+        type: 'error',
+        message: 'Loja fechada no momento. Tente novamente no horario de atendimento.',
+      });
+      return;
+    }
+
     if (this.cartItems().length === 0) {
       this.checkoutState.setOrderFeedback({
         type: 'error',
         message: 'Adicione itens no carrinho antes de finalizar.',
+      });
+      return;
+    }
+
+    if (this.minimumOrderAmount > 0 && this.cartSubtotal() < this.minimumOrderAmount) {
+      this.checkoutState.setOrderFeedback({
+        type: 'error',
+        message: `Pedido minimo de R$ ${this.minimumOrderAmount.toFixed(2)} para finalizar.`,
       });
       return;
     }
@@ -505,7 +550,7 @@ export class HomeComponent implements OnInit {
    */
   openWhatsAppContact() {
     const message = this.buildWhatsAppMessage();
-    const url = `https://wa.me/${this.storeWhatsAppPhone}?text=${encodeURIComponent(message)}`;
+    const url = `https://wa.me/${this.supportWhatsAppPhone}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   }
 
@@ -514,6 +559,14 @@ export class HomeComponent implements OnInit {
    */
   get canContactWhatsApp() {
     return this.trackingData !== null || this.trackingOrderId.trim().length > 0;
+  }
+
+  /**
+   * Resolve telefone de suporte para contato via WhatsApp.
+   */
+  get supportWhatsAppPhone() {
+    const digitsOnly = (this.storeSettings.contactWhatsApp || '').replace(/\D/g, '');
+    return digitsOnly.length >= 10 ? digitsOnly : this.fallbackStoreWhatsAppPhone;
   }
 
   /**
@@ -629,5 +682,21 @@ export class HomeComponent implements OnInit {
     }
 
     this.trackingState.startAutoRefresh(parsedOrderId);
+  }
+
+  /**
+   * Converte valores numericos vindos da API para numero seguro no front.
+   */
+  private toNumber(value: string | number | null | undefined) {
+    if (typeof value === 'number') {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    return 0;
   }
 }

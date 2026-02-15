@@ -8,6 +8,7 @@ import { AdminKitchenComponent } from './pages/kitchen/admin-kitchen';
 import { AdminClientsComponent } from './pages/clients/admin-clients';
 import { AdminOrdersComponent } from './pages/orders/admin-orders';
 import { AdminPlaceholderComponent } from './pages/placeholder/admin-placeholder';
+import { AdminSettingsComponent } from './pages/settings/admin-settings';
 
 export const adminRoutes: Routes = [
   {
@@ -68,7 +69,7 @@ export const adminRoutes: Routes = [
       },
       {
         path: 'configuracoes',
-        component: AdminPlaceholderComponent,
+        component: AdminSettingsComponent,
         canActivate: [adminAuthGuard],
         data: { roles: ['admin'], title: 'Configuracoes' },
       },
