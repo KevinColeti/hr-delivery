@@ -77,10 +77,10 @@
 - [x] (`done`) [P1] Registro da promocao aplicada no pedido
 
 ## E5 - Clientes e Configuracoes de Loja
-- Status: `todo`
-- [ ] (`todo`) [P0] Cadastro/atualizacao automatica de cliente no checkout
-- [ ] (`todo`) [P0] Deduplicacao por telefone
-- [ ] (`todo`) [P1] Historico de pedidos por cliente
+- Status: `in-progress`
+- [x] (`done`) [P0] Cadastro/atualizacao automatica de cliente no checkout
+- [x] (`done`) [P0] Deduplicacao por telefone
+- [x] (`done`) [P1] Historico de pedidos por cliente
 - [ ] (`todo`) [P0] Configuracoes de delivery (taxa, pedido minimo, area atendida)
 - [ ] (`todo`) [P1] Configuracoes de horario e operacao
 - [ ] (`todo`) [P1] Configuracoes institucionais da loja
@@ -112,7 +112,7 @@
 - [ ] (`todo`) [P0] Modulo cardapio (produtos/categorias/receitas/extras)
 - [ ] (`todo`) [P0] Modulo estoque (insumos + movimentacoes + alertas)
 - [ ] (`todo`) [P0] Modulo promocoes (cupons + combos)
-- [ ] (`todo`) [P1] Modulo clientes
+- [x] (`done`) [P1] Modulo clientes
 - [ ] (`todo`) [P1] Modulo configuracoes
 - [x] (`done`) [P0] Guards por perfil e protecao de rotas
 
@@ -139,7 +139,7 @@
 - [ ] (`todo`) [P0] Cozinha consegue marcar pedido como pronto
 - [ ] (`todo`) [P0] Estoque de insumos e baixado corretamente
 - [ ] (`todo`) [P0] Cupons e combos aplicam regras corretamente
-- [ ] (`todo`) [P1] Cliente e historico ficam salvos
+- [x] (`done`) [P1] Cliente e historico ficam salvos
 - [ ] (`todo`) [P0] WhatsApp envia confirmacao e atualizacoes essenciais
 
 ---

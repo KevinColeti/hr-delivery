@@ -284,6 +284,103 @@ collection:
             store: true
           rebuildPath: true
 
+  - name: Clients
+    meta:
+      id: fld_clients_hrnachapa_001
+      created: 1771051000000
+      modified: 1771051000000
+      sortKey: -1771000000025
+      description: Consulta administrativa de clientes e historico
+    children:
+      - url: "{{ _.base_url }}/clients"
+        name: List Clients
+        meta:
+          id: req_clients_list_hrnachapa_001
+          created: 1771051000001
+          modified: 1771051000001
+          isPrivate: false
+          description: Lista clientes com dados consolidados de pedidos
+          sortKey: -1771051000001
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/clients?search=joao&limit=20&onlyWithOrders=true"
+        name: List Clients (With Query)
+        meta:
+          id: req_clients_list_hrnachapa_002
+          created: 1771051000002
+          modified: 1771051000002
+          isPrivate: false
+          description: Lista filtrando por nome/telefone e clientes com pedidos
+          sortKey: -1771051000002
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/clients/1"
+        name: Get Client Consolidated
+        meta:
+          id: req_clients_get_hrnachapa_001
+          created: 1771051000003
+          modified: 1771051000003
+          isPrivate: false
+          description: Retorna cliente com metricas consolidadas
+          sortKey: -1771051000003
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/clients/1/orders?limit=50"
+        name: Get Client Order History
+        meta:
+          id: req_clients_orders_history_hrnachapa_001
+          created: 1771051000004
+          modified: 1771051000004
+          isPrivate: false
+          description: Retorna historico de pedidos do cliente
+          sortKey: -1771051000004
+        method: GET
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+
   - name: Ingredients
     meta:
       id: fld_ingredients_hrnachapa_001

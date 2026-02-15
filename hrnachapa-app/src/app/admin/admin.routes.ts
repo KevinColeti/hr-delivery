@@ -5,6 +5,7 @@ import { AdminForbiddenComponent } from './pages/forbidden/admin-forbidden';
 import { DashboardComponent } from './pages/dashboard/dashboard';
 import { AdminLoginComponent } from './pages/login/admin-login';
 import { AdminKitchenComponent } from './pages/kitchen/admin-kitchen';
+import { AdminClientsComponent } from './pages/clients/admin-clients';
 import { AdminOrdersComponent } from './pages/orders/admin-orders';
 import { AdminPlaceholderComponent } from './pages/placeholder/admin-placeholder';
 
@@ -61,7 +62,7 @@ export const adminRoutes: Routes = [
       },
       {
         path: 'clientes',
-        component: AdminPlaceholderComponent,
+        component: AdminClientsComponent,
         canActivate: [adminAuthGuard],
         data: { roles: ['admin'], title: 'Clientes' },
       },

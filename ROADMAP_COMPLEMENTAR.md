@@ -59,8 +59,8 @@
 - [x] (`done`) [P0] Ajustar criacao de pedido para usar cliente resolvido automaticamente.
 
 ### C2.2 [Subtopico de E5] Historico e consulta de cliente
-- [ ] (`todo`) [P1] Endpoint de historico de pedidos por cliente.
-- [ ] (`todo`) [P1] Endpoint admin para consulta de cliente e dados consolidados.
+- [x] (`done`) [P1] Endpoint de historico de pedidos por cliente.
+- [x] (`done`) [P1] Endpoint admin para consulta de cliente e dados consolidados.
 
 ### C2.3 [Subtopico de E5] Configuracoes operacionais de loja
 - [ ] (`todo`) [P0] Entidade/config de delivery (taxa padrao, pedido minimo, area atendida).
@@ -112,7 +112,7 @@
 
 ### C4.5 [Subtopico de E8] Modulos promocoes, clientes e configuracoes
 - [ ] (`todo`) [P0] Tela de cupons e combos com validacoes.
-- [ ] (`todo`) [P1] Tela de clientes com historico de pedidos.
+- [x] (`done`) [P1] Tela de clientes com historico de pedidos.
 - [ ] (`todo`) [P1] Tela de configuracoes de loja.
 
 ---

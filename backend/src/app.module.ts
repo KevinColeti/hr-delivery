@@ -12,6 +12,7 @@ import { CombosModule } from './combos/combos.module';
 import { RequestLoggingInterceptor } from './common/logging/request-logging.interceptor';
 import { StructuredLoggerService } from './common/logging/structured-logger.service';
 import { RequestContextMiddleware } from './common/request-context/request-context.middleware';
+import { ClientsModule } from './clients/clients.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { getDatabaseConfig } from './database/database.config';
 import { IngredientsModule } from './ingredients/ingredients.module';
@@ -27,6 +28,7 @@ import { StockMovementsModule } from './stock-movements/stock-movements.module';
     TypeOrmModule.forRoot(getDatabaseConfig()),
     AuthModule,
     CategoriesModule,
+    ClientsModule,
     CombosModule,
     CouponsModule,
     IngredientsModule,
