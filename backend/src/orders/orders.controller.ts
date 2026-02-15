@@ -17,6 +17,7 @@ import { Public } from '../auth/public.decorator';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../entities/user.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { CreatePublicCheckoutOrderDto } from './dto/create-public-checkout-order.dto';
 import { ListKitchenBoardQueryDto } from './dto/list-kitchen-board-query.dto';
 import { OrdersRealtimeService } from './orders-realtime.service';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
@@ -82,6 +83,18 @@ export class OrdersController {
   @Roles(UserRole.ADMIN, UserRole.KITCHEN)
   kitchenStream(): Observable<MessageEvent> {
     return this.ordersRealtimeService.getKitchenStream();
+  }
+
+  /**
+   * Checkout publico com resolucao automatica de cliente por telefone.
+   *
+   * Motivo:
+   * o site cliente nao deve depender de `clientId` tecnico.
+   */
+  @Post('checkout')
+  @Public()
+  createPublicCheckout(@Body() dto: CreatePublicCheckoutOrderDto) {
+    return this.ordersService.createPublicCheckout(dto);
   }
 
   /**

@@ -12,6 +12,21 @@ interface CreateOrderPayload {
   notes?: string;
 }
 
+interface CreatePublicCheckoutOrderPayload {
+  client: {
+    name: string;
+    phone: string;
+    addressLine?: string;
+  };
+  items: Array<{
+    productId: number;
+    quantity: number;
+  }>;
+  deliveryFee?: number;
+  couponCode?: string;
+  notes?: string;
+}
+
 export interface OrderTrackingResponse {
   id: number;
   status: string;
@@ -44,6 +59,13 @@ export class OrdersApiService {
    */
   createOrder(payload: CreateOrderPayload) {
     return this.http.post<{ id: number; status: string }>(this.baseUrl, payload);
+  }
+
+  /**
+   * Executa checkout publico resolvendo cliente automaticamente por telefone.
+   */
+  createPublicCheckoutOrder(payload: CreatePublicCheckoutOrderPayload) {
+    return this.http.post<{ id: number; status: string }>(`${this.baseUrl}/checkout`, payload);
   }
 
   /**

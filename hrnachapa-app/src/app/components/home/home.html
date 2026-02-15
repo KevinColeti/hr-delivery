@@ -132,15 +132,14 @@
     <article id="checkout" class="rounded-2xl border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] p-5 shadow-sm">
       <h3 class="text-2xl font-bold text-[color:var(--hc-ink)]">Checkout</h3>
       <p class="mt-2 text-xs text-[color:var(--hc-muted)]">
-        Nesta fase, informe um <strong>clientId</strong> existente no backend para criar pedido real.
+        Informe nome e telefone. O cliente e resolvido automaticamente por telefone.
       </p>
       <form class="mt-4 space-y-3">
         <input
-          [(ngModel)]="checkout.clientId"
-          name="clientId"
-          type="number"
-          min="1"
-          placeholder="Client ID (ex.: 1)"
+          [(ngModel)]="checkout.name"
+          name="name"
+          type="text"
+          placeholder="Nome do cliente"
           class="w-full rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-3 text-sm outline-none focus:border-[color:var(--hc-accent)]" />
         <input
           [(ngModel)]="checkout.whatsapp"

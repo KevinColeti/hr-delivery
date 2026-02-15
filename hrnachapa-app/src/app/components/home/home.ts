@@ -56,7 +56,7 @@ export class HomeComponent {
   trackingData: OrderTrackingResponse | null = null;
 
   checkout = {
-    clientId: '',
+    name: '',
     whatsapp: '',
     address: '',
     couponCode: '',
@@ -212,8 +212,8 @@ export class HomeComponent {
    * Envia pedido para API usando estado do carrinho local.
    *
    * Observacao:
-   * - o backend atual exige `clientId` existente;
-   * - campos de contato/endereco seguem como dados de tela neste estagio.
+   * - cliente e deduplicado no backend pelo telefone informado;
+   * - endereco segue como campo simplificado (`addressLine`) neste estagio.
    */
   submitOrder() {
     if (this.cartItems().length === 0) {
@@ -224,11 +224,20 @@ export class HomeComponent {
       return;
     }
 
-    const clientId = Number(this.checkout.clientId);
-    if (!Number.isInteger(clientId) || clientId <= 0) {
+    const clientName = this.checkout.name.trim();
+    if (clientName.length < 3) {
       this.orderFeedback = {
         type: 'error',
-        message: 'Informe um clientId valido para criar o pedido.',
+        message: 'Informe o nome do cliente para finalizar o pedido.',
+      };
+      return;
+    }
+
+    const normalizedPhone = this.normalizePhoneForCheckout(this.checkout.whatsapp);
+    if (!normalizedPhone) {
+      this.orderFeedback = {
+        type: 'error',
+        message: 'Informe um telefone valido para finalizar o pedido.',
       };
       return;
     }
@@ -237,8 +246,12 @@ export class HomeComponent {
     this.orderFeedback = null;
 
     this.ordersApiService
-      .createOrder({
-        clientId,
+      .createPublicCheckoutOrder({
+        client: {
+          name: clientName,
+          phone: normalizedPhone,
+          addressLine: this.checkout.address.trim() || undefined,
+        },
         items: this.cartItems().map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
@@ -425,5 +438,17 @@ export class HomeComponent {
       category: product.category.slug,
       isAvailable: product.availability?.available ?? false,
     };
+  }
+
+  /**
+   * Normaliza telefone digitado no checkout para envio consistente.
+   */
+  private normalizePhoneForCheckout(rawPhone: string) {
+    const digitsOnly = rawPhone.replace(/\D/g, '');
+    if (digitsOnly.length < 10) {
+      return null;
+    }
+
+    return digitsOnly;
   }
 }

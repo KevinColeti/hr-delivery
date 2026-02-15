@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, In, Not, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, Not, QueryFailedError, Repository } from 'typeorm';
 import { Client } from '../entities/client.entity';
 import { ComboRuleType } from '../entities/combo-rule.entity';
 import { Combo, ComboDiscountType } from '../entities/combo.entity';
@@ -19,6 +19,10 @@ import { UserRole } from '../entities/user.entity';
 import { StockMovementsService } from '../stock-movements/stock-movements.service';
 import { WhatsAppService } from '../whatsapp/whatsapp.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import {
+  CreatePublicCheckoutClientDto,
+  CreatePublicCheckoutOrderDto,
+} from './dto/create-public-checkout-order.dto';
 import { ListKitchenBoardQueryDto } from './dto/list-kitchen-board-query.dto';
 import { OrdersRealtimeService } from './orders-realtime.service';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
@@ -36,6 +40,20 @@ interface DiscountResolutionResult {
   appliedCouponCode: string | null;
   appliedComboId: number | null;
   appliedComboName: string | null;
+}
+
+interface OrderItemInput {
+  productId: number;
+  quantity: number;
+}
+
+interface CreateOrderWithResolvedClientInput {
+  clientId: number;
+  items: OrderItemInput[];
+  deliveryFee?: number;
+  discountAmount?: number;
+  couponCode?: string;
+  notes?: string;
 }
 
 export interface TrackingStep {
@@ -182,89 +200,40 @@ export class OrdersService {
 
     const saved = await this.dataSource.transaction(async (manager) => {
       await this.ensureClientExists(dto.clientId, manager, true);
-
-      const orderItemsData: OrderItem[] = [];
-      let subtotal = 0;
-      const productQuantityMap = new Map<number, number>();
-      const categoryQuantityMap = new Map<number, number>();
-
-      for (const item of dto.items) {
-        const product = await manager.findOne(Product, {
-          where: { id: item.productId },
-        });
-
-        if (!product) {
-          throw new BadRequestException(
-            `Produto ${item.productId} nao encontrado`,
-          );
-        }
-
-        if (!product.isActive) {
-          throw new BadRequestException(`Produto ${product.name} esta inativo`);
-        }
-
-        const unitPrice = Number(product.price);
-        const lineTotal = unitPrice * item.quantity;
-        subtotal += lineTotal;
-
-        orderItemsData.push(
-          manager.create(OrderItem, {
-            productId: product.id,
-            productName: product.name,
-            quantity: item.quantity,
-            unitPrice: this.toMoney(unitPrice),
-            lineTotal: this.toMoney(lineTotal),
-          }),
-        );
-
-        productQuantityMap.set(
-          product.id,
-          (productQuantityMap.get(product.id) ?? 0) + item.quantity,
-        );
-        categoryQuantityMap.set(
-          product.categoryId,
-          (categoryQuantityMap.get(product.categoryId) ?? 0) + item.quantity,
-        );
-      }
-
-      const deliveryFee = dto.deliveryFee ?? 0;
-      const discount = await this.resolveDiscountStrategy(
-        manager,
-        dto,
-        subtotal,
-        productQuantityMap,
-        categoryQuantityMap,
-      );
-      const total = this.calculateOrderTotal(subtotal, deliveryFee, discount.discountAmount);
-
-      const order = manager.create(Order, {
+      return this.createOrderWithResolvedClient(manager, {
         clientId: dto.clientId,
-        status: OrderStatus.NEW,
-        subtotal: this.toMoney(subtotal),
-        deliveryFee: this.toMoney(deliveryFee),
-        discountAmount: this.toMoney(discount.discountAmount),
-        total: this.toMoney(total),
-        notes: dto.notes?.trim() || null,
-        appliedCouponId: discount.appliedCouponId,
-        appliedCouponCode: discount.appliedCouponCode,
-        appliedComboId: discount.appliedComboId,
-        appliedComboName: discount.appliedComboName,
-        items: orderItemsData,
+        items: dto.items,
+        deliveryFee: dto.deliveryFee,
+        discountAmount: dto.discountAmount,
+        couponCode: dto.couponCode,
+        notes: dto.notes,
       });
-
-      return manager.save(Order, order);
     });
 
-    const fullOrder = await this.findOne(saved.id);
+    return this.finalizeCreatedOrder(saved.id);
+  }
 
-    this.ordersRealtimeService.publish({
-      type: 'order_created',
-      orderId: fullOrder.id,
-      status: fullOrder.status,
+  /**
+   * Cria pedido via checkout publico resolvendo cliente por telefone.
+   *
+   * Diferenca para fluxo interno:
+   * - o caller nao envia `clientId`;
+   * - cliente e deduplicado por telefone dentro da transacao.
+   */
+  async createPublicCheckout(dto: CreatePublicCheckoutOrderDto) {
+    const saved = await this.dataSource.transaction(async (manager) => {
+      const client = await this.resolveClientForPublicCheckout(manager, dto.client);
+
+      return this.createOrderWithResolvedClient(manager, {
+        clientId: client.id,
+        items: dto.items,
+        deliveryFee: dto.deliveryFee,
+        couponCode: dto.couponCode,
+        notes: dto.notes,
+      });
     });
-    await this.whatsAppService.sendOrderCreated(fullOrder);
 
-    return fullOrder;
+    return this.finalizeCreatedOrder(saved.id);
   }
 
   /**
@@ -341,6 +310,190 @@ export class OrdersService {
    */
   markReady(orderId: number, actor: OrderStatusChangeActor) {
     return this.updateStatus(orderId, { status: OrderStatus.READY }, actor);
+  }
+
+  /**
+   * Finaliza retorno de criacao de pedido publicando eventos colaterais.
+   */
+  private async finalizeCreatedOrder(orderId: number) {
+    const fullOrder = await this.findOne(orderId);
+
+    this.ordersRealtimeService.publish({
+      type: 'order_created',
+      orderId: fullOrder.id,
+      status: fullOrder.status,
+    });
+    await this.whatsAppService.sendOrderCreated(fullOrder);
+
+    return fullOrder;
+  }
+
+  /**
+   * Cria pedido com cliente ja resolvido.
+   *
+   * Esta funcao concentra regra de precificacao para evitar divergencia
+   * entre fluxo interno (`clientId`) e checkout publico (cliente por telefone).
+   */
+  private async createOrderWithResolvedClient(
+    manager: EntityManager,
+    input: CreateOrderWithResolvedClientInput,
+  ) {
+    if (input.couponCode && input.discountAmount !== undefined) {
+      throw new BadRequestException(
+        'Nao e permitido informar discountAmount manual quando couponCode e usado',
+      );
+    }
+
+    const orderItemsData: OrderItem[] = [];
+    let subtotal = 0;
+    const productQuantityMap = new Map<number, number>();
+    const categoryQuantityMap = new Map<number, number>();
+
+    for (const item of input.items) {
+      const product = await manager.findOne(Product, {
+        where: { id: item.productId },
+      });
+
+      if (!product) {
+        throw new BadRequestException(`Produto ${item.productId} nao encontrado`);
+      }
+
+      if (!product.isActive) {
+        throw new BadRequestException(`Produto ${product.name} esta inativo`);
+      }
+
+      const unitPrice = Number(product.price);
+      const lineTotal = unitPrice * item.quantity;
+      subtotal += lineTotal;
+
+      orderItemsData.push(
+        manager.create(OrderItem, {
+          productId: product.id,
+          productName: product.name,
+          quantity: item.quantity,
+          unitPrice: this.toMoney(unitPrice),
+          lineTotal: this.toMoney(lineTotal),
+        }),
+      );
+
+      productQuantityMap.set(
+        product.id,
+        (productQuantityMap.get(product.id) ?? 0) + item.quantity,
+      );
+      categoryQuantityMap.set(
+        product.categoryId,
+        (categoryQuantityMap.get(product.categoryId) ?? 0) + item.quantity,
+      );
+    }
+
+    const deliveryFee = input.deliveryFee ?? 0;
+    const discount = await this.resolveDiscountStrategy(
+      manager,
+      {
+        clientId: input.clientId,
+        discountAmount: input.discountAmount,
+        couponCode: input.couponCode,
+      },
+      subtotal,
+      productQuantityMap,
+      categoryQuantityMap,
+    );
+    const total = this.calculateOrderTotal(subtotal, deliveryFee, discount.discountAmount);
+
+    const order = manager.create(Order, {
+      clientId: input.clientId,
+      status: OrderStatus.NEW,
+      subtotal: this.toMoney(subtotal),
+      deliveryFee: this.toMoney(deliveryFee),
+      discountAmount: this.toMoney(discount.discountAmount),
+      total: this.toMoney(total),
+      notes: input.notes?.trim() || null,
+      appliedCouponId: discount.appliedCouponId,
+      appliedCouponCode: discount.appliedCouponCode,
+      appliedComboId: discount.appliedComboId,
+      appliedComboName: discount.appliedComboName,
+      items: orderItemsData,
+    });
+
+    return manager.save(Order, order);
+  }
+
+  /**
+   * Resolve cliente do checkout publico com deduplicacao por telefone.
+   *
+   * Regra:
+   * - se telefone existe, atualiza dados do cliente;
+   * - se nao existe, cria novo cliente.
+   */
+  private async resolveClientForPublicCheckout(
+    manager: EntityManager,
+    client: CreatePublicCheckoutClientDto,
+  ) {
+    const normalizedPhone = this.normalizeClientPhone(client.phone);
+    const payload = {
+      name: client.name.trim(),
+      phone: normalizedPhone,
+      addressLine: client.addressLine?.trim() || null,
+      neighborhood: client.neighborhood?.trim() || null,
+      city: client.city?.trim() || null,
+      state: client.state?.trim().toUpperCase().slice(0, 2) || null,
+      zipCode: client.zipCode?.trim() || null,
+    };
+
+    const existing = await manager.findOne(Client, {
+      where: { phone: normalizedPhone },
+      lock: { mode: 'pessimistic_write' },
+    });
+    if (existing) {
+      const merged = manager.merge(Client, existing, payload);
+      return manager.save(Client, merged);
+    }
+
+    try {
+      const created = manager.create(Client, payload);
+      return await manager.save(Client, created);
+    } catch (error) {
+      // Em corrida de checkout simultaneo para o mesmo telefone, uma transacao
+      // pode inserir antes da outra. Neste caso reconsultamos e atualizamos.
+      if (!this.isUniqueViolation(error)) {
+        throw error;
+      }
+
+      const concurrentClient = await manager.findOne(Client, {
+        where: { phone: normalizedPhone },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!concurrentClient) {
+        throw error;
+      }
+
+      const merged = manager.merge(Client, concurrentClient, payload);
+      return manager.save(Client, merged);
+    }
+  }
+
+  /**
+   * Normaliza telefone para chave de deduplicacao consistente.
+   */
+  private normalizeClientPhone(rawPhone: string) {
+    const digitsOnly = rawPhone.replace(/\D/g, '');
+    if (digitsOnly.length < 10 || digitsOnly.length > 20) {
+      throw new BadRequestException('Telefone do cliente invalido para checkout');
+    }
+
+    return digitsOnly;
+  }
+
+  /**
+   * Identifica erro de chave unica do PostgreSQL.
+   */
+  private isUniqueViolation(error: unknown) {
+    if (!(error instanceof QueryFailedError)) {
+      return false;
+    }
+
+    const driverError = error.driverError as { code?: string } | undefined;
+    return driverError?.code === '23505';
   }
 
   /**
@@ -673,7 +826,7 @@ export class OrdersService {
    */
   private async resolveDiscountStrategy(
     manager: EntityManager,
-    dto: CreateOrderDto,
+    dto: Pick<CreateOrderWithResolvedClientInput, 'clientId' | 'discountAmount' | 'couponCode'>,
     subtotal: number,
     productQuantityMap: Map<number, number>,
     categoryQuantityMap: Map<number, number>,

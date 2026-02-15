@@ -131,6 +131,24 @@ collection:
       sortKey: -1771000000030
       description: CRUD de categorias
     children:
+      - url: "{{ _.base_url }}/categories/public/catalog"
+        name: List Public Categories Catalog
+        meta:
+          id: req_categories_public_catalog_hrnachapa_001
+          created: 1771048000001
+          modified: 1771048000001
+          isPrivate: false
+          description: Lista categorias publicas para vitrine do site
+          sortKey: -17710000000305
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
       - url: "{{ _.base_url }}/categories"
         name: List Categories
         meta:
@@ -463,6 +481,24 @@ collection:
       sortKey: -1771000000070
       description: CRUD de produtos
     children:
+      - url: "{{ _.base_url }}/products/public/catalog"
+        name: List Public Products Catalog
+        meta:
+          id: req_products_public_catalog_hrnachapa_001
+          created: 1771048000002
+          modified: 1771048000002
+          isPrivate: false
+          description: Lista produtos publicos para vitrine do site
+          sortKey: -17710000000705
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
       - url: "{{ _.base_url }}/products"
         name: List Products
         meta:
@@ -769,6 +805,24 @@ collection:
       sortKey: -1771000000079
       description: Extras por produto
     children:
+      - url: "{{ _.base_url }}/products/1/extras/public/catalog"
+        name: List Public Product Extras Catalog
+        meta:
+          id: req_product_extras_public_catalog_hrnachapa_001
+          created: 1771048000003
+          modified: 1771048000003
+          isPrivate: false
+          description: Lista extras publicos de um produto para vitrine do site
+          sortKey: -17710356000305
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
       - url: "{{ _.base_url }}/products/1/extras"
         name: List Product Extras
         meta:
@@ -914,6 +968,64 @@ collection:
       sortKey: -1771000000081
       description: Pedidos e fluxo de status
     children:
+      - url: "{{ _.base_url }}/orders/checkout"
+        name: Create Public Checkout Order
+        meta:
+          id: req_orders_checkout_public_hrnachapa_001
+          created: 1771048000004
+          modified: 1771048000004
+          isPrivate: false
+          description: Checkout publico sem clientId (cliente por telefone)
+          sortKey: -17710356000405
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "client": {
+                "name": "Joao da Silva",
+                "phone": "(11) 98765-4321",
+                "addressLine": "Rua Exemplo, 123"
+              },
+              "items": [
+                {
+                  "productId": 1,
+                  "quantity": 2
+                }
+              ],
+              "deliveryFee": 6,
+              "couponCode": "PROMO10",
+              "notes": "Sem cebola"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/orders/1/tracking"
+        name: Get Public Order Tracking
+        meta:
+          id: req_orders_tracking_public_hrnachapa_001
+          created: 1771048000005
+          modified: 1771048000005
+          isPrivate: false
+          description: Consulta acompanhamento publico de pedido por ID
+          sortKey: -17710356000406
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
       - url: "{{ _.base_url }}/orders"
         name: List Orders
         meta:

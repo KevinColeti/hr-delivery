@@ -37,8 +37,8 @@
 - [ ] (`todo`) [P1] Exibir validacoes de disponibilidade antes de ir ao checkout.
 
 ### C1.5 [Subtopico de E7] Checkout real
-- [ ] (`todo`) [P0] Remover dependencia de `clientId` manual da tela publica.
-- [ ] (`todo`) [P0] Coletar dados de cliente/telefone/endereco conforme contrato backend real.
+- [x] (`done`) [P0] Remover dependencia de `clientId` manual da tela publica.
+- [x] (`done`) [P0] Coletar dados de cliente/telefone/endereco conforme contrato backend real.
 - [ ] (`todo`) [P0] Integrar cupom com feedback de validacao claro ao usuario.
 - [ ] (`todo`) [P1] Preparar ponto de extensao para forma de pagamento.
 
@@ -50,13 +50,13 @@
 ---
 
 ## C2 - E5 (Clientes e Configuracoes) - Subtopicos de Backoffice/Checkout
-- Status: `todo`
+- Status: `in-progress`
 - Referencia principal: `E5 - Clientes e Configuracoes de Loja` no `ROADMAP.md`
 
 ### C2.1 [Subtopico de E5] Cliente automatico no checkout
-- [ ] (`todo`) [P0] Criar endpoint publico de checkout que aceite dados de cliente (telefone como chave de deduplicacao).
-- [ ] (`todo`) [P0] Implementar upsert de cliente por telefone (`find-or-create` + atualizacao de dados mutaveis).
-- [ ] (`todo`) [P0] Ajustar criacao de pedido para usar cliente resolvido automaticamente.
+- [x] (`done`) [P0] Criar endpoint publico de checkout que aceite dados de cliente (telefone como chave de deduplicacao).
+- [x] (`done`) [P0] Implementar upsert de cliente por telefone (`find-or-create` + atualizacao de dados mutaveis).
+- [x] (`done`) [P0] Ajustar criacao de pedido para usar cliente resolvido automaticamente.
 
 ### C2.2 [Subtopico de E5] Historico e consulta de cliente
 - [ ] (`todo`) [P1] Endpoint de historico de pedidos por cliente.
@@ -151,3 +151,57 @@
 4. C4.4 e C4.5 (restante admin).
 5. C5 e C6 (operacao WhatsApp e fechamento go-live).
 
+---
+
+## Plano de execucao em 5 dias (prioridade imediata)
+
+### Dia 1 - Checkout real com cliente automatico (backend)
+- [x] (`done`) [P0] Criar endpoint publico de checkout sem `clientId` manual.
+- [x] (`done`) [P0] Implementar upsert de cliente por telefone (deduplicacao).
+- [x] (`done`) [P0] Ajustar criacao de pedido para usar cliente resolvido.
+- [ ] (`todo`) [P0] Testar via Insomnia: novo cliente, cliente existente, telefone invalido.
+- Saida esperada:
+  - Site nao precisa mais enviar `clientId`.
+  - Pedido passa a nascer com cliente correto automaticamente.
+
+### Dia 2 - Pedido com extras estruturados (backend)
+- [ ] (`todo`) [P0] Evoluir contrato de pedido para aceitar extras por item.
+- [ ] (`todo`) [P0] Persistir extras no item do pedido com snapshot consistente.
+- [ ] (`todo`) [P0] Ajustar calculo de total incluindo extras.
+- [ ] (`todo`) [P0] Ajustar baixa de estoque de extras vinculados a insumo.
+- [ ] (`todo`) [P0] Testar fluxo completo: pedido com e sem extras.
+- Saida esperada:
+  - Extras deixam de depender de texto em `notes`.
+  - Total e estoque refletem personalizacao real do pedido.
+
+### Dia 3 - Quebra de fluxo no frontend publico
+- [ ] (`todo`) [P0] Criar rotas: `/cardapio`, `/carrinho`, `/checkout`, `/pedido/:id`, `/acompanhar`.
+- [ ] (`todo`) [P0] Reduzir `Home` para papel de landing e atalhos.
+- [ ] (`todo`) [P0] Mover estado para servicos por dominio (catalogo, carrinho, checkout, tracking).
+- [ ] (`todo`) [P1] Garantir navegacao sem perda de estado entre paginas.
+- Saida esperada:
+  - Fluxo visivel e limpo: cardapio -> carrinho -> checkout -> acompanhamento.
+
+### Dia 4 - Integracao frontend com novo contrato de pedido
+- [ ] (`todo`) [P0] Checkout enviar dados de cliente (telefone/endereco) e itens com extras estruturados.
+- [ ] (`todo`) [P0] Pagina de detalhe do produto montar payload real de extras.
+- [ ] (`todo`) [P0] Pagina `/pedido/:id` ser destino principal apos checkout.
+- [ ] (`todo`) [P1] Manter `/acompanhar` como busca manual secundaria.
+- Saida esperada:
+  - Front e back alinhados no contrato final de pedido.
+  - Jornada de compra completa sem campo tecnico.
+
+### Dia 5 - Admin operacional minimo (pedidos + cozinha)
+- [ ] (`todo`) [P0] Implementar modulo admin de pedidos (lista + detalhe + mudanca de status).
+- [ ] (`todo`) [P0] Implementar modulo cozinha (board + stream + acao pronto).
+- [ ] (`todo`) [P0] Validar regras de role entre `admin` e `kitchen`.
+- [ ] (`todo`) [P0] Teste manual ponta a ponta: site -> admin -> cozinha -> tracking.
+- Saida esperada:
+  - Operacao real minima funcionando no admin.
+  - Base pronta para avancar em estoque/promocoes/clientes/configuracoes.
+
+### Regra de fechamento diario (execucao)
+- Ao final de cada dia:
+  - Atualizar status dos itens deste arquivo.
+  - Atualizar `ROADMAP.md` apenas no macro-item correspondente.
+  - Fazer commit separado por dia concluido.
