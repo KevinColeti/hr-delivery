@@ -12,6 +12,8 @@ export const adminAuthInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AdminAuthService);
   const token = authService.token();
 
+  // Limitamos o header a chamadas da API local para nao vazar token em
+  // requests externas (imagens/CDN/servicos de terceiros).
   if (!token || !req.url.startsWith('http://localhost:3000/')) {
     return next(req);
   }
@@ -24,4 +26,3 @@ export const adminAuthInterceptor: HttpInterceptorFn = (req, next) => {
     }),
   );
 };
-

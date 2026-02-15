@@ -24,6 +24,15 @@ import {
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
+/**
+ * Componente principal da vitrine publica.
+ *
+ * Responsabilidades:
+ * - carregar catalogo publico da API com fallback local;
+ * - controlar carrinho e checkout;
+ * - permitir acompanhamento publico de pedido;
+ * - oferecer canal de contato via WhatsApp.
+ */
 export class HomeComponent {
   private readonly defaultProductImage =
     'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop';
@@ -57,6 +66,9 @@ export class HomeComponent {
   isSubmittingOrder = false;
   orderFeedback: { type: 'success' | 'error'; message: string } | null = null;
 
+  /**
+   * Injeta dependencias de estado local e comunicacao com backend.
+   */
   constructor(
     private readonly cartService: CartService,
     private readonly catalogApiService: CatalogApiService,
@@ -91,6 +103,9 @@ export class HomeComponent {
     return this.cartService.totalItems;
   }
 
+  /**
+   * Filtra produtos da vitrine pela categoria selecionada.
+   */
   getProductsByCategory(categoryId: string): Product[] {
     return this.catalogProducts.filter(product => product.category === categoryId);
   }
@@ -106,6 +121,8 @@ export class HomeComponent {
    * Abre modal de detalhe do produto com extras publicos.
    */
   openProductDetails(product: Product) {
+    // Limpamos estado anterior antes de nova consulta para evitar misturar
+    // extras e observacoes de produtos diferentes no mesmo modal.
     this.selectedProduct = product;
     this.selectedProductExtras = [];
     this.selectedExtraIds = [];

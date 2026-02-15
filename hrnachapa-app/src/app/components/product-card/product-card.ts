@@ -17,6 +17,13 @@ export interface Product {
   templateUrl: './product-card.html',
   styleUrl: './product-card.css',
 })
+/**
+ * Card de produto usado na vitrine publica.
+ *
+ * Emite eventos separados para:
+ * - adicao direta ao carrinho;
+ * - abertura de detalhe com personalizacao.
+ */
 export class ProductCardComponent {
   @Input() product!: Product;
   @Output() add = new EventEmitter<Product>();

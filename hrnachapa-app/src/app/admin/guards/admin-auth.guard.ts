@@ -17,6 +17,8 @@ export const adminAuthGuard: CanActivateFn = (
   const router = inject(Router);
 
   if (!authService.isAuthenticated()) {
+    // Preservamos returnUrl para que o operador volte exatamente ao destino
+    // original apos autenticar, reduzindo retrabalho no fluxo admin.
     return router.createUrlTree(['/admin/login'], {
       queryParams: { returnUrl: state.url },
     });
@@ -29,4 +31,3 @@ export const adminAuthGuard: CanActivateFn = (
 
   return true;
 };
-

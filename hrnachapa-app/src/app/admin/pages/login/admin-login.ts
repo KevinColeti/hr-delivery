@@ -12,6 +12,11 @@ import { AdminAuthService } from '../../services/admin-auth.service';
 })
 /**
  * Tela de login do backoffice.
+ *
+ * Responsabilidades:
+ * - autenticar operador (`admin`/`kitchen`);
+ * - respeitar retorno para rota originalmente solicitada;
+ * - exibir erros de credencial de forma clara.
  */
 export class AdminLoginComponent implements OnInit {
   credentials = {
@@ -21,6 +26,9 @@ export class AdminLoginComponent implements OnInit {
   isSubmitting = false;
   errorMessage = '';
 
+  /**
+   * Injeta serviços de autenticacao e navegacao da tela de login.
+   */
   constructor(
     private readonly authService: AdminAuthService,
     private readonly router: Router,

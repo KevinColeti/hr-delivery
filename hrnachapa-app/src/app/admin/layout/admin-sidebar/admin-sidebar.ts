@@ -9,6 +9,9 @@ import { SidebarService } from '../../services/sidebar.service';
   templateUrl: './admin-sidebar.html',
   styleUrl: './admin-sidebar.css',
 })
+/**
+ * Sidebar principal do admin com menu condicionado por perfil.
+ */
 export class AdminSidebarComponent {
   menuItems = [
     { label: 'Dashboard', shortLabel: 'DB', route: '/admin/dashboard', roles: ['admin', 'kitchen'] },
@@ -21,11 +24,17 @@ export class AdminSidebarComponent {
     { label: 'Configuracoes', shortLabel: 'CF', route: '/admin/configuracoes', roles: ['admin'] },
   ];
 
+  /**
+   * Injeta estado responsivo da sidebar e sessao do operador.
+   */
   constructor(
     public sidebarService: SidebarService,
     public authService: AdminAuthService,
   ) {}
 
+  /**
+   * Fecha sidebar em mobile apos clicar em uma opcao para liberar area util.
+   */
   onLinkClick() {
     this.sidebarService.closeSidebar();
   }

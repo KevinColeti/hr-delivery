@@ -35,6 +35,9 @@ export class AdminAuthService {
   readonly user = this.userSignal.asReadonly();
   readonly isAuthenticated = computed(() => Boolean(this.tokenSignal()));
 
+  /**
+   * Injeta cliente HTTP para autenticacao e carga de sessao.
+   */
   constructor(private readonly http: HttpClient) {}
 
   /**
@@ -65,6 +68,8 @@ export class AdminAuthService {
       return false;
     }
 
+    // Verificamos intersecao simples para manter a regra de permissao
+    // previsivel e reaproveitavel entre guard e menu lateral.
     return roles.includes(currentUser.role);
   }
 
@@ -112,4 +117,3 @@ export class AdminAuthService {
     }
   }
 }
-

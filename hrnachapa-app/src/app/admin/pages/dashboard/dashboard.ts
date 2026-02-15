@@ -6,6 +6,11 @@ import { Component } from '@angular/core';
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
+/**
+ * Dashboard inicial do admin.
+ *
+ * No estagio atual os cards usam valores mock para validar layout e fluxo.
+ */
 export class DashboardComponent {
   stats = [
     { label: 'Total de Produtos', value: 156, icon: '📦', color: 'bg-blue-500' },

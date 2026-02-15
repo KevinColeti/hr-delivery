@@ -10,4 +10,7 @@ import { AdminFooterComponent } from '../admin-footer/admin-footer';
   templateUrl: './admin-layout.html',
   styleUrl: './admin-layout.css',
 })
+/**
+ * Casca de layout compartilhada entre modulos administrativos.
+ */
 export class AdminLayoutComponent {}

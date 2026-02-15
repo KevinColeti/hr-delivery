@@ -9,6 +9,7 @@ import { RouterLink } from '@angular/router';
 })
 /**
  * Tela para acesso negado por perfil.
+ *
+ * Usada quando usuario autenticado tenta abrir rota sem permissao de role.
  */
 export class AdminForbiddenComponent {}
-

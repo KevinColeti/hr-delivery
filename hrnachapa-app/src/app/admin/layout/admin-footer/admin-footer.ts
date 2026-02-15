@@ -6,6 +6,9 @@ import { Component } from '@angular/core';
   templateUrl: './admin-footer.html',
   styleUrl: './admin-footer.css',
 })
+/**
+ * Footer simples do admin com ano corrente dinamico.
+ */
 export class AdminFooterComponent {
   currentYear = new Date().getFullYear();
 }

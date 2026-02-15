@@ -8,6 +8,9 @@ import { ProductCardComponent, Product } from '../product-card/product-card';
   templateUrl: './category-section.html',
   styleUrl: './category-section.css'
 })
+/**
+ * Agrupa produtos por categoria na home e propaga eventos para o container.
+ */
 export class CategorySectionComponent {
   @Input() title: string = '';
   @Input() products: Product[] = [];

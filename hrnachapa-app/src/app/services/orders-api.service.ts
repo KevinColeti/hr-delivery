@@ -34,17 +34,20 @@ export interface OrderTrackingResponse {
 export class OrdersApiService {
   private readonly baseUrl = 'http://localhost:3000/orders';
 
+  /**
+   * Injeta cliente HTTP para chamadas de pedidos publicos.
+   */
   constructor(private readonly http: HttpClient) {}
 
   /**
-   * Cria pedido no backend com payload de checkout.
+   * Cria pedido no backend com dados consolidados do checkout.
    */
   createOrder(payload: CreateOrderPayload) {
     return this.http.post<{ id: number; status: string }>(this.baseUrl, payload);
   }
 
   /**
-   * Consulta status de acompanhamento publico do pedido.
+   * Consulta status publico de acompanhamento por identificador.
    */
   getOrderTracking(orderId: number) {
     return this.http.get<OrderTrackingResponse>(`${this.baseUrl}/${orderId}/tracking`);

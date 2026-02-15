@@ -12,8 +12,10 @@ import { ActivatedRoute } from '@angular/router';
  */
 export class AdminPlaceholderComponent {
   private readonly route = inject(ActivatedRoute);
+  /**
+   * Resolve titulo dinamico do modulo placeholder a partir da rota.
+   */
   readonly pageTitle = computed(
     () => (this.route.snapshot.data['title'] as string | undefined) ?? 'Modulo',
   );
 }
-

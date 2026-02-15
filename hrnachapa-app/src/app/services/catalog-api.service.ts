@@ -47,10 +47,17 @@ export class CatalogApiService {
   private readonly categoriesUrl = 'http://localhost:3000/categories/public/catalog';
   private readonly productsUrl = 'http://localhost:3000/products/public/catalog';
 
+  /**
+   * Injeta cliente HTTP usado para chamadas de catalogo publico.
+   */
   constructor(private readonly http: HttpClient) {}
 
   /**
-   * Carrega categorias e produtos em paralelo para reduzir tempo de tela.
+   * Carrega categorias e produtos em paralelo para montar a vitrine.
+   *
+   * Motivo:
+   * esta tela depende de ambos os recursos ao mesmo tempo; executar em
+   * paralelo reduz tempo total de carregamento percebido.
    */
   getPublicCatalog() {
     return forkJoin({
@@ -60,7 +67,7 @@ export class CatalogApiService {
   }
 
   /**
-   * Lista extras publicos de um produto.
+   * Lista extras publicos de um produto especifico da vitrine.
    */
   getProductPublicExtras(productId: number) {
     return this.http.get<PublicCatalogProductExtraResponse[]>(

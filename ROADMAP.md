@@ -5,6 +5,11 @@
 - Prioridade: `P0` (critico), `P1` (importante), `P2` (melhoria)
 - Este roadmap cobre `Admin Panel` e `Site Cliente` da Fase 1 (MVP)
 
+## Complemento de continuidade
+- Este arquivo foi mantido sem remocao de itens antigos.
+- Para detalhamento novo em formato de **subtopicos** (sem substituir este roadmap), consultar:
+  - `ROADMAP_COMPLEMENTAR.md`
+
 ## Baseline atual (ja feito no repositorio)
 - [x] (`done`) [P0] Base frontend Angular com home publica e catalogo mock
 - [x] (`done`) [P1] Layout inicial de `/admin` com dashboard de exemplo
