@@ -15,25 +15,27 @@
         (click)="toggleMenu()"
         class="rounded-md p-2 text-[color:var(--hc-muted)] hover:bg-[color:var(--hc-paper)] md:hidden"
         aria-label="Toggle menu">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path *ngIf="!isMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
           <path *ngIf="isMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
         </svg>
       </button>
 
       <nav class="hidden items-center gap-6 md:flex">
-        <a href="#cardapio" class="text-sm font-semibold uppercase tracking-[0.12em] text-[color:var(--hc-muted)] hover:text-[color:var(--hc-accent)]">Cardápio</a>
-        <a href="#checkout" class="text-sm font-semibold uppercase tracking-[0.12em] text-[color:var(--hc-muted)] hover:text-[color:var(--hc-accent)]">Checkout</a>
-        <a href="#acompanhar" class="rounded-full bg-[color:var(--hc-accent)] px-4 py-2 text-sm font-semibold text-amber-50 transition hover:bg-[color:var(--hc-accent-dark)]">
-          Acompanhar pedido
+        <a routerLink="/cardapio" routerLinkActive="text-[color:var(--hc-accent)]" class="text-sm font-semibold uppercase tracking-[0.12em] text-[color:var(--hc-muted)] hover:text-[color:var(--hc-accent)]">Cardapio</a>
+        <a routerLink="/carrinho" routerLinkActive="text-[color:var(--hc-accent)]" class="text-sm font-semibold uppercase tracking-[0.12em] text-[color:var(--hc-muted)] hover:text-[color:var(--hc-accent)]">Carrinho</a>
+        <a routerLink="/checkout" routerLinkActive="text-[color:var(--hc-accent)]" class="text-sm font-semibold uppercase tracking-[0.12em] text-[color:var(--hc-muted)] hover:text-[color:var(--hc-accent)]">Checkout</a>
+        <a routerLink="/acompanhar" class="rounded-full bg-[color:var(--hc-accent)] px-4 py-2 text-sm font-semibold text-amber-50 transition hover:bg-[color:var(--hc-accent-dark)]">
+          Meu pedido
         </a>
       </nav>
     </div>
 
     <nav *ngIf="isMenuOpen" class="space-y-2 pb-4 md:hidden">
-      <a href="#cardapio" class="block rounded-md px-3 py-2 text-sm font-semibold text-[color:var(--hc-muted)] hover:bg-[color:var(--hc-paper)]">Cardápio</a>
-      <a href="#checkout" class="block rounded-md px-3 py-2 text-sm font-semibold text-[color:var(--hc-muted)] hover:bg-[color:var(--hc-paper)]">Checkout</a>
-      <a href="#acompanhar" class="block rounded-md bg-[color:var(--hc-accent)] px-3 py-2 text-sm font-semibold text-amber-50">Acompanhar pedido</a>
+      <a routerLink="/cardapio" (click)="closeMenu()" class="block rounded-md px-3 py-2 text-sm font-semibold text-[color:var(--hc-muted)] hover:bg-[color:var(--hc-paper)]">Cardapio</a>
+      <a routerLink="/carrinho" (click)="closeMenu()" class="block rounded-md px-3 py-2 text-sm font-semibold text-[color:var(--hc-muted)] hover:bg-[color:var(--hc-paper)]">Carrinho</a>
+      <a routerLink="/checkout" (click)="closeMenu()" class="block rounded-md px-3 py-2 text-sm font-semibold text-[color:var(--hc-muted)] hover:bg-[color:var(--hc-paper)]">Checkout</a>
+      <a routerLink="/acompanhar" (click)="closeMenu()" class="block rounded-md bg-[color:var(--hc-accent)] px-3 py-2 text-sm font-semibold text-amber-50">Meu pedido</a>
     </nav>
   </div>
 </header>

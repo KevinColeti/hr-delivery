@@ -11,6 +11,22 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
+/**
+ * Extra selecionado em item de pedido.
+ */
+class CreateOrderItemExtraDto {
+  @IsInt()
+  @Min(1)
+  extraId: number;
+
+  @IsInt()
+  @Min(1)
+  quantity: number;
+}
+
+/**
+ * Item base de pedido.
+ */
 class CreateOrderItemDto {
   @IsInt()
   @Min(1)
@@ -19,8 +35,17 @@ class CreateOrderItemDto {
   @IsInt()
   @Min(1)
   quantity: number;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateOrderItemExtraDto)
+  extras?: CreateOrderItemExtraDto[];
 }
 
+/**
+ * Payload de criacao de pedido no fluxo interno.
+ */
 export class CreateOrderDto {
   @IsInt()
   @Min(1)

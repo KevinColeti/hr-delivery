@@ -1,5 +1,6 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Order } from './order.entity';
+import { OrderItemExtra } from './order-item-extra.entity';
 import { Product } from './product.entity';
 
 @Entity({ name: 'order_items' })
@@ -32,4 +33,9 @@ export class OrderItem {
   @ManyToOne(() => Product, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'product_id' })
   product: Product;
+
+  @OneToMany(() => OrderItemExtra, (orderItemExtra) => orderItemExtra.orderItem, {
+    cascade: true,
+  })
+  extras: OrderItemExtra[];
 }

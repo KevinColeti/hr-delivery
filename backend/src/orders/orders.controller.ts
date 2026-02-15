@@ -147,6 +147,15 @@ export class OrdersController {
   }
 
   /**
+   * Reverte cancelamento para o status `confirmed`.
+   */
+  @Patch(':id/cancellation/revert')
+  @Roles(UserRole.ADMIN)
+  revertCancellation(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
+    return this.ordersService.revertCancellation(id, this.getAuthenticatedUser(req));
+  }
+
+  /**
    * Acao operacional da cozinha para marcar pedido como pronto.
    */
   @Patch(':id/kitchen/ready')

@@ -1,287 +1,351 @@
-﻿<app-header></app-header>
+<app-header></app-header>
 
 <main class="pb-12">
-  <section class="relative overflow-hidden border-b border-[color:var(--hc-border)] bg-[color:var(--hc-surface)]">
-    <div class="absolute -left-12 top-8 h-32 w-32 rounded-full bg-[color:var(--hc-gold)]/20 blur-2xl"></div>
-    <div class="absolute -right-10 bottom-6 h-40 w-40 rounded-full bg-[color:var(--hc-accent)]/20 blur-2xl"></div>
+  @if (isLandingView) {
+    <section class="relative overflow-hidden border-b border-[color:var(--hc-border)] bg-[color:var(--hc-surface)]">
+      <div class="absolute -left-12 top-8 h-32 w-32 rounded-full bg-[color:var(--hc-gold)]/20 blur-2xl"></div>
+      <div class="absolute -right-10 bottom-6 h-40 w-40 rounded-full bg-[color:var(--hc-accent)]/20 blur-2xl"></div>
 
-    <div class="container relative mx-auto px-4 py-8 md:py-12">
-      <div class="grid items-center gap-8 md:grid-cols-2">
+      <div class="container relative mx-auto px-4 py-8 md:py-12">
+        <div class="grid items-center gap-8 md:grid-cols-2">
+          <div>
+            <p class="inline-flex rounded-full border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-[color:var(--hc-muted)]">
+              Delivery artesanal premium
+            </p>
+            <h1 class="mt-4 text-4xl font-bold leading-tight text-[color:var(--hc-ink)] md:text-5xl">
+              Sabor de chapa com
+              <span class="text-[color:var(--hc-accent)]">presenca de marca</span>
+            </h1>
+            <p class="mt-4 text-sm leading-relaxed text-[color:var(--hc-muted)] md:text-base">
+              Escolha seu burger no cardapio, revise no carrinho e finalize no checkout em um fluxo separado.
+            </p>
+
+            <div class="mt-6 flex flex-wrap gap-3">
+              <a routerLink="/cardapio" class="rounded-full bg-[color:var(--hc-accent)] px-5 py-3 text-sm font-semibold text-amber-50 hover:bg-[color:var(--hc-accent-dark)]">Ir para cardapio</a>
+              <a routerLink="/checkout" class="rounded-full border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] px-5 py-3 text-sm font-semibold text-[color:var(--hc-ink)]">Ir para checkout</a>
+              <a routerLink="/acompanhar" class="rounded-full border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] px-5 py-3 text-sm font-semibold text-[color:var(--hc-ink)]">Ver meu pedido</a>
+            </div>
+          </div>
+
+          <div class="rounded-3xl border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] p-4 shadow-lg shadow-amber-900/10">
+            <img src="/logo.jpg" alt="Logo HR Na Chapa" class="h-64 w-full rounded-2xl object-cover md:h-80" />
+          </div>
+        </div>
+      </div>
+    </section>
+  }
+
+  @if (isCatalogView) {
+    <section class="container mx-auto px-4 py-8 md:py-12">
+      <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p class="inline-flex rounded-full border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-[color:var(--hc-muted)]">
-            Delivery artesanal premium
-          </p>
-          <h1 class="mt-4 text-4xl font-bold leading-tight text-[color:var(--hc-ink)] md:text-5xl">
-            Sabor de chapa com
-            <span class="text-[color:var(--hc-accent)]">presenca de marca</span>
-          </h1>
-          <p class="mt-4 text-sm leading-relaxed text-[color:var(--hc-muted)] md:text-base">
-            Este prototipo mostra como o cliente final vai navegar no cardapio, montar pedido e acompanhar status.
-            O foco e uma experiencia mobile-first, com visual rustico artesanal e acabamento premium.
-          </p>
-
-          <div class="mt-6 flex flex-wrap gap-3">
-            <a href="#cardapio" class="rounded-full bg-[color:var(--hc-accent)] px-5 py-3 text-sm font-semibold text-amber-50 hover:bg-[color:var(--hc-accent-dark)]">Ver cardapio</a>
-            <a href="#checkout" class="rounded-full border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] px-5 py-3 text-sm font-semibold text-[color:var(--hc-ink)]">Simular checkout</a>
-          </div>
+          <p class="text-xs font-semibold uppercase tracking-[0.15em] text-[color:var(--hc-muted)]">Cardapio</p>
+          <h2 class="text-3xl font-bold text-[color:var(--hc-ink)]">Escolha seu pedido</h2>
         </div>
-
-        <div class="rounded-3xl border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] p-4 shadow-lg shadow-amber-900/10">
-          <img src="/logo.jpg" alt="Logo HR Na Chapa" class="h-64 w-full rounded-2xl object-cover md:h-80" />
-        </div>
+        <a routerLink="/carrinho" class="rounded-full border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--hc-ink)]">
+          Ver carrinho
+        </a>
       </div>
-    </div>
-  </section>
 
-  <section id="cardapio" class="container mx-auto px-4 py-8 md:py-12">
-    <div class="mb-6 flex items-end justify-between gap-4">
-      <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.15em] text-[color:var(--hc-muted)]">Cardapio</p>
-        <h2 class="text-3xl font-bold text-[color:var(--hc-ink)]">Destaques da casa</h2>
+      <div class="mb-6 flex flex-wrap gap-2">
+        <a
+          routerLink="/cardapio"
+          [queryParams]="getCatalogCategoryQueryParams()"
+          class="rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em]"
+          [class]="selectedCategoryId === ''
+            ? 'border-[color:var(--hc-accent)] bg-[color:var(--hc-accent)] text-amber-50'
+            : 'border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] text-[color:var(--hc-ink)]'">
+          Todas
+        </a>
+        @for (category of categories; track category.id) {
+          <a
+            routerLink="/cardapio"
+            [queryParams]="getCatalogCategoryQueryParams(category.id)"
+            class="rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em]"
+            [class]="isCategorySelected(category.id)
+              ? 'border-[color:var(--hc-accent)] bg-[color:var(--hc-accent)] text-amber-50'
+              : 'border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] text-[color:var(--hc-ink)]'">
+            {{ category.name }}
+          </a>
+        }
       </div>
-    </div>
 
-    @if (isCatalogLoading) {
-      <p class="mb-4 rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-2 text-sm text-[color:var(--hc-muted)]">
-        Carregando catalogo da API...
-      </p>
-    }
-    @if (catalogLoadError) {
-      <p class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-        {{ catalogLoadError }}
-      </p>
-    }
-
-    <div class="mb-10 grid gap-4 md:grid-cols-3">
-      @for (item of featuredItems; track item.id) {
-        <article class="rounded-2xl border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] p-4 shadow-sm">
-          <img [src]="item.image" [alt]="item.name" class="h-36 w-full rounded-xl object-cover" />
-          <h3 class="mt-3 text-lg font-bold text-[color:var(--hc-ink)]">{{ item.name }}</h3>
-          <p class="mt-1 text-sm text-[color:var(--hc-muted)]">{{ item.description }}</p>
-          <div class="mt-4 flex items-center justify-between">
-            <span class="text-lg font-bold text-[color:var(--hc-accent)]">{{ item.price | currency:'BRL':'symbol':'1.2-2' }}</span>
-            <button
-              type="button"
-              (click)="openProductDetails(item)"
-              class="rounded-full border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--hc-ink)]">
-              Visualizar
-            </button>
-          </div>
-        </article>
+      @if (isCatalogLoading) {
+        <p class="mb-4 rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-2 text-sm text-[color:var(--hc-muted)]">
+          Carregando catalogo da API...
+        </p>
       }
-    </div>
+      @if (catalogLoadError) {
+        <p class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+          {{ catalogLoadError }}
+        </p>
+      }
 
-    @for (category of categories; track category.id) {
-      <app-category-section
-        [title]="category.name"
-        [products]="getProductsByCategory(category.id)"
-        (addProduct)="addToCart($event)"
-        (viewProductDetails)="openProductDetails($event)"></app-category-section>
-    }
-  </section>
+      @if (featuredItems.length > 0) {
+        <div class="mb-10 grid gap-4 md:grid-cols-3">
+          @for (item of featuredItems; track item.id) {
+            <article class="rounded-2xl border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] p-4 shadow-sm">
+              <img [src]="item.image" [alt]="item.name" class="h-36 w-full rounded-xl object-cover" />
+              <h3 class="mt-3 text-lg font-bold text-[color:var(--hc-ink)]">{{ item.name }}</h3>
+              <p class="mt-1 text-sm text-[color:var(--hc-muted)]">{{ item.description }}</p>
+              <div class="mt-4 flex items-center justify-between">
+                <span class="text-lg font-bold text-[color:var(--hc-accent)]">{{ item.price | currency:'BRL':'symbol':'1.2-2' }}</span>
+                <button
+                  type="button"
+                  (click)="openProductDetails(item)"
+                  class="rounded-full border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--hc-ink)]">
+                  Visualizar
+                </button>
+              </div>
+            </article>
+          }
+        </div>
+      }
 
-  <section class="container mx-auto grid gap-6 px-4 md:grid-cols-2">
-    <article class="rounded-2xl border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] p-5 shadow-sm">
-      <h3 class="text-2xl font-bold text-[color:var(--hc-ink)]">Carrinho</h3>
-      <div class="mt-4 space-y-3">
-        @for (item of cartItems(); track item.key) {
-          <div class="flex items-center justify-between rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-2">
-            <div>
-              <p class="text-sm font-semibold text-[color:var(--hc-ink)]">{{ item.name }}</p>
+      @if (!isCatalogLoading && isCatalogEmptyForCurrentFilter) {
+        <p class="rounded-xl border border-dashed border-[color:var(--hc-border)] px-4 py-5 text-sm text-[color:var(--hc-muted)]">
+          Nao encontramos itens para este filtro de categoria.
+        </p>
+      }
+
+      @for (category of visibleCatalogCategories; track category.id) {
+        @if (getProductsByCategory(category.id).length > 0) {
+          <app-category-section
+            [title]="category.name"
+            [products]="getProductsByCategory(category.id)"
+            (addProduct)="addToCart($event)"
+            (viewProductDetails)="openProductDetails($event)"></app-category-section>
+        }
+      }
+    </section>
+  }
+
+  @if (isCartView) {
+    <section class="container mx-auto px-4 py-8 md:py-12">
+      <article class="rounded-2xl border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] p-5 shadow-sm">
+        <h2 class="text-3xl font-bold text-[color:var(--hc-ink)]">Carrinho</h2>
+        <div class="mt-4 space-y-3">
+          @for (item of cartItems(); track item.key) {
+            <div class="flex items-center justify-between rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-2">
+              <div>
+                <p class="text-sm font-semibold text-[color:var(--hc-ink)]">{{ item.name }}</p>
+                @if (item.extrasSummary && item.extrasSummary.length > 0) {
+                  <p class="mt-1 text-xs text-[color:var(--hc-muted)]">Extras: {{ item.extrasSummary.join(', ') }}</p>
+                }
+                @if (item.notes) {
+                  <p class="mt-1 text-xs text-[color:var(--hc-muted)]">Obs: {{ item.notes }}</p>
+                }
+                <div class="mt-1 flex items-center gap-2 text-xs">
+                  <button
+                    type="button"
+                    (click)="changeItemQuantity(item.key, item.quantity - 1)"
+                    class="h-6 w-6 rounded-md border border-[color:var(--hc-border)] text-[color:var(--hc-ink)]">-</button>
+                  <span class="min-w-6 text-center font-semibold text-[color:var(--hc-ink)]">{{ item.quantity }}</span>
+                  <button
+                    type="button"
+                    (click)="changeItemQuantity(item.key, item.quantity + 1)"
+                    class="h-6 w-6 rounded-md border border-[color:var(--hc-border)] text-[color:var(--hc-ink)]">+</button>
+                  <button
+                    type="button"
+                    (click)="removeFromCart(item.key)"
+                    class="ml-2 rounded-md px-2 py-1 text-[color:var(--hc-muted)] hover:bg-[color:var(--hc-paper)]">
+                    Remover
+                  </button>
+                </div>
+              </div>
+              <span class="text-sm font-bold text-[color:var(--hc-accent)]">{{ (item.price * item.quantity) | currency:'BRL':'symbol':'1.2-2' }}</span>
+            </div>
+          }
+          @if (cartItems().length === 0) {
+            <p class="rounded-xl border border-dashed border-[color:var(--hc-border)] px-3 py-4 text-sm text-[color:var(--hc-muted)]">
+              Seu carrinho esta vazio. Adicione itens do cardapio.
+            </p>
+          }
+        </div>
+
+        <div class="mt-4 rounded-xl border border-dashed border-[color:var(--hc-border)] px-3 py-3 text-sm text-[color:var(--hc-muted)]">
+          Itens: <strong class="text-[color:var(--hc-ink)]">{{ cartTotalItems() }}</strong>
+          <br />
+          Subtotal: <strong class="text-[color:var(--hc-ink)]">{{ cartSubtotal() | currency:'BRL':'symbol':'1.2-2' }}</strong>
+        </div>
+
+        <div class="mt-4 flex flex-wrap gap-3">
+          <a routerLink="/cardapio" class="rounded-xl border border-[color:var(--hc-border)] px-4 py-2 text-sm font-semibold text-[color:var(--hc-ink)]">Continuar comprando</a>
+          <a routerLink="/checkout" class="rounded-xl bg-[color:var(--hc-accent)] px-4 py-2 text-sm font-semibold text-amber-50">Ir para checkout</a>
+        </div>
+      </article>
+    </section>
+  }
+
+  @if (isCheckoutView) {
+    <section class="container mx-auto grid gap-6 px-4 py-8 md:grid-cols-2 md:py-12">
+      <article class="rounded-2xl border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] p-5 shadow-sm">
+        <h3 class="text-2xl font-bold text-[color:var(--hc-ink)]">Resumo do pedido</h3>
+        <div class="mt-4 space-y-3">
+          @for (item of cartItems(); track item.key) {
+            <div class="rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-2 text-sm">
+              <p class="font-semibold text-[color:var(--hc-ink)]">{{ item.name }} x{{ item.quantity }}</p>
               @if (item.extrasSummary && item.extrasSummary.length > 0) {
                 <p class="mt-1 text-xs text-[color:var(--hc-muted)]">Extras: {{ item.extrasSummary.join(', ') }}</p>
               }
-              @if (item.notes) {
-                <p class="mt-1 text-xs text-[color:var(--hc-muted)]">Obs: {{ item.notes }}</p>
-              }
-              <div class="mt-1 flex items-center gap-2 text-xs">
-                <button
-                  type="button"
-                  (click)="changeItemQuantity(item.key, item.quantity - 1)"
-                  class="h-6 w-6 rounded-md border border-[color:var(--hc-border)] text-[color:var(--hc-ink)]">-</button>
-                <span class="min-w-6 text-center font-semibold text-[color:var(--hc-ink)]">{{ item.quantity }}</span>
-                <button
-                  type="button"
-                  (click)="changeItemQuantity(item.key, item.quantity + 1)"
-                  class="h-6 w-6 rounded-md border border-[color:var(--hc-border)] text-[color:var(--hc-ink)]">+</button>
-                <button
-                  type="button"
-                  (click)="removeFromCart(item.key)"
-                  class="ml-2 rounded-md px-2 py-1 text-[color:var(--hc-muted)] hover:bg-[color:var(--hc-paper)]">
-                  Remover
-                </button>
-              </div>
             </div>
-            <span class="text-sm font-bold text-[color:var(--hc-accent)]">{{ (item.price * item.quantity) | currency:'BRL':'symbol':'1.2-2' }}</span>
-          </div>
-        }
-        @if (cartItems().length === 0) {
-          <p class="rounded-xl border border-dashed border-[color:var(--hc-border)] px-3 py-4 text-sm text-[color:var(--hc-muted)]">
-            Seu carrinho esta vazio. Adicione itens do cardapio.
-          </p>
-        }
-      </div>
-
-      <div class="mt-4 rounded-xl border border-dashed border-[color:var(--hc-border)] px-3 py-3 text-sm text-[color:var(--hc-muted)]">
-        Itens: <strong class="text-[color:var(--hc-ink)]">{{ cartTotalItems() }}</strong>
-        <br />
-        Subtotal: <strong class="text-[color:var(--hc-ink)]">{{ cartSubtotal() | currency:'BRL':'symbol':'1.2-2' }}</strong>
-      </div>
-    </article>
-
-    <article id="checkout" class="rounded-2xl border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] p-5 shadow-sm">
-      <h3 class="text-2xl font-bold text-[color:var(--hc-ink)]">Checkout</h3>
-      <p class="mt-2 text-xs text-[color:var(--hc-muted)]">
-        Informe nome e telefone. O cliente e resolvido automaticamente por telefone.
-      </p>
-      <form class="mt-4 space-y-3">
-        <input
-          [(ngModel)]="checkout.name"
-          name="name"
-          type="text"
-          placeholder="Nome do cliente"
-          class="w-full rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-3 text-sm outline-none focus:border-[color:var(--hc-accent)]" />
-        <input
-          [(ngModel)]="checkout.whatsapp"
-          name="whatsapp"
-          type="tel"
-          placeholder="WhatsApp"
-          class="w-full rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-3 text-sm outline-none focus:border-[color:var(--hc-accent)]" />
-        <input
-          [(ngModel)]="checkout.address"
-          name="address"
-          type="text"
-          placeholder="Endereco de entrega"
-          class="w-full rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-3 text-sm outline-none focus:border-[color:var(--hc-accent)]" />
-        <input
-          [(ngModel)]="checkout.notes"
-          name="notes"
-          type="text"
-          placeholder="Observacoes do pedido"
-          class="w-full rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-3 text-sm outline-none focus:border-[color:var(--hc-accent)]" />
-        <div class="grid grid-cols-2 gap-3">
-          <input
-            [(ngModel)]="checkout.couponCode"
-            name="couponCode"
-            type="text"
-            placeholder="Cupom (opcional)"
-            class="rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-3 text-sm outline-none focus:border-[color:var(--hc-accent)]" />
-          <input
-            [(ngModel)]="checkout.deliveryFee"
-            name="deliveryFee"
-            type="number"
-            min="0"
-            step="0.01"
-            placeholder="Taxa entrega"
-            class="rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-3 text-sm outline-none focus:border-[color:var(--hc-accent)]" />
-        </div>
-
-        <div class="rounded-xl border border-dashed border-[color:var(--hc-border)] px-3 py-2 text-sm text-[color:var(--hc-muted)]">
-          Total estimado:
-          <strong class="text-[color:var(--hc-ink)]">{{ orderTotal | currency:'BRL':'symbol':'1.2-2' }}</strong>
-        </div>
-
-        @if (orderFeedback) {
-          <p
-            class="rounded-xl px-3 py-2 text-sm"
-            [class]="orderFeedback.type === 'success'
-              ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
-              : 'border border-red-200 bg-red-50 text-red-700'">
-            {{ orderFeedback.message }}
-          </p>
-        }
-
-        <button
-          type="button"
-          (click)="submitOrder()"
-          [disabled]="isSubmittingOrder"
-          class="w-full rounded-xl bg-[color:var(--hc-accent)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.1em] text-amber-50 hover:bg-[color:var(--hc-accent-dark)] disabled:cursor-not-allowed disabled:opacity-60">
-          {{ isSubmittingOrder ? 'Enviando pedido...' : 'Finalizar pedido' }}
-        </button>
-      </form>
-    </article>
-  </section>
-
-  <section id="acompanhar" class="container mx-auto px-4 py-8 md:py-12">
-    <article class="rounded-2xl border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] p-5 shadow-sm">
-      <h3 class="text-2xl font-bold text-[color:var(--hc-ink)]">Acompanhar pedido</h3>
-      <p class="mt-1 text-sm text-[color:var(--hc-muted)]">
-        Digite o numero do pedido para consultar o status atual.
-      </p>
-
-      <div class="mt-4 flex flex-col gap-3 md:flex-row">
-        <input
-          [(ngModel)]="trackingOrderId"
-          name="trackingOrderId"
-          type="number"
-          min="1"
-          placeholder="Numero do pedido (ex.: 12)"
-          class="w-full rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-3 text-sm outline-none focus:border-[color:var(--hc-accent)]" />
-        <button
-          type="button"
-          (click)="loadTracking()"
-          [disabled]="trackingLoading"
-          class="rounded-xl bg-[color:var(--hc-accent)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-amber-50 hover:bg-[color:var(--hc-accent-dark)] disabled:cursor-not-allowed disabled:opacity-60">
-          {{ trackingLoading ? 'Consultando...' : 'Consultar status' }}
-        </button>
-      </div>
-
-      <button
-        type="button"
-        (click)="openWhatsAppContact()"
-        [disabled]="!canContactWhatsApp"
-        class="mt-3 rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-[color:var(--hc-ink)] hover:bg-[color:var(--hc-paper)] disabled:cursor-not-allowed disabled:opacity-60">
-        Falar no WhatsApp sobre pedido
-      </button>
-
-      @if (trackingError) {
-        <p class="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {{ trackingError }}
-        </p>
-      }
-
-      @if (trackingData) {
-        <div class="mt-4 rounded-xl border border-dashed border-[color:var(--hc-border)] px-3 py-3 text-sm text-[color:var(--hc-muted)]">
-          Pedido
-          <strong class="text-[color:var(--hc-ink)]">#{{ trackingData.id }}</strong>
-          <br />
-          Status atual:
-          <strong class="text-[color:var(--hc-ink)]">{{ trackingData.status }}</strong>
-          <br />
-          Total:
-          <strong class="text-[color:var(--hc-ink)]">{{ trackingData.total | currency:'BRL':'symbol':'1.2-2' }}</strong>
-        </div>
-
-        <ol class="mt-5 space-y-3">
-          @for (step of trackingData.timeline; track step.status) {
-            <li
-              class="flex items-center gap-3 rounded-xl border px-3 py-3"
-              [class]="step.done
-                ? 'border-emerald-200 bg-emerald-50'
-                : 'border-[color:var(--hc-border)] bg-[color:var(--hc-surface)]'">
-              <span
-                class="inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold"
-                [class]="step.done ? 'bg-emerald-600 text-white' : 'bg-stone-300 text-stone-700'">
-                {{ step.done ? 'OK' : '...' }}
-              </span>
-              <div class="flex-1">
-                <p class="text-sm font-semibold text-[color:var(--hc-ink)]">{{ step.label }}</p>
-                <p class="text-xs text-[color:var(--hc-muted)]">{{ step.status }}</p>
-              </div>
-            </li>
           }
-        </ol>
-      }
-      @if (!trackingData && !trackingError && !trackingLoading) {
-        <p class="mt-4 rounded-xl border border-dashed border-[color:var(--hc-border)] px-3 py-3 text-sm text-[color:var(--hc-muted)]">
-          Nenhum pedido consultado ainda.
+          @if (cartItems().length === 0) {
+            <p class="rounded-xl border border-dashed border-[color:var(--hc-border)] px-3 py-4 text-sm text-[color:var(--hc-muted)]">
+              Carrinho vazio. Volte ao cardapio para adicionar itens.
+            </p>
+          }
+        </div>
+      </article>
+
+      <article class="rounded-2xl border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] p-5 shadow-sm">
+        <h3 class="text-2xl font-bold text-[color:var(--hc-ink)]">Checkout</h3>
+        <p class="mt-2 text-xs text-[color:var(--hc-muted)]">
+          Informe nome e telefone. O cliente e resolvido automaticamente por telefone.
         </p>
-      }
-    </article>
-  </section>
+        <form class="mt-4 space-y-3">
+          <input
+            [(ngModel)]="checkout.name"
+            name="name"
+            type="text"
+            placeholder="Nome do cliente"
+            class="w-full rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-3 text-sm outline-none focus:border-[color:var(--hc-accent)]" />
+          <input
+            [(ngModel)]="checkout.whatsapp"
+            name="whatsapp"
+            type="tel"
+            placeholder="WhatsApp"
+            class="w-full rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-3 text-sm outline-none focus:border-[color:var(--hc-accent)]" />
+          <input
+            [(ngModel)]="checkout.address"
+            name="address"
+            type="text"
+            placeholder="Endereco de entrega"
+            class="w-full rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-3 text-sm outline-none focus:border-[color:var(--hc-accent)]" />
+          <input
+            [(ngModel)]="checkout.notes"
+            name="notes"
+            type="text"
+            placeholder="Observacoes do pedido"
+            class="w-full rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-3 text-sm outline-none focus:border-[color:var(--hc-accent)]" />
+          <div class="grid grid-cols-2 gap-3">
+            <input
+              [(ngModel)]="checkout.couponCode"
+              name="couponCode"
+              type="text"
+              placeholder="Cupom (opcional)"
+              class="rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-3 text-sm outline-none focus:border-[color:var(--hc-accent)]" />
+            <input
+              [(ngModel)]="checkout.deliveryFee"
+              name="deliveryFee"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Taxa entrega"
+              class="rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-3 text-sm outline-none focus:border-[color:var(--hc-accent)]" />
+          </div>
+
+          <div class="rounded-xl border border-dashed border-[color:var(--hc-border)] px-3 py-2 text-sm text-[color:var(--hc-muted)]">
+            Total estimado:
+            <strong class="text-[color:var(--hc-ink)]">{{ orderTotal | currency:'BRL':'symbol':'1.2-2' }}</strong>
+          </div>
+
+          @if (orderFeedback) {
+            <p
+              class="rounded-xl px-3 py-2 text-sm"
+              [class]="orderFeedback.type === 'success'
+                ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                : 'border border-red-200 bg-red-50 text-red-700'">
+              {{ orderFeedback.message }}
+            </p>
+          }
+
+          <button
+            type="button"
+            (click)="submitOrder()"
+            [disabled]="isSubmittingOrder"
+            class="w-full rounded-xl bg-[color:var(--hc-accent)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.1em] text-amber-50 hover:bg-[color:var(--hc-accent-dark)] disabled:cursor-not-allowed disabled:opacity-60">
+            {{ isSubmittingOrder ? 'Enviando pedido...' : 'Finalizar pedido' }}
+          </button>
+        </form>
+      </article>
+    </section>
+  }
+
+  @if (isTrackingView || isOrderStatusView) {
+    <section class="container mx-auto px-4 py-8 md:py-12">
+      <article class="rounded-2xl border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] p-5 shadow-sm">
+        <h3 class="text-2xl font-bold text-[color:var(--hc-ink)]">Seu pedido</h3>
+
+        @if (isOrderStatusView) {
+          <p class="mt-2 rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-2 text-sm text-[color:var(--hc-muted)]">
+            Visualizando pedido #{{ trackingOrderId }}.
+          </p>
+        }
+
+        <button
+          type="button"
+          (click)="openWhatsAppContact()"
+          [disabled]="!canContactWhatsApp"
+          class="mt-3 rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-[color:var(--hc-ink)] hover:bg-[color:var(--hc-paper)] disabled:cursor-not-allowed disabled:opacity-60">
+          Falar no WhatsApp sobre pedido
+        </button>
+
+        @if (trackingError) {
+          <p class="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {{ trackingError }}
+          </p>
+        }
+
+        @if (trackingData) {
+          <div class="mt-4 rounded-xl border border-dashed border-[color:var(--hc-border)] px-3 py-3 text-sm text-[color:var(--hc-muted)]">
+            Pedido
+            <strong class="text-[color:var(--hc-ink)]">#{{ trackingData.id }}</strong>
+            <br />
+            Status atual:
+            <strong class="text-[color:var(--hc-ink)]">{{ trackingData.status }}</strong>
+            <br />
+            Total:
+            <strong class="text-[color:var(--hc-ink)]">{{ trackingData.total | currency:'BRL':'symbol':'1.2-2' }}</strong>
+          </div>
+
+          @if (trackingData.status === 'canceled') {
+            <p class="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-700">
+              {{ trackingCancellationMessage }}
+            </p>
+          }
+
+          <ol class="mt-5 space-y-3">
+            @for (step of trackingData.timeline; track step.status) {
+              <li
+                class="flex items-center gap-3 rounded-xl border px-3 py-3"
+                [class]="step.done
+                  ? 'border-emerald-200 bg-emerald-50'
+                  : 'border-[color:var(--hc-border)] bg-[color:var(--hc-surface)]'">
+                <span
+                  class="inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold"
+                  [class]="step.done ? 'bg-emerald-600 text-white' : 'bg-stone-300 text-stone-700'">
+                  {{ step.done ? 'OK' : '...' }}
+                </span>
+                <div class="flex-1">
+                  <p class="text-sm font-semibold text-[color:var(--hc-ink)]">{{ step.label }}</p>
+                  <p class="text-xs text-[color:var(--hc-muted)]">{{ step.status }}</p>
+                </div>
+              </li>
+            }
+          </ol>
+        }
+        @if (!trackingData && !trackingError && !trackingLoading) {
+          <p class="mt-4 rounded-xl border border-dashed border-[color:var(--hc-border)] px-3 py-3 text-sm text-[color:var(--hc-muted)]">
+            Nenhum pedido consultado ainda.
+          </p>
+        }
+      </article>
+    </section>
+  }
 </main>
 
-@if (selectedProduct) {
+@if (selectedProduct && isCatalogView) {
   <div class="fixed inset-0 z-50 flex items-end bg-black/40 p-3 md:items-center md:justify-center">
     <article class="w-full max-w-xl rounded-2xl border border-[color:var(--hc-border)] bg-[color:var(--hc-paper)] p-5 shadow-xl">
       <div class="flex items-start justify-between gap-3">

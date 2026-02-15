@@ -10,9 +10,11 @@ import { ComboRuleType } from '../entities/combo-rule.entity';
 import { Combo, ComboDiscountType } from '../entities/combo.entity';
 import { Coupon, CouponDiscountType } from '../entities/coupon.entity';
 import { Ingredient } from '../entities/ingredient.entity';
+import { OrderItemExtra } from '../entities/order-item-extra.entity';
 import { OrderItem } from '../entities/order-item.entity';
 import { Order, OrderStatus } from '../entities/order.entity';
 import { OrderStatusHistory } from '../entities/order-status-history.entity';
+import { ProductExtra } from '../entities/product-extra.entity';
 import { ProductIngredient } from '../entities/product-ingredient.entity';
 import { Product } from '../entities/product.entity';
 import { UserRole } from '../entities/user.entity';
@@ -45,6 +47,10 @@ interface DiscountResolutionResult {
 interface OrderItemInput {
   productId: number;
   quantity: number;
+  extras?: Array<{
+    extraId: number;
+    quantity: number;
+  }>;
 }
 
 interface CreateOrderWithResolvedClientInput {
@@ -68,8 +74,12 @@ export interface PublicOrderTrackingResponse {
   total: string;
   createdAt: Date;
   updatedAt: Date;
+  cancellationCustomerMessage: string | null;
   timeline: TrackingStep[];
 }
+
+const DEFAULT_CANCELLATION_CUSTOMER_MESSAGE =
+  'Tivemos um problema com o seu pedido, e precisamos cancelar.';
 
 @Injectable()
 /**
@@ -89,6 +99,8 @@ export class OrdersService {
     private readonly orderItemsRepository: Repository<OrderItem>,
     @InjectRepository(Product)
     private readonly productsRepository: Repository<Product>,
+    @InjectRepository(ProductExtra)
+    private readonly productExtrasRepository: Repository<ProductExtra>,
     @InjectRepository(Client)
     private readonly clientsRepository: Repository<Client>,
     @InjectRepository(Combo)
@@ -97,6 +109,8 @@ export class OrdersService {
     private readonly productIngredientsRepository: Repository<ProductIngredient>,
     @InjectRepository(OrderStatusHistory)
     private readonly orderStatusHistoryRepository: Repository<OrderStatusHistory>,
+    @InjectRepository(OrderItemExtra)
+    private readonly orderItemExtrasRepository: Repository<OrderItemExtra>,
     private readonly stockMovementsService: StockMovementsService,
     private readonly ordersRealtimeService: OrdersRealtimeService,
     private readonly whatsAppService: WhatsAppService,
@@ -107,7 +121,7 @@ export class OrdersService {
    */
   findAll() {
     return this.ordersRepository.find({
-      relations: { items: true, client: true, appliedCoupon: true, appliedCombo: true },
+      relations: { items: { extras: true }, client: true, appliedCoupon: true, appliedCombo: true },
       order: { createdAt: 'DESC' },
     });
   }
@@ -127,7 +141,7 @@ export class OrdersService {
 
     return this.ordersRepository.find({
       where: { status: In(statuses) },
-      relations: { items: true, client: true, appliedCoupon: true, appliedCombo: true },
+      relations: { items: { extras: true }, client: true, appliedCoupon: true, appliedCombo: true },
       order: { createdAt: 'ASC' },
       take: query.limit ?? 100,
     });
@@ -139,7 +153,7 @@ export class OrdersService {
   async findOne(id: number) {
     const order = await this.ordersRepository.findOne({
       where: { id },
-      relations: { items: true, client: true, appliedCoupon: true, appliedCombo: true },
+      relations: { items: { extras: true }, client: true, appliedCoupon: true, appliedCombo: true },
     });
 
     if (!order) {
@@ -168,7 +182,7 @@ export class OrdersService {
   async findPublicTracking(orderId: number): Promise<PublicOrderTrackingResponse> {
     const order = await this.ordersRepository.findOne({
       where: { id: orderId },
-      relations: { items: true },
+      relations: { items: { extras: true } },
     });
 
     if (!order) {
@@ -181,6 +195,7 @@ export class OrdersService {
       total: order.total,
       createdAt: order.createdAt,
       updatedAt: order.updatedAt,
+      cancellationCustomerMessage: order.cancellationCustomerMessage,
       timeline: this.buildTrackingTimeline(order.status),
     };
   }
@@ -254,11 +269,13 @@ export class OrdersService {
   ) {
     const order = await this.findOne(id);
     const previousStatus = order.status;
+    const isCancellationTransition = dto.status === OrderStatus.CANCELED;
 
     if (previousStatus === dto.status) {
       return order;
     }
 
+    this.validateCancellationPayloadCompatibility(dto);
     this.validateActorTransitionPermission(previousStatus, dto.status, actor.role);
     this.validateStatusTransition(previousStatus, dto.status);
 
@@ -275,6 +292,10 @@ export class OrdersService {
       return confirmedOrder;
     }
 
+    const cancellationPayload = isCancellationTransition
+      ? this.resolveCancellationPayload(dto)
+      : null;
+
     await this.dataSource.transaction(async (manager) => {
       const managedOrder = await manager.findOne(Order, { where: { id } });
 
@@ -283,6 +304,10 @@ export class OrdersService {
       }
 
       managedOrder.status = dto.status;
+      if (cancellationPayload) {
+        managedOrder.cancellationCustomerMessage = cancellationPayload.customerMessage;
+        managedOrder.cancellationInternalNote = cancellationPayload.internalNote;
+      }
       await manager.save(Order, managedOrder);
 
       await this.recordStatusChangeWithManager(manager, {
@@ -300,7 +325,15 @@ export class OrdersService {
       status: updatedOrder.status,
       previousStatus,
     });
-    await this.whatsAppService.sendOrderStatusUpdated(updatedOrder);
+
+    if (cancellationPayload) {
+      await this.whatsAppService.sendOrderCanceled(
+        updatedOrder,
+        cancellationPayload.customerMessage,
+      );
+    } else {
+      await this.whatsAppService.sendOrderStatusUpdated(updatedOrder);
+    }
 
     return updatedOrder;
   }
@@ -310,6 +343,99 @@ export class OrdersService {
    */
   markReady(orderId: number, actor: OrderStatusChangeActor) {
     return this.updateStatus(orderId, { status: OrderStatus.READY }, actor);
+  }
+
+  /**
+   * Valida compatibilidade dos campos de cancelamento com o status alvo.
+   *
+   * Motivo:
+   * manter este contrato explicito evita gravar mensagem/nota de cancelamento
+   * em mudancas de status que nao representam cancelamento real.
+   */
+  private validateCancellationPayloadCompatibility(dto: UpdateOrderStatusDto) {
+    if (dto.status === OrderStatus.CANCELED) {
+      return;
+    }
+
+    if (
+      dto.cancellationCustomerMessage !== undefined ||
+      dto.cancellationInternalNote !== undefined
+    ) {
+      throw new BadRequestException(
+        'Campos de cancelamento so podem ser enviados quando status = canceled',
+      );
+    }
+  }
+
+  /**
+   * Resolve payload de cancelamento com fallback de mensagem para cliente.
+   */
+  private resolveCancellationPayload(dto: UpdateOrderStatusDto) {
+    const rawCustomerMessage = dto.cancellationCustomerMessage?.trim();
+    const rawInternalNote = dto.cancellationInternalNote?.trim();
+
+    return {
+      customerMessage: rawCustomerMessage || DEFAULT_CANCELLATION_CUSTOMER_MESSAGE,
+      internalNote: rawInternalNote || null,
+    };
+  }
+
+  /**
+   * Reverte cancelamento de pedido para `confirmed`.
+   *
+   * Motivo:
+   * manter a reversao sempre para `confirmed` evita retomar o pedido em etapas
+   * avancadas indevidas (ex.: `ready`) e padroniza o reprocessamento operacional.
+   */
+  async revertCancellation(
+    orderId: number,
+    actor: OrderStatusChangeActor = {
+      id: null,
+      name: null,
+      email: null,
+      role: null,
+    },
+  ) {
+    if (actor.role === UserRole.KITCHEN) {
+      throw new BadRequestException(
+        'Perfil cozinha nao pode reverter cancelamento de pedido',
+      );
+    }
+
+    const order = await this.findOne(orderId);
+    if (order.status !== OrderStatus.CANCELED) {
+      throw new BadRequestException('Somente pedidos cancelados podem ser revertidos');
+    }
+
+    await this.dataSource.transaction(async (manager) => {
+      const managedOrder = await manager.findOne(Order, { where: { id: orderId } });
+      if (!managedOrder) {
+        throw new NotFoundException('Pedido nao encontrado');
+      }
+
+      managedOrder.status = OrderStatus.CONFIRMED;
+      managedOrder.cancellationCustomerMessage = null;
+      managedOrder.cancellationInternalNote = null;
+      await manager.save(Order, managedOrder);
+
+      await this.recordStatusChangeWithManager(manager, {
+        orderId: managedOrder.id,
+        previousStatus: OrderStatus.CANCELED,
+        nextStatus: OrderStatus.CONFIRMED,
+        actor,
+      });
+    });
+
+    const revertedOrder = await this.findOne(orderId);
+    this.ordersRealtimeService.publish({
+      type: 'order_status_changed',
+      orderId: revertedOrder.id,
+      status: revertedOrder.status,
+      previousStatus: OrderStatus.CANCELED,
+    });
+    await this.whatsAppService.sendOrderStatusUpdated(revertedOrder);
+
+    return revertedOrder;
   }
 
   /**
@@ -363,7 +489,17 @@ export class OrdersService {
       }
 
       const unitPrice = Number(product.price);
-      const lineTotal = unitPrice * item.quantity;
+      const productLineTotal = unitPrice * item.quantity;
+      const extras = await this.resolveOrderItemExtrasWithManager(manager, {
+        productId: product.id,
+        itemQuantity: item.quantity,
+        extrasInput: item.extras ?? [],
+      });
+      const extrasLineTotal = extras.reduce(
+        (sum, extra) => sum + Number(extra.lineTotal),
+        0,
+      );
+      const lineTotal = productLineTotal + extrasLineTotal;
       subtotal += lineTotal;
 
       orderItemsData.push(
@@ -373,6 +509,7 @@ export class OrdersService {
           quantity: item.quantity,
           unitPrice: this.toMoney(unitPrice),
           lineTotal: this.toMoney(lineTotal),
+          extras,
         }),
       );
 
@@ -416,6 +553,68 @@ export class OrdersService {
     });
 
     return manager.save(Order, order);
+  }
+
+  /**
+   * Resolve extras selecionados de um item e gera snapshot para persistencia.
+   *
+   * Motivo:
+   * concentrar esta regra evita divergencia entre preco do pedido e estoque
+   * consumido por extras no momento da confirmacao.
+   */
+  private async resolveOrderItemExtrasWithManager(
+    manager: EntityManager,
+    params: {
+      productId: number;
+      itemQuantity: number;
+      extrasInput: Array<{ extraId: number; quantity: number }>;
+    },
+  ) {
+    if (params.extrasInput.length === 0) {
+      return [];
+    }
+
+    const normalizedExtras = new Map<number, number>();
+    for (const extraInput of params.extrasInput) {
+      const current = normalizedExtras.get(extraInput.extraId) ?? 0;
+      normalizedExtras.set(extraInput.extraId, current + extraInput.quantity);
+    }
+
+    const orderItemExtras: OrderItemExtra[] = [];
+    for (const [extraId, extraQuantityPerItem] of normalizedExtras.entries()) {
+      const productExtra = await manager.findOne(ProductExtra, {
+        where: { id: extraId, productId: params.productId },
+      });
+
+      if (!productExtra) {
+        throw new BadRequestException(
+          `Extra ${extraId} nao encontrado para o produto ${params.productId}`,
+        );
+      }
+
+      if (!productExtra.isActive) {
+        throw new BadRequestException(`Extra ${productExtra.name} esta inativo`);
+      }
+
+      const extraUnitPrice = Number(productExtra.price);
+      const extraLineTotal =
+        extraUnitPrice * extraQuantityPerItem * params.itemQuantity;
+
+      orderItemExtras.push(
+        manager.create(OrderItemExtra, {
+          productExtraId: productExtra.id,
+          extraName: productExtra.name,
+          quantity: extraQuantityPerItem,
+          unitPrice: this.toMoney(extraUnitPrice),
+          lineTotal: this.toMoney(extraLineTotal),
+          ingredientId: productExtra.ingredientId,
+          ingredientQuantity: productExtra.ingredientQuantity,
+          ingredientUnit: productExtra.ingredientUnit,
+        }),
+      );
+    }
+
+    return orderItemExtras;
   }
 
   /**
@@ -539,7 +738,7 @@ export class OrdersService {
     await this.dataSource.transaction(async (manager) => {
       const order = await manager.findOne(Order, {
         where: { id: orderId },
-        relations: { items: true },
+        relations: { items: { extras: true } },
       });
 
       if (!order) {
@@ -569,6 +768,19 @@ export class OrdersService {
           const required = Number(recipeItem.quantity) * item.quantity;
           const current = requiredByIngredient.get(recipeItem.ingredientId) ?? 0;
           requiredByIngredient.set(recipeItem.ingredientId, current + required);
+        }
+
+        for (const orderItemExtra of item.extras ?? []) {
+          if (!orderItemExtra.ingredientId || !orderItemExtra.ingredientQuantity) {
+            continue;
+          }
+
+          const required =
+            Number(orderItemExtra.ingredientQuantity) *
+            orderItemExtra.quantity *
+            item.quantity;
+          const current = requiredByIngredient.get(orderItemExtra.ingredientId) ?? 0;
+          requiredByIngredient.set(orderItemExtra.ingredientId, current + required);
         }
       }
 

@@ -4,23 +4,34 @@ import { FooterComponent } from '../footer/footer';
 import { CategorySectionComponent } from '../category-section/category-section';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { categories as mockCategories, products as mockProducts } from '../../data/products';
+import {
+  ActivatedRoute,
+  Data,
+  ParamMap,
+  Params,
+  Router,
+  RouterLink,
+} from '@angular/router';
+import { combineLatest } from 'rxjs';
 import { Product } from '../product-card/product-card';
 import { CartService } from '../../services/cart.service';
-import {
-  CatalogApiService,
-  PublicCatalogCategoryResponse,
-  PublicCatalogProductExtraResponse,
-  PublicCatalogProductResponse,
-} from '../../services/catalog-api.service';
-import {
-  OrderTrackingResponse,
-  OrdersApiService,
-} from '../../services/orders-api.service';
+import { CatalogStateService } from '../../services/catalog-state.service';
+import { CheckoutStateService } from '../../services/checkout-state.service';
+import { OrdersApiService } from '../../services/orders-api.service';
+import { TrackingStateService } from '../../services/tracking-state.service';
+
+type HomeViewMode = 'landing' | 'catalog' | 'cart' | 'checkout' | 'tracking' | 'order-status';
 
 @Component({
   selector: 'app-home',
-  imports: [CommonModule, FormsModule, HeaderComponent, FooterComponent, CategorySectionComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    HeaderComponent,
+    FooterComponent,
+    CategorySectionComponent,
+  ],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
@@ -28,58 +39,258 @@ import {
  * Componente principal da vitrine publica.
  *
  * Responsabilidades:
- * - carregar catalogo publico da API com fallback local;
- * - controlar carrinho e checkout;
- * - permitir acompanhamento publico de pedido;
- * - oferecer canal de contato via WhatsApp.
+ * - coordenar navegacao do fluxo publico por rota;
+ * - delegar estado de dominio para servicos (catalogo, checkout e tracking);
+ * - orquestrar envio de pedido e redirecionamento pos-checkout.
  */
-export class HomeComponent {
-  private readonly defaultProductImage =
-    'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop';
+export class HomeComponent implements OnInit {
   private readonly storeWhatsAppPhone = '5511987654321';
-
-  categories = mockCategories;
-  catalogProducts: Product[] = mockProducts;
-  featuredItems = this.catalogProducts.slice(0, 3);
-  isCatalogLoading = false;
-  catalogLoadError = '';
-  selectedProduct: Product | null = null;
-  productDetailsLoading = false;
-  productDetailsError = '';
-  selectedProductExtras: PublicCatalogProductExtraResponse[] = [];
-  selectedExtraIds: number[] = [];
-  productObservation = '';
-
-  trackingOrderId = '';
-  trackingLoading = false;
-  trackingError = '';
-  trackingData: OrderTrackingResponse | null = null;
-
-  checkout = {
-    name: '',
-    whatsapp: '',
-    address: '',
-    couponCode: '',
-    deliveryFee: 6,
-    notes: '',
-  };
-  isSubmittingOrder = false;
-  orderFeedback: { type: 'success' | 'error'; message: string } | null = null;
+  private readonly defaultCancellationTrackingMessage =
+    'Tivemos um problema com o seu pedido, e precisamos cancelar.';
+  currentViewMode: HomeViewMode = 'landing';
+  selectedCategoryId = '';
 
   /**
-   * Injeta dependencias de estado local e comunicacao com backend.
+   * Injeta dependencias de estado, API e navegacao.
    */
   constructor(
     private readonly cartService: CartService,
-    private readonly catalogApiService: CatalogApiService,
+    private readonly catalogState: CatalogStateService,
+    private readonly checkoutState: CheckoutStateService,
+    private readonly trackingState: TrackingStateService,
     private readonly ordersApiService: OrdersApiService,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
   ) {}
 
   /**
-   * Inicializa carga do catalogo real no primeiro render.
+   * Inicializa contexto de rota para separar fluxo publico por pagina.
    */
   ngOnInit() {
-    this.loadPublicCatalog();
+    this.bindRouteViewContext();
+  }
+
+  /**
+   * Sinaliza se tela atual e landing.
+   */
+  get isLandingView() {
+    return this.currentViewMode === 'landing';
+  }
+
+  /**
+   * Sinaliza se tela atual e cardapio.
+   */
+  get isCatalogView() {
+    return this.currentViewMode === 'catalog';
+  }
+
+  /**
+   * Sinaliza se tela atual e carrinho.
+   */
+  get isCartView() {
+    return this.currentViewMode === 'cart';
+  }
+
+  /**
+   * Sinaliza se tela atual e checkout.
+   */
+  get isCheckoutView() {
+    return this.currentViewMode === 'checkout';
+  }
+
+  /**
+   * Sinaliza se tela atual e acompanhamento manual.
+   */
+  get isTrackingView() {
+    return this.currentViewMode === 'tracking';
+  }
+
+  /**
+   * Sinaliza se tela atual e detalhe de pedido por rota dedicada.
+   */
+  get isOrderStatusView() {
+    return this.currentViewMode === 'order-status';
+  }
+
+  /**
+   * Exposicao de categorias do catalogo.
+   */
+  get categories() {
+    return this.catalogState.categories();
+  }
+
+  /**
+   * Exposicao de produtos do catalogo.
+   */
+  get catalogProducts() {
+    return this.catalogState.catalogProducts();
+  }
+
+  /**
+   * Exposicao das categorias visiveis conforme filtro selecionado na URL.
+   */
+  get visibleCatalogCategories() {
+    if (!this.selectedCategoryId) {
+      return this.categories;
+    }
+
+    return this.categories.filter((category) => category.id === this.selectedCategoryId);
+  }
+
+  /**
+   * Indica se o filtro atual resultou em lista sem itens visiveis.
+   */
+  get isCatalogEmptyForCurrentFilter() {
+    if (this.catalogProducts.length === 0) {
+      return true;
+    }
+
+    return this.visibleCatalogCategories.every(
+      (category) => this.getProductsByCategory(category.id).length === 0,
+    );
+  }
+
+  /**
+   * Exposicao de destaques do catalogo.
+   */
+  get featuredItems() {
+    if (!this.selectedCategoryId) {
+      return this.catalogState.featuredItems();
+    }
+
+    return this.catalogState
+      .featuredItems()
+      .filter((item) => item.category === this.selectedCategoryId);
+  }
+
+  /**
+   * Exposicao de estado de carregamento do catalogo.
+   */
+  get isCatalogLoading() {
+    return this.catalogState.isCatalogLoading();
+  }
+
+  /**
+   * Exposicao de erro do catalogo.
+   */
+  get catalogLoadError() {
+    return this.catalogState.catalogLoadError();
+  }
+
+  /**
+   * Exposicao do produto selecionado para configuracao.
+   */
+  get selectedProduct() {
+    return this.catalogState.selectedProduct();
+  }
+
+  /**
+   * Exposicao de estado de carregamento dos extras do produto.
+   */
+  get productDetailsLoading() {
+    return this.catalogState.productDetailsLoading();
+  }
+
+  /**
+   * Exposicao de erro de carregamento dos extras do produto.
+   */
+  get productDetailsError() {
+    return this.catalogState.productDetailsError();
+  }
+
+  /**
+   * Exposicao de extras disponiveis do produto em configuracao.
+   */
+  get selectedProductExtras() {
+    return this.catalogState.selectedProductExtras();
+  }
+
+  /**
+   * Exposicao de identificadores de extras selecionados.
+   */
+  get selectedExtraIds() {
+    return this.catalogState.selectedExtraIds();
+  }
+
+  /**
+   * Exposicao de observacao digitada no modal de produto.
+   */
+  get productObservation() {
+    return this.catalogState.productObservation();
+  }
+
+  /**
+   * Atualiza observacao do produto em configuracao.
+   */
+  set productObservation(nextValue: string) {
+    this.catalogState.setProductObservation(nextValue);
+  }
+
+  /**
+   * Exposicao do numero de pedido em acompanhamento.
+   */
+  get trackingOrderId() {
+    return this.trackingState.trackingOrderId();
+  }
+
+  /**
+   * Exposicao de estado de carregamento do tracking.
+   */
+  get trackingLoading() {
+    return this.trackingState.trackingLoading();
+  }
+
+  /**
+   * Exposicao de erro do tracking.
+   */
+  get trackingError() {
+    return this.trackingState.trackingError();
+  }
+
+  /**
+   * Exposicao de dados de tracking carregados.
+   */
+  get trackingData() {
+    return this.trackingState.trackingData();
+  }
+
+  /**
+   * Retorna mensagem de cancelamento para exibicao no tracking.
+   *
+   * Motivo:
+   * mantemos fallback local para cobrir pedidos antigos cancelados antes da
+   * persistencia da mensagem personalizada.
+   */
+  get trackingCancellationMessage() {
+    if (!this.trackingData || this.trackingData.status !== 'canceled') {
+      return '';
+    }
+
+    return (
+      this.trackingData.cancellationCustomerMessage?.trim() ||
+      this.defaultCancellationTrackingMessage
+    );
+  }
+
+  /**
+   * Exposicao do estado do formulario de checkout.
+   */
+  get checkout() {
+    return this.checkoutState.checkout;
+  }
+
+  /**
+   * Exposicao de estado de envio do checkout.
+   */
+  get isSubmittingOrder() {
+    return this.checkoutState.isSubmittingOrder;
+  }
+
+  /**
+   * Exposicao de feedback operacional do checkout.
+   */
+  get orderFeedback() {
+    return this.checkoutState.orderFeedback;
   }
 
   /**
@@ -107,7 +318,25 @@ export class HomeComponent {
    * Filtra produtos da vitrine pela categoria selecionada.
    */
   getProductsByCategory(categoryId: string): Product[] {
-    return this.catalogProducts.filter(product => product.category === categoryId);
+    return this.catalogState.getProductsByCategory(categoryId);
+  }
+
+  /**
+   * Informa se categoria esta selecionada no filtro atual da URL.
+   */
+  isCategorySelected(categoryId: string) {
+    return this.selectedCategoryId === categoryId;
+  }
+
+  /**
+   * Monta query params para navegar no filtro de categoria.
+   */
+  getCatalogCategoryQueryParams(categoryId?: string): Params {
+    if (!categoryId) {
+      return {};
+    }
+
+    return { categoria: categoryId };
   }
 
   /**
@@ -121,50 +350,21 @@ export class HomeComponent {
    * Abre modal de detalhe do produto com extras publicos.
    */
   openProductDetails(product: Product) {
-    // Limpamos estado anterior antes de nova consulta para evitar misturar
-    // extras e observacoes de produtos diferentes no mesmo modal.
-    this.selectedProduct = product;
-    this.selectedProductExtras = [];
-    this.selectedExtraIds = [];
-    this.productObservation = '';
-    this.productDetailsError = '';
-    this.productDetailsLoading = true;
-
-    this.catalogApiService.getProductPublicExtras(product.id).subscribe({
-      next: (extras) => {
-        this.productDetailsLoading = false;
-        this.selectedProductExtras = extras;
-      },
-      error: () => {
-        this.productDetailsLoading = false;
-        this.selectedProductExtras = [];
-        this.productDetailsError = 'Nao foi possivel carregar os extras deste produto.';
-      },
-    });
+    this.catalogState.openProductDetails(product);
   }
 
   /**
    * Fecha modal de detalhe e limpa estado temporario.
    */
   closeProductDetails() {
-    this.selectedProduct = null;
-    this.selectedProductExtras = [];
-    this.selectedExtraIds = [];
-    this.productObservation = '';
-    this.productDetailsError = '';
-    this.productDetailsLoading = false;
+    this.catalogState.closeProductDetails();
   }
 
   /**
    * Marca/desmarca extra no detalhe.
    */
   toggleExtraSelection(extraId: number, checked: boolean) {
-    if (checked) {
-      this.selectedExtraIds = [...this.selectedExtraIds, extraId];
-      return;
-    }
-
-    this.selectedExtraIds = this.selectedExtraIds.filter((id) => id !== extraId);
+    this.catalogState.toggleExtraSelection(extraId, checked);
   }
 
   /**
@@ -175,16 +375,12 @@ export class HomeComponent {
       return;
     }
 
-    const extrasSummary = this.selectedProductExtras
-      .filter((extra) => this.selectedExtraIds.includes(extra.id))
-      .map((extra) => extra.name);
-
     this.cartService.addConfiguredProduct(this.selectedProduct, {
       notes: this.productObservation.trim() || undefined,
-      extrasSummary,
+      extraSelections: this.catalogState.buildSelectedExtraSelections(),
     });
 
-    this.closeProductDetails();
+    this.catalogState.closeProductDetails();
   }
 
   /**
@@ -217,33 +413,33 @@ export class HomeComponent {
    */
   submitOrder() {
     if (this.cartItems().length === 0) {
-      this.orderFeedback = {
+      this.checkoutState.setOrderFeedback({
         type: 'error',
         message: 'Adicione itens no carrinho antes de finalizar.',
-      };
+      });
       return;
     }
 
     const clientName = this.checkout.name.trim();
     if (clientName.length < 3) {
-      this.orderFeedback = {
+      this.checkoutState.setOrderFeedback({
         type: 'error',
         message: 'Informe o nome do cliente para finalizar o pedido.',
-      };
+      });
       return;
     }
 
-    const normalizedPhone = this.normalizePhoneForCheckout(this.checkout.whatsapp);
+    const normalizedPhone = this.checkoutState.normalizePhoneForCheckout(this.checkout.whatsapp);
     if (!normalizedPhone) {
-      this.orderFeedback = {
+      this.checkoutState.setOrderFeedback({
         type: 'error',
         message: 'Informe um telefone valido para finalizar o pedido.',
-      };
+      });
       return;
     }
 
-    this.isSubmittingOrder = true;
-    this.orderFeedback = null;
+    this.checkoutState.setIsSubmittingOrder(true);
+    this.checkoutState.setOrderFeedback(null);
 
     this.ordersApiService
       .createPublicCheckoutOrder({
@@ -255,66 +451,49 @@ export class HomeComponent {
         items: this.cartItems().map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
+          extras: item.extraSelections?.map((extra) => ({
+            extraId: extra.extraId,
+            quantity: extra.quantity,
+          })),
         })),
         deliveryFee: this.checkout.deliveryFee || 0,
         couponCode: this.checkout.couponCode.trim() || undefined,
-        notes: this.buildOrderNotesForCheckout(),
+        notes: this.checkoutState.buildOrderNotesForCheckout(this.cartItems()),
       })
       .subscribe({
         next: (order) => {
-          this.isSubmittingOrder = false;
+          this.checkoutState.resetAfterSuccessfulCheckout();
           this.cartService.clear();
-          this.trackingOrderId = String(order.id);
-          this.loadTracking();
-          this.orderFeedback = {
-            type: 'success',
-            message: `Pedido #${order.id} criado com sucesso.`,
-          };
+          this.trackingState.setOwnedOrderId(order.id);
+          // Direcionamos para rota dedicada de pedido para manter
+          // o acompanhamento como destino canonico pos-checkout.
+          void this.router.navigate(['/pedido', order.id]);
         },
         error: (error) => {
-          this.isSubmittingOrder = false;
+          this.checkoutState.setIsSubmittingOrder(false);
           const apiMessage =
             error?.error?.message && typeof error.error.message === 'string'
               ? error.error.message
               : 'Falha ao criar pedido. Verifique os dados e tente novamente.';
-          this.orderFeedback = {
+          this.checkoutState.setOrderFeedback({
             type: 'error',
             message: apiMessage,
-          };
+          });
         },
       });
   }
 
   /**
-   * Consulta acompanhamento publico por id digitado.
+   * Abre rota de acompanhamento para o pedido do dispositivo atual.
    */
-  loadTracking() {
-    const orderId = Number(this.trackingOrderId);
-    if (!Number.isInteger(orderId) || orderId <= 0) {
-      this.trackingError = 'Informe um numero de pedido valido.';
-      this.trackingData = null;
+  openCurrentOrderTracking() {
+    const ownedOrderId = this.trackingState.getOwnedOrderId();
+    if (!ownedOrderId) {
+      this.trackingState.setNoActiveOrderState();
       return;
     }
 
-    this.trackingLoading = true;
-    this.trackingError = '';
-    // Evita exibir timeline do pedido anterior enquanto consulta o novo id.
-    this.trackingData = null;
-
-    this.ordersApiService.getOrderTracking(orderId).subscribe({
-      next: (response) => {
-        this.trackingLoading = false;
-        this.trackingData = response;
-      },
-      error: (error) => {
-        this.trackingLoading = false;
-        this.trackingData = null;
-        this.trackingError =
-          error?.error?.message && typeof error.error.message === 'string'
-            ? error.error.message
-            : 'Nao foi possivel consultar o pedido.';
-      },
-    });
+    void this.router.navigate(['/pedido', ownedOrderId]);
   }
 
   /**
@@ -354,101 +533,101 @@ export class HomeComponent {
   }
 
   /**
-   * Consolida observacoes locais de itens em um campo unico de pedido.
+   * Sincroniza componente com rota publica atual.
    *
    * Motivo:
-   * o payload atual do backend ainda nao possui observacao por item,
-   * entao preservamos contexto operacional no `notes` geral do pedido.
+   * mantemos o mesmo componente em rotas diferentes enquanto o fluxo
+   * ainda esta em transicao; isso reduz duplicacao de template sem perder
+   * URLs dedicadas por etapa.
    */
-  private buildOrderNotesForCheckout() {
-    const notesBlocks = this.cartItems()
-      .map((item) => {
-        const details: string[] = [];
-        if (item.extrasSummary && item.extrasSummary.length > 0) {
-          details.push(`extras: ${item.extrasSummary.join(', ')}`);
-        }
-        if (item.notes) {
-          details.push(`obs: ${item.notes}`);
-        }
-        if (details.length === 0) {
-          return '';
-        }
-        return `${item.name} x${item.quantity} (${details.join(' | ')})`;
-      })
-      .filter((line) => line.length > 0);
-
-    const checkoutNotes = this.checkout.notes.trim();
-    const mergedNotes = [checkoutNotes, ...notesBlocks].filter((line) => line.length > 0);
-    return mergedNotes.length > 0 ? mergedNotes.join('\n') : undefined;
-  }
-
-  /**
-   * Carrega catalogo publico da API com fallback para dados mock.
-   *
-   * Motivo:
-   * manter a vitrine navegavel mesmo se backend estiver fora, evitando
-   * pagina vazia durante validacao local.
-   */
-  private loadPublicCatalog() {
-    this.isCatalogLoading = true;
-    this.catalogLoadError = '';
-
-    this.catalogApiService.getPublicCatalog().subscribe({
-      next: (response) => {
-        this.isCatalogLoading = false;
-        this.categories = response.categories.map((category) =>
-          this.mapCategoryFromApi(category),
+  private bindRouteViewContext() {
+    combineLatest([this.route.data, this.route.paramMap, this.route.queryParamMap]).subscribe(
+      ([data, paramMap, queryParamMap]) => {
+        this.currentViewMode = this.resolveViewModeFromRouteData(data);
+        this.selectedCategoryId = this.resolveCategoryFilterFromQuery(
+          queryParamMap.get('categoria'),
         );
-        this.catalogProducts = response.products.map((product) =>
-          this.mapProductFromApi(product),
-        );
-        this.featuredItems = this.catalogProducts.slice(0, 3);
+
+        if (this.isCatalogView) {
+          this.catalogState.ensureCatalogLoaded();
+        } else if (this.selectedProduct) {
+          this.catalogState.closeProductDetails();
+        }
+
+        if (this.isTrackingView) {
+          this.openCurrentOrderTracking();
+        }
+
+        if (this.isOrderStatusView) {
+          this.loadTrackingByRouteParam(paramMap);
+        } else {
+          this.trackingState.stopAutoRefresh();
+        }
       },
-      error: () => {
-        this.isCatalogLoading = false;
-        this.categories = mockCategories;
-        this.catalogProducts = mockProducts;
-        this.featuredItems = this.catalogProducts.slice(0, 3);
-        this.catalogLoadError =
-          'Catalogo indisponivel no momento. Exibindo vitrine local temporaria.';
-      },
-    });
+    );
   }
 
   /**
-   * Normaliza categoria da API para o modelo visual do frontend.
+   * Resolve modo visual da tela a partir dos dados declarados na rota.
    */
-  private mapCategoryFromApi(category: PublicCatalogCategoryResponse) {
-    return {
-      id: category.slug,
-      name: category.name,
-    };
-  }
+  private resolveViewModeFromRouteData(data: Data): HomeViewMode {
+    const routeView = data['view'];
+    const allowedViews: HomeViewMode[] = [
+      'landing',
+      'catalog',
+      'cart',
+      'checkout',
+      'tracking',
+      'order-status',
+    ];
 
-  /**
-   * Normaliza produto da API para o modelo visual do frontend.
-   */
-  private mapProductFromApi(product: PublicCatalogProductResponse): Product {
-    return {
-      id: product.id,
-      name: product.name,
-      description: product.description ?? '',
-      price: Number(product.price),
-      image: product.imageUrl || this.defaultProductImage,
-      category: product.category.slug,
-      isAvailable: product.availability?.available ?? false,
-    };
-  }
-
-  /**
-   * Normaliza telefone digitado no checkout para envio consistente.
-   */
-  private normalizePhoneForCheckout(rawPhone: string) {
-    const digitsOnly = rawPhone.replace(/\D/g, '');
-    if (digitsOnly.length < 10) {
-      return null;
+    if (typeof routeView !== 'string') {
+      return 'landing';
     }
 
-    return digitsOnly;
+    return allowedViews.includes(routeView as HomeViewMode)
+      ? (routeView as HomeViewMode)
+      : 'landing';
+  }
+
+  /**
+   * Resolve filtro de categoria recebido na query string.
+   *
+   * Motivo:
+   * manter o filtro acoplado a URL permite compartilhamento de links
+   * e preserva contexto ao navegar entre paginas do fluxo.
+   */
+  private resolveCategoryFilterFromQuery(rawCategory: string | null) {
+    if (!rawCategory) {
+      return '';
+    }
+
+    return rawCategory.trim();
+  }
+
+  /**
+   * Carrega tracking automaticamente quando rota de pedido contem id valido.
+   */
+  private loadTrackingByRouteParam(paramMap: ParamMap) {
+    const rawOrderId = paramMap.get('id');
+    const parsedOrderId = Number(rawOrderId);
+
+    if (!Number.isInteger(parsedOrderId) || parsedOrderId <= 0) {
+      this.trackingState.setNoActiveOrderState();
+      return;
+    }
+
+    if (!this.trackingState.isOwnedOrder(parsedOrderId)) {
+      this.trackingState.setForbiddenOrderState();
+      const ownedOrderId = this.trackingState.getOwnedOrderId();
+      if (ownedOrderId) {
+        void this.router.navigate(['/pedido', ownedOrderId]);
+      } else {
+        void this.router.navigate(['/']);
+      }
+      return;
+    }
+
+    this.trackingState.startAutoRefresh(parsedOrderId);
   }
 }

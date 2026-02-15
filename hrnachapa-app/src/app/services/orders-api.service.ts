@@ -6,6 +6,10 @@ interface CreateOrderPayload {
   items: Array<{
     productId: number;
     quantity: number;
+    extras?: Array<{
+      extraId: number;
+      quantity: number;
+    }>;
   }>;
   deliveryFee?: number;
   couponCode?: string;
@@ -21,6 +25,10 @@ interface CreatePublicCheckoutOrderPayload {
   items: Array<{
     productId: number;
     quantity: number;
+    extras?: Array<{
+      extraId: number;
+      quantity: number;
+    }>;
   }>;
   deliveryFee?: number;
   couponCode?: string;
@@ -33,6 +41,7 @@ export interface OrderTrackingResponse {
   total: string;
   createdAt: string;
   updatedAt: string;
+  cancellationCustomerMessage: string | null;
   timeline: Array<{
     status: string;
     label: string;

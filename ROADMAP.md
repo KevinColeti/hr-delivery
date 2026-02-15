@@ -107,8 +107,8 @@
 - Status: `in-progress`
 - [x] (`done`) [P2] Esboco inicial de layout `/admin` (sidebar/header/footer/dashboard)
 - [ ] (`todo`) [P0] Redesenhar `/admin` para o fluxo real da operacao
-- [ ] (`todo`) [P0] Modulo de pedidos (admin)
-- [ ] (`todo`) [P0] Modulo cozinha (visualizacao para monitor)
+- [x] (`done`) [P0] Modulo de pedidos (admin)
+- [x] (`done`) [P0] Modulo cozinha (visualizacao para monitor)
 - [ ] (`todo`) [P0] Modulo cardapio (produtos/categorias/receitas/extras)
 - [ ] (`todo`) [P0] Modulo estoque (insumos + movimentacoes + alertas)
 - [ ] (`todo`) [P0] Modulo promocoes (cupons + combos)

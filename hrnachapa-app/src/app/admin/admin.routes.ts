@@ -4,6 +4,8 @@ import { AdminLayoutComponent } from './layout/admin-layout/admin-layout';
 import { AdminForbiddenComponent } from './pages/forbidden/admin-forbidden';
 import { DashboardComponent } from './pages/dashboard/dashboard';
 import { AdminLoginComponent } from './pages/login/admin-login';
+import { AdminKitchenComponent } from './pages/kitchen/admin-kitchen';
+import { AdminOrdersComponent } from './pages/orders/admin-orders';
 import { AdminPlaceholderComponent } from './pages/placeholder/admin-placeholder';
 
 export const adminRoutes: Routes = [
@@ -29,13 +31,13 @@ export const adminRoutes: Routes = [
       },
       {
         path: 'pedidos',
-        component: AdminPlaceholderComponent,
+        component: AdminOrdersComponent,
         canActivate: [adminAuthGuard],
         data: { roles: ['admin'], title: 'Pedidos' },
       },
       {
         path: 'cozinha',
-        component: AdminPlaceholderComponent,
+        component: AdminKitchenComponent,
         canActivate: [adminAuthGuard],
         data: { roles: ['admin', 'kitchen'], title: 'Cozinha' },
       },

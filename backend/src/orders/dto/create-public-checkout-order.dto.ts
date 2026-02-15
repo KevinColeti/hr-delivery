@@ -12,6 +12,19 @@ import {
 import { Type } from 'class-transformer';
 
 /**
+ * Extra selecionado por item no checkout publico.
+ */
+class CreatePublicCheckoutOrderItemExtraDto {
+  @IsInt()
+  @Min(1)
+  extraId: number;
+
+  @IsInt()
+  @Min(1)
+  quantity: number;
+}
+
+/**
  * Item de pedido enviado no checkout publico.
  */
 class CreatePublicCheckoutOrderItemDto {
@@ -22,6 +35,12 @@ class CreatePublicCheckoutOrderItemDto {
   @IsInt()
   @Min(1)
   quantity: number;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreatePublicCheckoutOrderItemExtraDto)
+  extras?: CreatePublicCheckoutOrderItemExtraDto[];
 }
 
 /**
@@ -97,4 +116,3 @@ export class CreatePublicCheckoutOrderDto {
   @MaxLength(1000)
   notes?: string;
 }
-

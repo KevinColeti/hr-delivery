@@ -1,0 +1,117 @@
+<section class="space-y-4">
+  <header class="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">Operacao</p>
+        <h1 class="text-2xl font-bold text-stone-900">Cozinha</h1>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <label class="inline-flex items-center gap-2 text-sm text-stone-700">
+          <input
+            type="checkbox"
+            [(ngModel)]="includeReady"
+            (change)="onIncludeReadyChanged()"
+            class="h-4 w-4 rounded border-stone-300 text-stone-700 focus:ring-stone-400" />
+          Incluir pedidos prontos
+        </label>
+
+        <button
+          type="button"
+          (click)="loadKitchenBoard()"
+          class="rounded-xl border border-stone-300 px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100">
+          Atualizar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  @if (boardErrorMessage) {
+    <p class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+      {{ boardErrorMessage }}
+    </p>
+  }
+
+  @if (actionErrorMessage) {
+    <p class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+      {{ actionErrorMessage }}
+    </p>
+  }
+
+  @if (isLoadingBoard && kitchenOrders.length === 0) {
+    <p class="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-600">
+      Carregando board da cozinha...
+    </p>
+  }
+
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+    @for (order of kitchenOrders; track order.id) {
+      <article class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <p class="text-sm font-bold text-stone-900">Pedido #{{ order.id }}</p>
+            <p class="text-xs text-stone-600">{{ order.createdAt | date:'dd/MM HH:mm' }}</p>
+          </div>
+          <span
+            [class]="
+              'rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] ' +
+              getStatusBadgeClass(order.status)
+            ">
+            {{ getStatusLabel(order.status) }}
+          </span>
+        </div>
+
+        <div class="mt-3 rounded-xl border border-stone-200 bg-stone-50 p-3 text-sm">
+          <p class="font-semibold text-stone-800">{{ order.client.name }}</p>
+          <p class="text-stone-600">{{ order.client.phone }}</p>
+          @if (order.client.addressLine) {
+            <p class="text-stone-600">{{ order.client.addressLine }}</p>
+          }
+        </div>
+
+        <div class="mt-3 space-y-2">
+          @for (item of order.items; track item.id) {
+            <div class="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm">
+              <p class="font-semibold text-stone-800">{{ item.productName }} x{{ item.quantity }}</p>
+              @if (item.extras && item.extras.length > 0) {
+                <p class="mt-1 text-xs text-stone-600">
+                  Extras:
+                  @for (extra of item.extras; track extra.id; let isLast = $last) {
+                    <span>{{ extra.extraName }} x{{ extra.quantity }}{{ isLast ? '' : ', ' }}</span>
+                  }
+                </p>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            (click)="startPreparation(order)"
+            [disabled]="!canStartPreparation(order) || actionOrderIdInProgress === order.id"
+            class="rounded-lg bg-orange-600 px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-white disabled:cursor-not-allowed disabled:opacity-50">
+            {{ actionOrderIdInProgress === order.id ? 'Atualizando...' : 'Iniciar preparo' }}
+          </button>
+          <button
+            type="button"
+            (click)="markReady(order)"
+            [disabled]="!canMarkReady(order) || actionOrderIdInProgress === order.id"
+            class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-white disabled:cursor-not-allowed disabled:opacity-50">
+            {{ actionOrderIdInProgress === order.id ? 'Atualizando...' : 'Marcar pronto' }}
+          </button>
+        </div>
+
+        <p class="mt-3 text-right text-sm font-bold text-stone-900">
+          {{ toNumber(order.total) | currency:'BRL':'symbol':'1.2-2' }}
+        </p>
+      </article>
+    }
+  </div>
+
+  @if (!isLoadingBoard && kitchenOrders.length === 0) {
+    <p class="rounded-xl border border-dashed border-stone-300 px-3 py-4 text-sm text-stone-600">
+      Sem pedidos no board da cozinha neste momento.
+    </p>
+  }
+</section>

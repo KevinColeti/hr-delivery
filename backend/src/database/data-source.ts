@@ -5,6 +5,7 @@ import { ComboRule } from '../entities/combo-rule.entity';
 import { Combo } from '../entities/combo.entity';
 import { Coupon } from '../entities/coupon.entity';
 import { Ingredient } from '../entities/ingredient.entity';
+import { OrderItemExtra } from '../entities/order-item-extra.entity';
 import { OrderItem } from '../entities/order-item.entity';
 import { Order } from '../entities/order.entity';
 import { OrderStatusHistory } from '../entities/order-status-history.entity';
@@ -37,6 +38,7 @@ const dataSource = new DataSource({
     StockMovement,
     Order,
     OrderItem,
+    OrderItemExtra,
     OrderStatusHistory,
     WhatsAppNotificationLog,
   ],

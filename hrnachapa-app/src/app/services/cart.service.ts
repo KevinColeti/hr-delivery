@@ -1,6 +1,12 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { Product } from '../components/product-card/product-card';
 
+export interface CartItemExtraSelection {
+  extraId: number;
+  name: string;
+  quantity: number;
+}
+
 export interface CartItem {
   key: string;
   productId: number;
@@ -9,6 +15,7 @@ export interface CartItem {
   quantity: number;
   notes?: string;
   extrasSummary?: string[];
+  extraSelections?: CartItemExtraSelection[];
 }
 
 @Injectable({
@@ -67,12 +74,21 @@ export class CartService {
   /**
    * Adiciona produto personalizado (extras/observacao) sem colidir com item base.
    */
-  addConfiguredProduct(product: Product, options: { notes?: string; extrasSummary?: string[] }) {
+  addConfiguredProduct(
+    product: Product,
+    options: { notes?: string; extraSelections?: CartItemExtraSelection[] },
+  ) {
     const normalizedNotes = options.notes?.trim() || undefined;
-    const normalizedExtras =
-      options.extrasSummary?.map((extra) => extra.trim()).filter((extra) => extra.length > 0) ??
-      [];
-    const itemKey = this.buildItemKey(product.id, normalizedNotes, normalizedExtras);
+    const normalizedExtraSelections =
+      options.extraSelections
+        ?.filter((extra) => Number.isInteger(extra.extraId) && extra.extraId > 0 && extra.quantity > 0)
+        .map((extra) => ({
+          extraId: extra.extraId,
+          name: extra.name.trim(),
+          quantity: extra.quantity,
+        }))
+        .sort((a, b) => a.extraId - b.extraId) ?? [];
+    const itemKey = this.buildItemKey(product.id, normalizedNotes, normalizedExtraSelections);
     const current = this.itemsSignal();
     const existing = current.find((item) => item.key === itemKey);
 
@@ -86,7 +102,14 @@ export class CartService {
           price: product.price,
           quantity: 1,
           notes: normalizedNotes,
-          extrasSummary: normalizedExtras.length > 0 ? normalizedExtras : undefined,
+          extrasSummary:
+            normalizedExtraSelections.length > 0
+              ? normalizedExtraSelections.map((extra) =>
+                  extra.quantity > 1 ? `${extra.name} x${extra.quantity}` : extra.name,
+                )
+              : undefined,
+          extraSelections:
+            normalizedExtraSelections.length > 0 ? normalizedExtraSelections : undefined,
         },
       ]);
       return;
@@ -160,7 +183,15 @@ export class CartService {
           typeof item?.price === 'number' &&
           typeof item?.quantity === 'number' &&
           (item?.notes === undefined || typeof item?.notes === 'string') &&
-          (item?.extrasSummary === undefined || Array.isArray(item?.extrasSummary)),
+          (item?.extrasSummary === undefined || Array.isArray(item?.extrasSummary)) &&
+          (item?.extraSelections === undefined ||
+            (Array.isArray(item?.extraSelections) &&
+              item.extraSelections.every(
+                (extra: CartItemExtraSelection) =>
+                  typeof extra?.extraId === 'number' &&
+                  typeof extra?.name === 'string' &&
+                  typeof extra?.quantity === 'number',
+              ))),
       );
     } catch {
       return [];
@@ -170,8 +201,13 @@ export class CartService {
   /**
    * Gera chave deterministica para agrupar somente itens equivalentes.
    */
-  private buildItemKey(productId: number, notes?: string, extrasSummary?: string[]) {
-    const extrasKey = extrasSummary?.join('|') ?? '';
+  private buildItemKey(
+    productId: number,
+    notes?: string,
+    extraSelections?: CartItemExtraSelection[],
+  ) {
+    const extrasKey =
+      extraSelections?.map((extra) => `${extra.extraId}:${extra.quantity}`).join('|') ?? '';
     return `${productId}::${notes ?? ''}::${extrasKey}`;
   }
 }

@@ -39,6 +39,14 @@ export class WhatsAppService {
   }
 
   /**
+   * Envia mensagem personalizada quando pedido e cancelado.
+   */
+  async sendOrderCanceled(order: Order, customerMessage: string) {
+    const message = `Pedido #${order.id}: ${customerMessage}`;
+    await this.sendOrderEventMessage(order, 'order_status_changed', message);
+  }
+
+  /**
    * Envia payload para webhook com timeout e autenticacao opcional.
    */
   private async sendOrderEventMessage(

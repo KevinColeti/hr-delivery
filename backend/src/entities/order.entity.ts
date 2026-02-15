@@ -58,6 +58,12 @@ export class Order {
   @Column({ type: 'text', nullable: true })
   notes: string | null;
 
+  @Column({ name: 'cancellation_customer_message', type: 'text', nullable: true })
+  cancellationCustomerMessage: string | null;
+
+  @Column({ name: 'cancellation_internal_note', type: 'text', nullable: true })
+  cancellationInternalNote: string | null;
+
   @Column({ name: 'applied_coupon_id', type: 'integer', nullable: true })
   appliedCouponId: number | null;
 

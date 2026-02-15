@@ -6,8 +6,10 @@ import { Combo } from '../entities/combo.entity';
 import { Coupon } from '../entities/coupon.entity';
 import { Ingredient } from '../entities/ingredient.entity';
 import { OrderItem } from '../entities/order-item.entity';
+import { OrderItemExtra } from '../entities/order-item-extra.entity';
 import { Order } from '../entities/order.entity';
 import { OrderStatusHistory } from '../entities/order-status-history.entity';
+import { ProductExtra } from '../entities/product-extra.entity';
 import { ProductIngredient } from '../entities/product-ingredient.entity';
 import { Product } from '../entities/product.entity';
 import { StockMovementsModule } from '../stock-movements/stock-movements.module';
@@ -27,8 +29,10 @@ import { OrdersService } from './orders.service';
       ComboRule,
       Coupon,
       ProductIngredient,
+      ProductExtra,
       Ingredient,
       OrderStatusHistory,
+      OrderItemExtra,
     ]),
     StockMovementsModule,
     WhatsAppModule,

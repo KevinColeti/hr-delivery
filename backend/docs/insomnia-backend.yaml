@@ -990,7 +990,13 @@ collection:
               "items": [
                 {
                   "productId": 1,
-                  "quantity": 2
+                  "quantity": 2,
+                  "extras": [
+                    {
+                      "extraId": 1,
+                      "quantity": 1
+                    }
+                  ]
                 }
               ],
               "deliveryFee": 6,
@@ -1018,6 +1024,45 @@ collection:
           description: Consulta acompanhamento publico de pedido por ID
           sortKey: -17710356000406
         method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/orders/checkout"
+        name: Create Public Checkout Order (No Extras)
+        meta:
+          id: req_orders_checkout_public_hrnachapa_002
+          created: 1771049300001
+          modified: 1771049300001
+          isPrivate: false
+          description: Checkout publico sem extras para comparar calculo e estoque
+          sortKey: -177103560004055
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "client": {
+                "name": "Maria Oliveira",
+                "phone": "(11) 98888-7777",
+                "addressLine": "Av. Exemplo, 456"
+              },
+              "items": [
+                {
+                  "productId": 1,
+                  "quantity": 1
+                }
+              ],
+              "deliveryFee": 6,
+              "notes": "Sem observacoes"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
         settings:
           renderRequestBody: true
           encodeUrl: true
@@ -1088,7 +1133,13 @@ collection:
               "items": [
                 {
                   "productId": 1,
-                  "quantity": 2
+                  "quantity": 2,
+                  "extras": [
+                    {
+                      "extraId": 1,
+                      "quantity": 2
+                    }
+                  ]
                 }
               ],
               "deliveryFee": 5,
@@ -1115,20 +1166,44 @@ collection:
         meta:
           id: req_orders_status_update_hrnachapa_001
           created: 1771035600044
-          modified: 1771035600044
+          modified: 1771050500001
           isPrivate: false
-          description: Atualiza status (new, confirmed, in_preparation, ready, out_for_delivery, delivered, canceled)
+          description: Atualiza status (suporta campos de cancelamento quando status=canceled)
           sortKey: -1771035600044
         method: PATCH
         body:
           mimeType: application/json
           text: |-
             {
-              "status": "confirmed"
+              "status": "canceled",
+              "cancellationCustomerMessage": "Tivemos um problema com o seu pedido, e precisamos cancelar.",
+              "cancellationInternalNote": "Cancelado por falta de insumo critico no turno."
             }
         headers:
           - name: Content-Type
             value: application/json
+        authentication:
+          type: bearer
+          prefix: Bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/orders/1/cancellation/revert"
+        name: Revert Order Cancellation
+        meta:
+          id: req_orders_cancellation_revert_hrnachapa_001
+          created: 1771050500002
+          modified: 1771050500002
+          isPrivate: false
+          description: Reverte pedido cancelado para status confirmed (admin)
+          sortKey: -177103560004425
+        method: PATCH
         authentication:
           type: bearer
           prefix: Bearer

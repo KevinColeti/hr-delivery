@@ -13,26 +13,26 @@
 ---
 
 ## C1 - E7 (Site Cliente) - Subtopicos de Fluxo Real
-- Status: `todo`
+- Status: `in-progress`
 - Referencia principal: `E7 - Frontend Site (Cliente)` no `ROADMAP.md`
 
 ### C1.1 [Subtopico de E7] Separacao de fluxo em rotas
-- [ ] (`todo`) [P0] Criar rotas publicas separadas: `/`, `/cardapio`, `/produto/:slug|id`, `/carrinho`, `/checkout`, `/pedido/:id`, `/acompanhar`.
-- [ ] (`todo`) [P0] Remover acoplamento da `Home` como tela unica de cardapio+carrinho+checkout+tracking.
+- [x] (`done`) [P0] Criar rotas publicas separadas: `/`, `/cardapio`, `/produto/:slug|id`, `/carrinho`, `/checkout`, `/pedido/:id`, `/acompanhar`.
+- [x] (`done`) [P0] Remover acoplamento da `Home` como tela unica de cardapio+carrinho+checkout+tracking.
 - [ ] (`todo`) [P1] Criar layout publico reutilizavel (header/footer) para paginas de fluxo.
 
 ### C1.2 [Subtopico de E7] Cardapio dinamico (refino)
-- [ ] (`todo`) [P0] Mover carregamento de catalogo para pagina/servico dedicado.
-- [ ] (`todo`) [P1] Adicionar estados robustos de `loading`, `erro` e `vazio` por pagina.
-- [ ] (`todo`) [P1] Padronizar filtros por categoria via URL (query param).
+- [x] (`done`) [P0] Mover carregamento de catalogo para pagina/servico dedicado.
+- [x] (`done`) [P1] Adicionar estados robustos de `loading`, `erro` e `vazio` por pagina.
+- [x] (`done`) [P1] Padronizar filtros por categoria via URL (query param).
 
 ### C1.3 [Subtopico de E7] Detalhe de produto com extras
 - [ ] (`todo`) [P0] Converter modal atual para fluxo de pagina (ou modal com URL canônica).
 - [ ] (`todo`) [P0] Exibir disponibilidade de extras e preco final do item configurado.
-- [ ] (`todo`) [P1] Persistir configuracao de item de forma estruturada para pedido (nao apenas em `notes`).
+- [x] (`done`) [P1] Persistir configuracao de item de forma estruturada para pedido (nao apenas em `notes`).
 
 ### C1.4 [Subtopico de E7] Carrinho separado
-- [ ] (`todo`) [P0] Criar pagina `/carrinho` com resumo de itens, extras e observacoes.
+- [x] (`done`) [P0] Criar pagina `/carrinho` com resumo de itens, extras e observacoes.
 - [ ] (`todo`) [P0] Garantir edicao/remocao por item configurado (chave de composicao).
 - [ ] (`todo`) [P1] Exibir validacoes de disponibilidade antes de ir ao checkout.
 
@@ -43,8 +43,8 @@
 - [ ] (`todo`) [P1] Preparar ponto de extensao para forma de pagamento.
 
 ### C1.6 [Subtopico de E7] Tracking e pos-compra
-- [ ] (`todo`) [P0] Pagina dedicada `/pedido/:id` com tracking primario.
-- [ ] (`todo`) [P1] Manter `/acompanhar` como busca manual secundaria por numero.
+- [x] (`done`) [P0] Pagina dedicada `/pedido/:id` com tracking primario.
+- [x] (`done`) [P1] Manter `/acompanhar` como busca manual secundaria por numero.
 - [ ] (`todo`) [P1] Integrar CTA de WhatsApp contextual na jornada pos-checkout.
 
 ---
@@ -70,14 +70,14 @@
 ---
 
 ## C3 - E3/E4 (Pedidos e Preco) - Subtopicos de Modelo de Pedido
-- Status: `todo`
+- Status: `in-progress`
 - Referencia principal: `E3` e `E4` no `ROADMAP.md`
 
 ### C3.1 [Subtopico de E3] Pedido com itens configurados (extras estruturados)
-- [ ] (`todo`) [P0] Evoluir DTO de criacao de pedido para aceitar extras por item.
-- [ ] (`todo`) [P0] Criar persistencia de extras no item do pedido (tabela dedicada ou snapshot JSON estruturado).
-- [ ] (`todo`) [P0] Ajustar calculo de subtotal/total incluindo extras.
-- [ ] (`todo`) [P0] Ajustar baixa de estoque considerando extras com consumo de insumo.
+- [x] (`done`) [P0] Evoluir DTO de criacao de pedido para aceitar extras por item.
+- [x] (`done`) [P0] Criar persistencia de extras no item do pedido (tabela dedicada ou snapshot JSON estruturado).
+- [x] (`done`) [P0] Ajustar calculo de subtotal/total incluindo extras.
+- [x] (`done`) [P0] Ajustar baixa de estoque considerando extras com consumo de insumo.
 
 ### C3.2 [Subtopico de E4] Promocao com itens configurados
 - [ ] (`todo`) [P1] Validar impacto de combo/cupom no novo modelo de item com extras.
@@ -86,22 +86,25 @@
 ---
 
 ## C4 - E8 (Frontend Admin) - Subtopicos de Modulos Reais
-- Status: `todo`
+- Status: `in-progress`
 - Referencia principal: `E8 - Frontend Admin` no `ROADMAP.md`
 
 ### C4.1 [Subtopico de E8] Redesenho de IA de navegacao
 - [ ] (`todo`) [P0] Definir mapa final de navegacao do admin (pedidos, cozinha, cardapio, estoque, promocoes, clientes, configuracoes).
 - [ ] (`todo`) [P0] Remover placeholders por modulo real de forma incremental.
+- [x] (`done`) [P0] Substituir placeholders de `pedidos` e `cozinha` por modulos funcionais iniciais.
 
 ### C4.2 [Subtopico de E8] Modulo de pedidos (admin)
-- [ ] (`todo`) [P0] Listagem com filtros por status/data.
-- [ ] (`todo`) [P0] Detalhe do pedido com timeline de status e auditoria.
-- [ ] (`todo`) [P0] Acoes de transicao de status conforme role.
+- [x] (`done`) [P0] Listagem com filtros por status/data.
+- [x] (`done`) [P0] Detalhe do pedido com timeline de status e auditoria.
+- [x] (`done`) [P0] Acoes de transicao de status conforme role.
+- [x] (`done`) [P0] Fluxo de cancelamento com confirmacao, mensagem ao cliente, nota interna e reversao de cancelamento.
 
 ### C4.3 [Subtopico de E8] Modulo cozinha
-- [ ] (`todo`) [P0] Board operacional consumindo `/orders/kitchen/board`.
-- [ ] (`todo`) [P0] Atualizacao em tempo real via `/orders/kitchen/stream`.
-- [ ] (`todo`) [P0] Acoes rapidas de preparo/pronto.
+- [x] (`done`) [P0] Board operacional consumindo `/orders/kitchen/board`.
+- [x] (`done`) [P0] Atualizacao em tempo real via `/orders/kitchen/stream`.
+- [x] (`done`) [P0] Acoes rapidas de preparo/pronto.
+- [x] (`done`) [P1] Atualizacao automatica por polling curto como etapa intermedia ate stream SSE dedicado no front admin.
 
 ### C4.4 [Subtopico de E8] Modulo cardapio e estoque
 - [ ] (`todo`) [P0] CRUD completo de categorias/produtos/receitas/extras no admin.
@@ -165,36 +168,36 @@
   - Pedido passa a nascer com cliente correto automaticamente.
 
 ### Dia 2 - Pedido com extras estruturados (backend)
-- [ ] (`todo`) [P0] Evoluir contrato de pedido para aceitar extras por item.
-- [ ] (`todo`) [P0] Persistir extras no item do pedido com snapshot consistente.
-- [ ] (`todo`) [P0] Ajustar calculo de total incluindo extras.
-- [ ] (`todo`) [P0] Ajustar baixa de estoque de extras vinculados a insumo.
-- [ ] (`todo`) [P0] Testar fluxo completo: pedido com e sem extras.
+- [x] (`done`) [P0] Evoluir contrato de pedido para aceitar extras por item.
+- [x] (`done`) [P0] Persistir extras no item do pedido com snapshot consistente.
+- [x] (`done`) [P0] Ajustar calculo de total incluindo extras.
+- [x] (`done`) [P0] Ajustar baixa de estoque de extras vinculados a insumo.
+- [x] (`done`) [P0] Testar fluxo completo: pedido com e sem extras.
 - Saida esperada:
   - Extras deixam de depender de texto em `notes`.
   - Total e estoque refletem personalizacao real do pedido.
 
 ### Dia 3 - Quebra de fluxo no frontend publico
-- [ ] (`todo`) [P0] Criar rotas: `/cardapio`, `/carrinho`, `/checkout`, `/pedido/:id`, `/acompanhar`.
-- [ ] (`todo`) [P0] Reduzir `Home` para papel de landing e atalhos.
-- [ ] (`todo`) [P0] Mover estado para servicos por dominio (catalogo, carrinho, checkout, tracking).
-- [ ] (`todo`) [P1] Garantir navegacao sem perda de estado entre paginas.
+- [x] (`done`) [P0] Criar rotas: `/cardapio`, `/carrinho`, `/checkout`, `/pedido/:id`, `/acompanhar`.
+- [x] (`done`) [P0] Reduzir `Home` para papel de landing e atalhos.
+- [x] (`done`) [P0] Mover estado para servicos por dominio (catalogo, carrinho, checkout, tracking).
+- [x] (`done`) [P1] Garantir navegacao sem perda de estado entre paginas.
 - Saida esperada:
   - Fluxo visivel e limpo: cardapio -> carrinho -> checkout -> acompanhamento.
 
 ### Dia 4 - Integracao frontend com novo contrato de pedido
-- [ ] (`todo`) [P0] Checkout enviar dados de cliente (telefone/endereco) e itens com extras estruturados.
-- [ ] (`todo`) [P0] Pagina de detalhe do produto montar payload real de extras.
-- [ ] (`todo`) [P0] Pagina `/pedido/:id` ser destino principal apos checkout.
-- [ ] (`todo`) [P1] Manter `/acompanhar` como busca manual secundaria.
+- [x] (`done`) [P0] Checkout enviar dados de cliente (telefone/endereco) e itens com extras estruturados.
+- [x] (`done`) [P0] Pagina de detalhe do produto montar payload real de extras.
+- [x] (`done`) [P0] Pagina `/pedido/:id` ser destino principal apos checkout.
+- [x] (`done`) [P1] Manter `/acompanhar` como busca manual secundaria.
 - Saida esperada:
   - Front e back alinhados no contrato final de pedido.
   - Jornada de compra completa sem campo tecnico.
 
 ### Dia 5 - Admin operacional minimo (pedidos + cozinha)
-- [ ] (`todo`) [P0] Implementar modulo admin de pedidos (lista + detalhe + mudanca de status).
-- [ ] (`todo`) [P0] Implementar modulo cozinha (board + stream + acao pronto).
-- [ ] (`todo`) [P0] Validar regras de role entre `admin` e `kitchen`.
+- [x] (`done`) [P0] Implementar modulo admin de pedidos (lista + detalhe + mudanca de status).
+- [x] (`done`) [P0] Implementar modulo cozinha (board + stream + acao pronto).
+- [x] (`done`) [P0] Validar regras de role entre `admin` e `kitchen`.
 - [ ] (`todo`) [P0] Teste manual ponta a ponta: site -> admin -> cozinha -> tracking.
 - Saida esperada:
   - Operacao real minima funcionando no admin.
