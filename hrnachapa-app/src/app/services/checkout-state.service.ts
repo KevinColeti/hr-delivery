@@ -1,9 +1,16 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { CartItem } from './cart.service';
 
 export interface CheckoutFeedback {
   type: 'success' | 'error';
   message: string;
+}
+
+export interface CheckoutCouponFeedback {
+  type: 'success' | 'error';
+  message: string;
+  code?: string;
+  discountAmount?: number;
 }
 
 export interface CheckoutFormState {
@@ -28,6 +35,10 @@ export interface CheckoutFormState {
  */
 export class CheckoutStateService {
   private deliveryFeeDefault = 6;
+  private readonly isSubmittingOrderSignal = signal(false);
+  private readonly isValidatingCouponSignal = signal(false);
+  private readonly orderFeedbackSignal = signal<CheckoutFeedback | null>(null);
+  private readonly couponFeedbackSignal = signal<CheckoutCouponFeedback | null>(null);
 
   checkout: CheckoutFormState = {
     name: '',
@@ -37,21 +48,45 @@ export class CheckoutStateService {
     deliveryFee: this.deliveryFeeDefault,
     notes: '',
   };
-  isSubmittingOrder = false;
-  orderFeedback: CheckoutFeedback | null = null;
+
+  readonly isSubmittingOrder = this.isSubmittingOrderSignal.asReadonly();
+  readonly isValidatingCoupon = this.isValidatingCouponSignal.asReadonly();
+  readonly orderFeedback = this.orderFeedbackSignal.asReadonly();
+  readonly couponFeedback = this.couponFeedbackSignal.asReadonly();
 
   /**
    * Aplica feedback visual no bloco de checkout.
    */
   setOrderFeedback(nextFeedback: CheckoutFeedback | null) {
-    this.orderFeedback = nextFeedback;
+    this.orderFeedbackSignal.set(nextFeedback);
   }
 
   /**
    * Sinaliza estado de envio de pedido para bloquear interacoes duplicadas.
    */
   setIsSubmittingOrder(nextValue: boolean) {
-    this.isSubmittingOrder = nextValue;
+    this.isSubmittingOrderSignal.set(nextValue);
+  }
+
+  /**
+   * Sinaliza estado de validacao de cupom para bloquear clique duplicado.
+   */
+  setIsValidatingCoupon(nextValue: boolean) {
+    this.isValidatingCouponSignal.set(nextValue);
+  }
+
+  /**
+   * Aplica feedback de validacao de cupom no checkout.
+   */
+  setCouponFeedback(nextFeedback: CheckoutCouponFeedback | null) {
+    this.couponFeedbackSignal.set(nextFeedback);
+  }
+
+  /**
+   * Limpa feedback de cupom quando contexto de validacao muda.
+   */
+  clearCouponFeedback() {
+    this.couponFeedbackSignal.set(null);
   }
 
   /**
@@ -78,8 +113,10 @@ export class CheckoutStateService {
       deliveryFee: this.deliveryFeeDefault,
       notes: '',
     };
-    this.orderFeedback = null;
-    this.isSubmittingOrder = false;
+    this.orderFeedbackSignal.set(null);
+    this.isSubmittingOrderSignal.set(false);
+    this.isValidatingCouponSignal.set(false);
+    this.couponFeedbackSignal.set(null);
   }
 
   /**

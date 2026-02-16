@@ -233,13 +233,23 @@
             type="text"
             placeholder="Observacoes do pedido"
             class="w-full rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-3 text-sm outline-none focus:border-[color:var(--hc-accent)]" />
-          <div class="grid grid-cols-2 gap-3">
-            <input
-              [(ngModel)]="checkout.couponCode"
-              name="couponCode"
-              type="text"
-              placeholder="Cupom (opcional)"
-              class="rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-3 text-sm outline-none focus:border-[color:var(--hc-accent)]" />
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div class="space-y-2">
+              <input
+                [(ngModel)]="checkout.couponCode"
+                (ngModelChange)="onCouponCodeChanged()"
+                name="couponCode"
+                type="text"
+                placeholder="Cupom (opcional)"
+                class="w-full rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-3 text-sm outline-none focus:border-[color:var(--hc-accent)]" />
+              <button
+                type="button"
+                (click)="validateCouponForCheckout()"
+                [disabled]="isValidatingCoupon || isSubmittingOrder"
+                class="w-full rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-[color:var(--hc-ink)] hover:bg-[color:var(--hc-paper)] disabled:cursor-not-allowed disabled:opacity-60">
+                {{ isValidatingCoupon ? 'Validando...' : 'Validar cupom' }}
+              </button>
+            </div>
             <input
               [(ngModel)]="checkout.deliveryFee"
               name="deliveryFee"
@@ -250,9 +260,27 @@
               class="rounded-xl border border-[color:var(--hc-border)] bg-[color:var(--hc-surface)] px-3 py-3 text-sm outline-none focus:border-[color:var(--hc-accent)]" />
           </div>
 
+          @if (couponFeedback) {
+            <p
+              class="rounded-xl px-3 py-2 text-sm"
+              [class]="couponFeedback.type === 'success'
+                ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                : 'border border-amber-200 bg-amber-50 text-amber-700'">
+              {{ couponFeedback.message }}
+            </p>
+          }
+
           <div class="rounded-xl border border-dashed border-[color:var(--hc-border)] px-3 py-2 text-sm text-[color:var(--hc-muted)]">
             Total estimado:
             <strong class="text-[color:var(--hc-ink)]">{{ orderTotal | currency:'BRL':'symbol':'1.2-2' }}</strong>
+            @if (validatedCouponDiscountAmount > 0) {
+              <span class="block mt-1">
+                Desconto validado:
+                <strong class="text-emerald-700">
+                  -{{ validatedCouponDiscountAmount | currency:'BRL':'symbol':'1.2-2' }}
+                </strong>
+              </span>
+            }
             @if (minimumOrderAmount > 0) {
               <span class="block mt-1">
                 Pedido minimo:
@@ -373,8 +401,22 @@
       </div>
 
       <div class="mt-4 rounded-xl border border-dashed border-[color:var(--hc-border)] px-3 py-2 text-sm text-[color:var(--hc-muted)]">
-        Preco base:
-        <strong class="text-[color:var(--hc-ink)]">{{ selectedProduct.price | currency:'BRL':'symbol':'1.2-2' }}</strong>
+        <p>
+          Preco base:
+          <strong class="text-[color:var(--hc-ink)]">{{ selectedProduct.price | currency:'BRL':'symbol':'1.2-2' }}</strong>
+        </p>
+        <p>
+          Extras selecionados:
+          <strong class="text-[color:var(--hc-ink)]">
+            {{ selectedExtrasTotal | currency:'BRL':'symbol':'1.2-2' }}
+          </strong>
+        </p>
+        <p class="mt-1">
+          Preco final deste item:
+          <strong class="text-[color:var(--hc-accent)]">
+            {{ selectedProductConfiguredUnitPrice | currency:'BRL':'symbol':'1.2-2' }}
+          </strong>
+        </p>
       </div>
 
       <div class="mt-4">

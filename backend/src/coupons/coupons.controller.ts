@@ -1,9 +1,11 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Public } from '../auth/public.decorator';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../entities/user.entity';
 import { CouponsService } from './coupons.service';
 import { CreateCouponDto } from './dto/create-coupon.dto';
 import { UpdateCouponDto } from './dto/update-coupon.dto';
+import { ValidatePublicCouponDto } from './dto/validate-public-coupon.dto';
 
 @Controller('coupons')
 /**
@@ -11,6 +13,15 @@ import { UpdateCouponDto } from './dto/update-coupon.dto';
  */
 export class CouponsController {
   constructor(private readonly couponsService: CouponsService) {}
+
+  /**
+   * Valida cupom no contexto do checkout publico sem consumir uso.
+   */
+  @Post('public/validate')
+  @Public()
+  validatePublicCoupon(@Body() dto: ValidatePublicCouponDto) {
+    return this.couponsService.validateForPublicCheckout(dto);
+  }
 
   /**
    * Lista cupons.

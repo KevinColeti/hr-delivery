@@ -6,9 +6,11 @@ import { DashboardComponent } from './pages/dashboard/dashboard';
 import { AdminLoginComponent } from './pages/login/admin-login';
 import { AdminKitchenComponent } from './pages/kitchen/admin-kitchen';
 import { AdminClientsComponent } from './pages/clients/admin-clients';
+import { AdminMenuComponent } from './pages/menu/admin-menu';
 import { AdminOrdersComponent } from './pages/orders/admin-orders';
-import { AdminPlaceholderComponent } from './pages/placeholder/admin-placeholder';
+import { AdminPromotionsComponent } from './pages/promotions/admin-promotions';
 import { AdminSettingsComponent } from './pages/settings/admin-settings';
+import { AdminStockComponent } from './pages/stock/admin-stock';
 
 export const adminRoutes: Routes = [
   {
@@ -45,19 +47,19 @@ export const adminRoutes: Routes = [
       },
       {
         path: 'cardapio',
-        component: AdminPlaceholderComponent,
+        component: AdminMenuComponent,
         canActivate: [adminAuthGuard],
         data: { roles: ['admin'], title: 'Cardapio' },
       },
       {
         path: 'estoque',
-        component: AdminPlaceholderComponent,
+        component: AdminStockComponent,
         canActivate: [adminAuthGuard],
         data: { roles: ['admin'], title: 'Estoque' },
       },
       {
         path: 'promocoes',
-        component: AdminPlaceholderComponent,
+        component: AdminPromotionsComponent,
         canActivate: [adminAuthGuard],
         data: { roles: ['admin'], title: 'Promocoes' },
       },

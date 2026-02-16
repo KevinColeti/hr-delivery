@@ -216,7 +216,7 @@ export class ProductExtrasService {
   /**
    * Resolve ingrediente vinculado, quando informado.
    */
-  private async resolveIngredient(ingredientId?: number) {
+  private async resolveIngredient(ingredientId?: number | null) {
     if (!ingredientId) {
       return null;
     }

@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from '../entities/category.entity';
@@ -9,11 +9,22 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 /**
  * Regras de negocio de categorias do cardapio.
  */
-export class CategoriesService {
+export class CategoriesService implements OnModuleInit {
   constructor(
     @InjectRepository(Category)
     private readonly categoriesRepository: Repository<Category>,
   ) {}
+
+  /**
+   * Garante categoria padrao de combos ao inicializar o modulo.
+   *
+   * Motivo:
+   * combos agora sao itens do cardapio e dependem da categoria `combos`
+   * existir/estar ativa para aparecer no catalogo publico.
+   */
+  async onModuleInit() {
+    await this.ensureDefaultCombosCategory();
+  }
 
   /**
    * Lista categorias ordenadas para exibicao.
@@ -115,5 +126,50 @@ export class CategoriesService {
     if (slugExists) {
       throw new ConflictException('Ja existe uma categoria com este slug');
     }
+  }
+
+  /**
+   * Garante existencia e ativacao da categoria tecnica `Combos`.
+   *
+   * Regra:
+   * - se slug `combos` existir, reaproveita;
+   * - senao, tenta reaproveitar categoria com nome `Combos`;
+   * - se nada existir, cria categoria nova.
+   */
+  private async ensureDefaultCombosCategory() {
+    const bySlug = await this.categoriesRepository
+      .createQueryBuilder('category')
+      .where('LOWER(category.slug) = LOWER(:slug)', { slug: 'combos' })
+      .getOne();
+
+    if (bySlug) {
+      const merged = this.categoriesRepository.merge(bySlug, {
+        isActive: true,
+      });
+      await this.categoriesRepository.save(merged);
+      return;
+    }
+
+    const byName = await this.categoriesRepository
+      .createQueryBuilder('category')
+      .where('LOWER(category.name) = LOWER(:name)', { name: 'Combos' })
+      .getOne();
+
+    if (byName) {
+      const merged = this.categoriesRepository.merge(byName, {
+        slug: 'combos',
+        isActive: true,
+      });
+      await this.categoriesRepository.save(merged);
+      return;
+    }
+
+    const category = this.categoriesRepository.create({
+      name: 'Combos',
+      slug: 'combos',
+      sortOrder: 0,
+      isActive: true,
+    });
+    await this.categoriesRepository.save(category);
   }
 }

@@ -33,12 +33,16 @@ export class AdminAuthService {
 
   readonly token = this.tokenSignal.asReadonly();
   readonly user = this.userSignal.asReadonly();
-  readonly isAuthenticated = computed(() => Boolean(this.tokenSignal()));
+  readonly isAuthenticated = computed(
+    () => Boolean(this.tokenSignal() && this.userSignal()),
+  );
 
   /**
    * Injeta cliente HTTP para autenticacao e carga de sessao.
    */
-  constructor(private readonly http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {
+    this.normalizePersistedSession();
+  }
 
   /**
    * Executa login administrativo e persiste sessao local.
@@ -115,5 +119,22 @@ export class AdminAuthService {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Corrige inconsistencias de sessao persistida no bootstrap.
+   *
+   * Motivo:
+   * token sem usuario (ou vice-versa) deixa o estado ambiguo e pode liberar
+   * comportamentos inesperados entre guard, menu e interceptor.
+   */
+  private normalizePersistedSession() {
+    const hasToken = Boolean(this.tokenSignal());
+    const hasUser = Boolean(this.userSignal());
+    if (hasToken === hasUser) {
+      return;
+    }
+
+    this.logout();
   }
 }

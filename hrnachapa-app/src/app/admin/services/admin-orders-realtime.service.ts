@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
 import { AdminAuthService } from './admin-auth.service';
 import { AdminOrderStatus } from './admin-orders.service';
 
@@ -23,11 +24,16 @@ export interface AdminOrdersRealtimeEvent {
  */
 export class AdminOrdersRealtimeService {
   private readonly baseUrl = 'http://localhost:3000/orders';
+  private readonly initialReconnectDelayMs = 1000;
+  private readonly maxReconnectDelayMs = 15000;
 
   /**
    * Injeta sessao admin para ler token JWT atual.
    */
-  constructor(private readonly adminAuthService: AdminAuthService) {}
+  constructor(
+    private readonly adminAuthService: AdminAuthService,
+    private readonly router: Router,
+  ) {}
 
   /**
    * Conecta stream geral de pedidos.
@@ -65,8 +71,39 @@ export class AdminOrdersRealtimeService {
 
     const controller = new AbortController();
     let isClosed = false;
+    let reconnectAttempt = 0;
+    let reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-    void (async () => {
+    /**
+     * Agenda tentativa de reconexao com backoff exponencial.
+     *
+     * Motivo:
+     * evitar tempestade de requests quando backend/rede oscila e manter
+     * retomada automatica sem depender de polling agressivo.
+     */
+    const scheduleReconnect = () => {
+      if (isClosed || controller.signal.aborted) {
+        return;
+      }
+
+      const nextAttemptNumber = reconnectAttempt + 1;
+      const delayMs = this.calculateReconnectDelayMs(reconnectAttempt);
+      reconnectAttempt = nextAttemptNumber;
+
+      reconnectTimeoutId = setTimeout(() => {
+        reconnectTimeoutId = null;
+        void connectWithAutoReconnect();
+      }, delayMs);
+    };
+
+    /**
+     * Executa conexao SSE e reabre stream automaticamente em falha.
+     */
+    const connectWithAutoReconnect = async () => {
+      if (isClosed || controller.signal.aborted) {
+        return;
+      }
+
       try {
         const response = await fetch(`${this.baseUrl}${path}`, {
           method: 'GET',
@@ -78,10 +115,28 @@ export class AdminOrdersRealtimeService {
           cache: 'no-store',
         });
 
-        if (!response.ok || !response.body) {
-          onError?.(`Falha ao conectar stream (${response.status}).`);
+        if (response.status === 401 || response.status === 403) {
+          // Quando sessao expira, interrompemos reconexao automatica para
+          // evitar loop infinito de tentativas sem token valido.
+          onError?.('Sessao administrativa expirada para stream em tempo real.');
+          this.adminAuthService.logout();
+          if (!this.router.url.startsWith('/admin/login')) {
+            const queryParams = this.router.url.startsWith('/admin')
+              ? { returnUrl: this.router.url }
+              : undefined;
+            void this.router.navigate(['/admin/login'], { queryParams });
+          }
           return;
         }
+
+        if (!response.ok || !response.body) {
+          onError?.(`Falha ao conectar stream (${response.status}).`);
+          scheduleReconnect();
+          return;
+        }
+
+        // Conexao estabelecida: reiniciamos contador de backoff.
+        reconnectAttempt = 0;
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -96,17 +151,28 @@ export class AdminOrdersRealtimeService {
           buffer += decoder.decode(value, { stream: true });
           buffer = this.consumeSseBuffer(buffer, onEvent);
         }
+
+        if (!isClosed) {
+          scheduleReconnect();
+        }
       } catch (error) {
         if (isClosed || controller.signal.aborted) {
           return;
         }
 
         onError?.(this.resolveStreamErrorMessage(error));
+        scheduleReconnect();
       }
-    })();
+    };
+
+    void connectWithAutoReconnect();
 
     return () => {
       isClosed = true;
+      if (reconnectTimeoutId !== null) {
+        clearTimeout(reconnectTimeoutId);
+        reconnectTimeoutId = null;
+      }
       controller.abort();
     };
   }
@@ -188,5 +254,14 @@ export class AdminOrdersRealtimeService {
     }
 
     return 'Nao foi possivel manter conexao em tempo real com pedidos.';
+  }
+
+  /**
+   * Calcula atraso da proxima reconexao com teto maximo.
+   */
+  private calculateReconnectDelayMs(attempt: number) {
+    const exponent = Math.max(0, attempt);
+    const delay = this.initialReconnectDelayMs * 2 ** exponent;
+    return Math.min(this.maxReconnectDelayMs, delay);
   }
 }

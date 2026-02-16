@@ -40,6 +40,7 @@ export class CatalogStateService {
   private readonly selectedExtraIdsSignal = signal<number[]>([]);
   private readonly productObservationSignal = signal('');
   private hasLoadedCatalogSuccessfully = false;
+  private catalogLoadInFlight: Promise<void> | null = null;
 
   readonly categories = this.categoriesSignal.asReadonly();
   readonly catalogProducts = this.catalogProductsSignal.asReadonly();
@@ -60,13 +61,27 @@ export class CatalogStateService {
 
   /**
    * Garante carga inicial do catalogo uma unica vez por sessao.
+   *
+   * Retorna `Promise<void>` para permitir que fluxos guiados por rota
+   * aguardem a lista de produtos antes de resolver detalhes por id.
    */
   ensureCatalogLoaded() {
     if (this.hasLoadedCatalogSuccessfully || this.isCatalogLoadingSignal()) {
-      return;
+      return this.catalogLoadInFlight ?? Promise.resolve();
     }
 
-    this.loadPublicCatalog();
+    if (this.catalogLoadInFlight) {
+      return this.catalogLoadInFlight;
+    }
+
+    this.catalogLoadInFlight = new Promise((resolve) => {
+      this.loadPublicCatalog(() => {
+        this.catalogLoadInFlight = null;
+        resolve();
+      });
+    });
+
+    return this.catalogLoadInFlight;
   }
 
   /**
@@ -157,7 +172,7 @@ export class CatalogStateService {
    * em ambiente local o backend pode oscilar; manter fallback evita
    * interromper a navegacao de vitrine durante desenvolvimento.
    */
-  private loadPublicCatalog() {
+  private loadPublicCatalog(onComplete: () => void) {
     this.isCatalogLoadingSignal.set(true);
     this.catalogLoadErrorSignal.set('');
 
@@ -172,6 +187,7 @@ export class CatalogStateService {
           response.products.map((product) => this.mapProductFromApi(product)),
         );
         this.featuredItemsSignal.set(this.catalogProductsSignal().slice(0, 3));
+        onComplete();
       },
       error: () => {
         this.hasLoadedCatalogSuccessfully = false;
@@ -182,6 +198,7 @@ export class CatalogStateService {
         this.catalogLoadErrorSignal.set(
           'Catalogo indisponivel no momento. Exibindo vitrine local temporaria.',
         );
+        onComplete();
       },
     });
   }

@@ -1,5 +1,7 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, throwError } from 'rxjs';
 import { AdminAuthService } from '../services/admin-auth.service';
 
 /**
@@ -10,19 +12,38 @@ import { AdminAuthService } from '../services/admin-auth.service';
  */
 export const adminAuthInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AdminAuthService);
+  const router = inject(Router);
   const token = authService.token();
+  const hasAuthenticatedSession = authService.isAuthenticated();
+  const isLocalApiRequest = req.url.startsWith('http://localhost:3000/');
+  const shouldAttachAuthorization =
+    Boolean(token) && hasAuthenticatedSession && isLocalApiRequest;
 
   // Limitamos o header a chamadas da API local para nao vazar token em
   // requests externas (imagens/CDN/servicos de terceiros).
-  if (!token || !req.url.startsWith('http://localhost:3000/')) {
-    return next(req);
-  }
+  const request = shouldAttachAuthorization
+    ? req.clone({
+        setHeaders: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+    : req;
 
-  return next(
-    req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
+  return next(request).pipe(
+    catchError((error) => {
+      if (shouldAttachAuthorization && error?.status === 401) {
+        authService.logout();
+        if (!router.url.startsWith('/admin/login')) {
+          // Guardamos returnUrl somente quando a rota atual e do admin,
+          // porque em contexto publico o retorno apos login deve ser dashboard.
+          const queryParams = router.url.startsWith('/admin')
+            ? { returnUrl: router.url }
+            : undefined;
+          void router.navigate(['/admin/login'], { queryParams });
+        }
+      }
+
+      return throwError(() => error);
     }),
   );
 };

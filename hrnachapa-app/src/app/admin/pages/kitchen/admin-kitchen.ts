@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Subscription, interval } from 'rxjs';
 import { AdminOrdersRealtimeService } from '../../services/admin-orders-realtime.service';
 import { AdminOrder, AdminOrderStatus, AdminOrdersService } from '../../services/admin-orders.service';
 
@@ -27,7 +26,6 @@ export class AdminKitchenComponent implements OnInit, OnDestroy {
   boardErrorMessage = '';
   actionErrorMessage = '';
   actionOrderIdInProgress: number | null = null;
-  private refreshSubscription: Subscription | null = null;
   private streamDisconnect: (() => void) | null = null;
 
   /**
@@ -40,28 +38,29 @@ export class AdminKitchenComponent implements OnInit, OnDestroy {
   ) {}
 
   /**
-   * Carrega board inicial e inicia auto refresh do monitor.
+   * Carrega board inicial e inicia stream em tempo real da cozinha.
    */
   ngOnInit() {
     this.loadKitchenBoard();
     this.startRealtimeUpdates();
-    this.startAutoRefresh();
   }
 
   /**
-   * Finaliza assinatura de auto refresh ao sair da tela.
+   * Finaliza assinatura de stream ao sair da tela.
    */
   ngOnDestroy() {
     this.stopRealtimeUpdates();
-    this.stopAutoRefresh();
   }
 
   /**
    * Atualiza board da cozinha conforme filtros correntes.
    */
-  loadKitchenBoard() {
-    this.isLoadingBoard = true;
-    this.boardErrorMessage = '';
+  loadKitchenBoard(options?: { silent?: boolean }) {
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      this.isLoadingBoard = true;
+      this.boardErrorMessage = '';
+    }
 
     this.adminOrdersService
       .listKitchenBoard({ includeReady: this.includeReady, limit: this.boardLimit })
@@ -73,10 +72,12 @@ export class AdminKitchenComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.isLoadingBoard = false;
-          this.boardErrorMessage =
-            error?.error?.message && typeof error.error.message === 'string'
-              ? error.error.message
-              : 'Nao foi possivel carregar o board da cozinha.';
+          if (!silent) {
+            this.boardErrorMessage =
+              error?.error?.message && typeof error.error.message === 'string'
+                ? error.error.message
+                : 'Nao foi possivel carregar o board da cozinha.';
+          }
           this.cdr.detectChanges();
         },
       });
@@ -212,38 +213,18 @@ export class AdminKitchenComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Inicia refresh automatico do board da cozinha.
-   *
-   * Motivo:
-   * o monitor da cozinha exige visao quase em tempo real para despacho;
-   * polling curto reduz latencia operacional sem acao manual.
-   */
-  private startAutoRefresh() {
-    this.stopAutoRefresh();
-    this.refreshSubscription = interval(3000).subscribe(() => {
-      this.loadKitchenBoard();
-    });
-  }
-
-  /**
-   * Encerra refresh automatico do monitor da cozinha.
-   */
-  private stopAutoRefresh() {
-    if (!this.refreshSubscription) {
-      return;
-    }
-
-    this.refreshSubscription.unsubscribe();
-    this.refreshSubscription = null;
-  }
-
-  /**
    * Inicia assinatura do stream de cozinha para refresh imediato por evento.
    */
   private startRealtimeUpdates() {
     this.stopRealtimeUpdates();
     this.streamDisconnect = this.adminOrdersRealtimeService.connectKitchenStream(() => {
-      this.loadKitchenBoard();
+      if (this.actionOrderIdInProgress !== null) {
+        return;
+      }
+
+      // Atualizamos de forma silenciosa para evitar "piscar" visual
+      // em eventos frequentes do stream operacional.
+      this.loadKitchenBoard({ silent: true });
     });
   }
 

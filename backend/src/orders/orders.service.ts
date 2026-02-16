@@ -6,8 +6,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, In, Not, QueryFailedError, Repository } from 'typeorm';
 import { Client } from '../entities/client.entity';
-import { ComboRuleType } from '../entities/combo-rule.entity';
-import { Combo, ComboDiscountType } from '../entities/combo.entity';
 import { Coupon, CouponDiscountType } from '../entities/coupon.entity';
 import { Ingredient } from '../entities/ingredient.entity';
 import { OrderItemExtra } from '../entities/order-item-extra.entity';
@@ -110,8 +108,6 @@ export class OrdersService {
     private readonly productExtrasRepository: Repository<ProductExtra>,
     @InjectRepository(Client)
     private readonly clientsRepository: Repository<Client>,
-    @InjectRepository(Combo)
-    private readonly combosRepository: Repository<Combo>,
     @InjectRepository(ProductIngredient)
     private readonly productIngredientsRepository: Repository<ProductIngredient>,
     @InjectRepository(OrderStatusHistory)
@@ -480,8 +476,6 @@ export class OrdersService {
     const orderItemsData: OrderItem[] = [];
     let subtotal = 0;
     const operationalSettings = await this.resolveOperationalSettingsWithManager(manager);
-    const productQuantityMap = new Map<number, number>();
-    const categoryQuantityMap = new Map<number, number>();
 
     for (const item of input.items) {
       const product = await manager.findOne(Product, {
@@ -520,15 +514,6 @@ export class OrdersService {
           extras,
         }),
       );
-
-      productQuantityMap.set(
-        product.id,
-        (productQuantityMap.get(product.id) ?? 0) + item.quantity,
-      );
-      categoryQuantityMap.set(
-        product.categoryId,
-        (categoryQuantityMap.get(product.categoryId) ?? 0) + item.quantity,
-      );
     }
 
     if (!operationalSettings.isStoreOpen) {
@@ -550,8 +535,6 @@ export class OrdersService {
         couponCode: input.couponCode,
       },
       subtotal,
-      productQuantityMap,
-      categoryQuantityMap,
     );
     const total = this.calculateOrderTotal(subtotal, deliveryFee, discount.discountAmount);
 
@@ -985,8 +968,20 @@ export class OrdersService {
       );
     }
 
-    if (coupon.usageLimit !== null && coupon.usageCount >= coupon.usageLimit) {
-      throw new BadRequestException('Cupom atingiu limite de uso');
+    if (coupon.usageLimit !== null) {
+      const couponUsageByClient = await manager.count(Order, {
+        where: {
+          clientId,
+          appliedCouponId: coupon.id,
+          status: Not(OrderStatus.CANCELED),
+        },
+      });
+
+      if (couponUsageByClient >= coupon.usageLimit) {
+        throw new BadRequestException(
+          'Cupom atingiu limite de uso para este cliente',
+        );
+      }
     }
 
     if (coupon.firstOrderOnly) {
@@ -1008,89 +1003,21 @@ export class OrdersService {
   }
 
   /**
-   * Resolve o melhor combo valido para o carrinho atual.
-   *
-   * Politica atual:
-   * - aplica apenas um combo;
-   * - escolhe o combo com maior desconto monetario.
-   */
-  private async resolveBestCombo(
-    manager: EntityManager,
-    subtotal: number,
-    productQuantityMap: Map<number, number>,
-    categoryQuantityMap: Map<number, number>,
-  ) {
-    const combos = await manager.find(Combo, {
-      where: { isActive: true },
-      relations: { rules: true },
-    });
-
-    let bestCombo: Combo | null = null;
-    let bestDiscount = 0;
-
-    const now = new Date();
-    for (const combo of combos) {
-      if (combo.startsAt && now < combo.startsAt) {
-        continue;
-      }
-      if (combo.endsAt && now > combo.endsAt) {
-        continue;
-      }
-      if (!combo.rules || combo.rules.length === 0) {
-        continue;
-      }
-
-      const isMatched = combo.rules.every((rule) => {
-        if (rule.type === ComboRuleType.PRODUCT) {
-          const currentQuantity = productQuantityMap.get(rule.productId ?? -1) ?? 0;
-          return currentQuantity >= rule.minimumQuantity;
-        }
-
-        const currentQuantity = categoryQuantityMap.get(rule.categoryId ?? -1) ?? 0;
-        return currentQuantity >= rule.minimumQuantity;
-      });
-
-      if (!isMatched) {
-        continue;
-      }
-
-      const discount = this.calculateComboDiscount(combo, subtotal);
-      if (discount > bestDiscount) {
-        bestDiscount = discount;
-        bestCombo = combo;
-      }
-    }
-
-    return bestCombo;
-  }
-
-  /**
-   * Calcula desconto de combo respeitando teto do subtotal.
-   */
-  private calculateComboDiscount(combo: Combo, subtotal: number) {
-    const discountValue = Number(combo.discountValue);
-    const rawDiscount =
-      combo.discountType === ComboDiscountType.PERCENTAGE
-        ? (subtotal * discountValue) / 100
-        : discountValue;
-
-    return Number(Math.min(rawDiscount, subtotal).toFixed(2));
-  }
-
-  /**
    * Resolve politica de desconto sem acumulo.
    *
    * Prioridade:
    * 1) desconto manual (quando informado);
    * 2) cupom (quando informado);
-   * 3) combo automatico (quando nao ha desconto manual/cupom).
+   * 3) sem desconto automatico quando nao ha desconto manual/cupom.
+   *
+   * Motivo:
+   * a partir desta regra de negocio, "combo" passa a ser um produto
+   * do cardapio (categoria `Combos`) e nao mais um desconto automatico.
    */
   private async resolveDiscountStrategy(
     manager: EntityManager,
     dto: Pick<CreateOrderWithResolvedClientInput, 'clientId' | 'discountAmount' | 'couponCode'>,
     subtotal: number,
-    productQuantityMap: Map<number, number>,
-    categoryQuantityMap: Map<number, number>,
   ): Promise<DiscountResolutionResult> {
     if (dto.discountAmount !== undefined) {
       if (dto.discountAmount > subtotal) {
@@ -1128,28 +1055,12 @@ export class OrdersService {
       };
     }
 
-    const combo = await this.resolveBestCombo(
-      manager,
-      subtotal,
-      productQuantityMap,
-      categoryQuantityMap,
-    );
-    if (!combo) {
-      return {
-        discountAmount: 0,
-        appliedCouponId: null,
-        appliedCouponCode: null,
-        appliedComboId: null,
-        appliedComboName: null,
-      };
-    }
-
     return {
-      discountAmount: this.calculateComboDiscount(combo, subtotal),
+      discountAmount: 0,
       appliedCouponId: null,
       appliedCouponCode: null,
-      appliedComboId: combo.id,
-      appliedComboName: combo.name,
+      appliedComboId: null,
+      appliedComboName: null,
     };
   }
 

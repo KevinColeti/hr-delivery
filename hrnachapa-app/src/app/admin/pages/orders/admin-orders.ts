@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Subscription, interval } from 'rxjs';
 import { AdminOrdersRealtimeService } from '../../services/admin-orders-realtime.service';
 import {
   AdminOrder,
@@ -56,7 +55,6 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   listErrorMessage = '';
   detailErrorMessage = '';
   statusActionErrorMessage = '';
-  private refreshSubscription: Subscription | null = null;
   private streamDisconnect: (() => void) | null = null;
 
   /**
@@ -69,20 +67,18 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   ) {}
 
   /**
-   * Inicializa lista de pedidos e refresh automatico de acompanhamento.
+   * Inicializa lista de pedidos e stream de atualizacao em tempo real.
    */
   ngOnInit() {
     this.loadOrders(true);
     this.startRealtimeUpdates();
-    this.startAutoRefresh();
   }
 
   /**
-   * Libera assinatura de auto refresh ao destruir pagina.
+   * Libera assinatura de stream ao destruir pagina.
    */
   ngOnDestroy() {
     this.stopRealtimeUpdates();
-    this.stopAutoRefresh();
   }
 
   /**
@@ -99,9 +95,15 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   /**
    * Carrega lista de pedidos preservando selecao atual quando possivel.
    */
-  loadOrders(preserveSelection: boolean) {
-    this.isLoadingOrders = true;
-    this.listErrorMessage = '';
+  loadOrders(
+    preserveSelection: boolean,
+    options?: { silent?: boolean },
+  ) {
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      this.isLoadingOrders = true;
+      this.listErrorMessage = '';
+    }
 
     this.adminOrdersService.listOrders().subscribe({
       next: (orders) => {
@@ -125,10 +127,12 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.isLoadingOrders = false;
-        this.listErrorMessage =
-          error?.error?.message && typeof error.error.message === 'string'
-            ? error.error.message
-            : 'Nao foi possivel carregar os pedidos.';
+        if (!silent) {
+          this.listErrorMessage =
+            error?.error?.message && typeof error.error.message === 'string'
+              ? error.error.message
+              : 'Nao foi possivel carregar os pedidos.';
+        }
         this.cdr.detectChanges();
       },
     });
@@ -140,7 +144,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   selectOrder(orderId: number) {
     this.selectedOrderId = orderId;
     this.closeCancellationDialog();
-    this.loadSelectedOrderDetails(orderId);
+    this.loadSelectedOrderDetails(orderId, { silent: false });
   }
 
   /**
@@ -328,10 +332,15 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   /**
    * Carrega detalhe completo de pedido e historico de status.
    */
-  private loadSelectedOrderDetails(orderId: number) {
-    this.isLoadingOrderDetails = true;
-    this.detailErrorMessage = '';
-    this.statusActionErrorMessage = '';
+  private loadSelectedOrderDetails(
+    orderId: number,
+    options?: { silent?: boolean },
+  ) {
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      this.isLoadingOrderDetails = true;
+      this.detailErrorMessage = '';
+    }
 
     this.adminOrdersService.getOrderById(orderId).subscribe({
       next: (order) => {
@@ -342,12 +351,14 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.isLoadingOrderDetails = false;
-        this.selectedOrder = null;
-        this.statusHistory = [];
-        this.detailErrorMessage =
-          error?.error?.message && typeof error.error.message === 'string'
-            ? error.error.message
-            : 'Nao foi possivel carregar o detalhe do pedido.';
+        if (!silent) {
+          this.selectedOrder = null;
+          this.statusHistory = [];
+          this.detailErrorMessage =
+            error?.error?.message && typeof error.error.message === 'string'
+              ? error.error.message
+              : 'Nao foi possivel carregar o detalhe do pedido.';
+        }
         this.cdr.detectChanges();
       },
     });
@@ -370,45 +381,20 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Inicia refresh automatico da lista para reduzir atraso operacional.
-   *
-   * Motivo:
-   * atualizamos em intervalo curto para manter o backoffice responsivo
-   * mesmo antes de integrar consumo direto de stream SSE no frontend.
-   */
-  private startAutoRefresh() {
-    this.stopAutoRefresh();
-    this.refreshSubscription = interval(4000).subscribe(() => {
-      this.loadOrders(true);
-      if (this.selectedOrderId !== null) {
-        this.loadSelectedOrderDetails(this.selectedOrderId);
-      }
-    });
-  }
-
-  /**
-   * Encerra refresh automatico da tela.
-   */
-  private stopAutoRefresh() {
-    if (!this.refreshSubscription) {
-      return;
-    }
-
-    this.refreshSubscription.unsubscribe();
-    this.refreshSubscription = null;
-  }
-
-  /**
    * Inicia assinatura de stream de pedidos para atualizar tela por evento.
    */
   private startRealtimeUpdates() {
     this.stopRealtimeUpdates();
     this.streamDisconnect = this.adminOrdersRealtimeService.connectOrdersStream((event) => {
+      if (this.isUpdatingStatus) {
+        return;
+      }
+
       // Atualizamos a lista inteira para manter consistencia entre filtros
       // e detalhe selecionado quando eventos chegam fora de ordem.
-      this.loadOrders(true);
+      this.loadOrders(true, { silent: true });
       if (this.selectedOrderId !== null && event.orderId === this.selectedOrderId) {
-        this.loadSelectedOrderDetails(this.selectedOrderId);
+        this.loadSelectedOrderDetails(this.selectedOrderId, { silent: true });
       }
     });
   }

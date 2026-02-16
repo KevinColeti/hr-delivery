@@ -27,8 +27,8 @@
 - [x] (`done`) [P1] Padronizar filtros por categoria via URL (query param).
 
 ### C1.3 [Subtopico de E7] Detalhe de produto com extras
-- [ ] (`todo`) [P0] Converter modal atual para fluxo de pagina (ou modal com URL canônica).
-- [ ] (`todo`) [P0] Exibir disponibilidade de extras e preco final do item configurado.
+- [x] (`done`) [P0] Converter modal atual para fluxo de pagina (ou modal com URL canônica).
+- [x] (`done`) [P0] Exibir disponibilidade de extras e preco final do item configurado.
 - [x] (`done`) [P1] Persistir configuracao de item de forma estruturada para pedido (nao apenas em `notes`).
 
 ### C1.4 [Subtopico de E7] Carrinho separado
@@ -39,7 +39,7 @@
 ### C1.5 [Subtopico de E7] Checkout real
 - [x] (`done`) [P0] Remover dependencia de `clientId` manual da tela publica.
 - [x] (`done`) [P0] Coletar dados de cliente/telefone/endereco conforme contrato backend real.
-- [ ] (`todo`) [P0] Integrar cupom com feedback de validacao claro ao usuario.
+- [x] (`done`) [P0] Integrar cupom com feedback de validacao claro ao usuario.
 - [ ] (`todo`) [P1] Preparar ponto de extensao para forma de pagamento.
 
 ### C1.6 [Subtopico de E7] Tracking e pos-compra
@@ -107,11 +107,12 @@
 - [x] (`done`) [P1] Atualizacao automatica por polling curto como etapa intermedia ate stream SSE dedicado no front admin.
 
 ### C4.4 [Subtopico de E8] Modulo cardapio e estoque
-- [ ] (`todo`) [P0] CRUD completo de categorias/produtos/receitas/extras no admin.
-- [ ] (`todo`) [P0] Tela de movimentacoes e alertas de estoque minimo.
+- [x] (`done`) [P0] CRUD completo de categorias/produtos/receitas/extras no admin.
+- [x] (`done`) [P0] Tela de insumos com CRUD e alertas de estoque minimo.
+- [x] (`done`) [P0] Tela de movimentacoes de estoque.
 
 ### C4.5 [Subtopico de E8] Modulos promocoes, clientes e configuracoes
-- [ ] (`todo`) [P0] Tela de cupons e combos com validacoes.
+- [x] (`done`) [P0] Tela de cupons e combos com validacoes.
 - [x] (`done`) [P1] Tela de clientes com historico de pedidos.
 - [x] (`done`) [P1] Tela de configuracoes de loja.
 

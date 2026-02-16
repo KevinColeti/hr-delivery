@@ -1,167 +1,311 @@
-ARQUIVOS-BASE PARA RETOMAR NO NOVO CHAT
+﻿ARQUIVOS-BASE PARA RETOMAR NO NOVO CHAT
 1. README.md
 2. ROADMAP.md
-3. AI_CONTEXT.md
-4. NEW_CHAT_CONTEXT.txt
+3. ROADMAP_COMPLEMENTAR.md
+4. AI_CONTEXT.md
+5. NEW_CHAT_CONTEXT.txt
 
 Instrucao para a IA:
-"Use estes arquivos como fonte principal de contexto e priorize o que esta em ROADMAP.md e AI_CONTEXT.md para os proximos passos."
+"Use estes arquivos como fonte principal de contexto e priorize o que esta em ROADMAP.md e ROADMAP_COMPLEMENTAR.md para os proximos passos."
 
 ============================================================
 Resumo Tecnico Completo (cole no novo chat)
 
-1) Contexto e direcao do projeto
-- Projeto: HR Na Chapa (hamburgueria).
-- Objetivo Fase 1: site de delivery + painel admin + estoque por insumos + pedidos + promocoes + WhatsApp.
-- Direcao de design escolhida para o site: rustico artesanal, tom premium, mobile-first.
-- Documento de bussola criado: AI_CONTEXT.md (stack, estrutura, filosofia e checklist de retomada).
+1) Snapshot atual do repositorio
+- Branch atual: dev (tracking origin/dev).
+- Estado do Git: limpo (git status sem alteracoes locais).
+- Ultimos commits relevantes:
+  - 0e5ce16 (HEAD -> dev, origin/dev) "."
+  - dd65dec feat(admin-clientes): tela de clientes com busca, consolidado e historico.
+  - c76157e fix(pedidos): reversao de cancelamento para confirmed + mensagem de cancelamento no tracking.
+  - e5ad7ac feat(checkout): fluxo publico por telefone + tracking + Insomnia atualizado.
+  - 20c5d43 docs(roadmap): roadmap complementar.
+  - b8f633b feat(whatsapp): integracao de envio de confirmacao e atualizacao de status.
+  - 12a879e feat(combos): combos automaticos com CRUD e aplicacao no pedido.
+  - 9050b59 feat(coupons): CRUD e aplicacao transacional de cupom.
+- Migrations: todas as migrations atuais estao aplicadas (migration:show marcou todas com [X]).
 
-2) Stack e arquitetura
+2) Arquitetura e stack (estado real)
 - Frontend: Angular 21 standalone + Tailwind v3.
-- Backend: NestJS 11 + TypeORM + PostgreSQL 16 + JWT/roles.
-- Infra: docker-compose.yml com postgres + frontend.
-- Banco controlado por migration (backend/src/database/migrations/*).
-- Backend modular por dominio (auth, categories, ingredients, products, product-ingredients, product-extras, orders).
+- Backend: NestJS 11 + TypeORM 0.3.x + PostgreSQL 16.
+- Auth: JWT + roles (admin, kitchen), guards globais.
+- Tempo real:
+  - Backend expoe SSE em /orders/stream e /orders/kitchen/stream.
+  - Admin consome SSE com fetch + ReadableStream (nao EventSource, por causa do Authorization header).
+  - Cliente final usa polling no tracking (3s), nao SSE.
+- Infra: docker-compose.yml sobe postgres + angular-app.
 
-3) Estado atual do backend (implementado)
+3) Backend: estado por modulo/arquivo principal
 
-3.1 Auth e seguranca
-- JWT + roles (admin, kitchen) implementado.
-- Guards globais no AppModule.
-- Bootstrap de admin default por env (ADMIN_EMAIL, ADMIN_PASSWORD).
-- Arquivos principais:
-  - backend/src/auth/auth.module.ts
-  - backend/src/auth/auth.service.ts
-  - backend/src/auth/auth.controller.ts
-  - backend/src/auth/jwt.strategy.ts
-  - backend/src/auth/jwt-auth.guard.ts
-  - backend/src/auth/roles.guard.ts
-  - backend/src/auth/public.decorator.ts
-  - backend/src/auth/roles.decorator.ts
-  - backend/src/users/users.service.ts
-- Rotas:
-  - POST /auth/login
-  - GET /auth/me
-  - GET /health (public)
-  - GET /admin/ping (admin)
+3.1 Nucleo e seguranca
+- backend/src/main.ts
+  - CORS ativo para http://localhost:4200.
+  - ValidationPipe global (whitelist, transform, forbidNonWhitelisted).
+- backend/src/app.module.ts
+  - Modulos ativos: auth, categories, clients, combos, coupons, ingredients, products, product-ingredients, product-extras, orders, stock-movements, store-settings.
+  - Logging estruturado global via interceptor.
+  - Middleware global de request-id.
+- backend/src/auth/*
+  - JWT strategy + guards + decorators @Public e @Roles.
+  - Bootstrap de admin default via AuthModule.onModuleInit() + AuthService.ensureDefaultAdmin().
+  - Rotas:
+    - POST /auth/login
+    - GET /auth/me
+    - GET /health (public)
+    - GET /admin/ping (admin)
 
-3.2 Catalogo e estoque base
-- Categorias: CRUD completo.
-- Insumos: CRUD completo.
-- Produtos: CRUD completo.
-- Receita de produto (insumos obrigatorios): CRUD completo em rota aninhada.
-- Extras de produto (com possivel consumo de insumo): CRUD completo em rota aninhada.
-- Disponibilidade automatica de produto por estoque da receita (para 1 unidade) implementada.
-- Arquivos principais:
-  - backend/src/categories/*
-  - backend/src/ingredients/*
-  - backend/src/products/*
-  - backend/src/product-ingredients/*
-  - backend/src/product-extras/*
-  - Entidades:
-    - backend/src/entities/category.entity.ts
-    - backend/src/entities/ingredient.entity.ts
-    - backend/src/entities/product.entity.ts
-    - backend/src/entities/product-ingredient.entity.ts
-    - backend/src/entities/product-extra.entity.ts
-- Rotas principais:
-  - GET/POST/PATCH/DELETE /categories
-  - GET/POST/PATCH/DELETE /ingredients
-  - GET/POST/PATCH/DELETE /products
-  - GET /products/:id/availability
-  - GET/POST/PATCH/DELETE /products/:productId/ingredients
-  - GET/POST/PATCH/DELETE /products/:productId/extras
+3.2 Catalogo e estoque
+- backend/src/categories/*
+  - CRUD completo + GET /categories/public/catalog.
+- backend/src/products/*
+  - CRUD completo + disponibilidade por receita.
+  - GET /products/public/catalog.
+- backend/src/product-ingredients/*
+  - CRUD de receita por produto.
+- backend/src/product-extras/*
+  - CRUD de extras.
+  - GET /products/:productId/extras/public/catalog.
+  - Extras publicos retornam available conforme estoque do insumo vinculado.
+- backend/src/ingredients/*
+  - CRUD + alertas de minimo em GET /ingredients/alerts/minimum.
+- backend/src/stock-movements/*
+  - Historico e movimentacao manual (entry, exit, adjustment).
+  - Baixa automatica em confirmacao de pedido com source=order_confirmation.
+  - Rotas:
+    - GET /stock-movements
+    - POST /stock-movements
 
-3.3 Pedidos e baixa de estoque
-- Pedidos implementados com itens, status e calculo de totais.
-- Transicao de status validada por maquina de estados.
-- Ao confirmar (status=confirmed), baixa automatica de estoque por receita com transacao (all-or-nothing).
-- Arquivos principais:
-  - backend/src/orders/*
-  - Entidades:
-    - backend/src/entities/order.entity.ts
-    - backend/src/entities/order-item.entity.ts
-- Rotas:
-  - POST /orders
+3.3 Pedidos (modulo mais completo)
+- backend/src/orders/orders.controller.ts
+  - POST /orders/checkout (public, resolve cliente por telefone).
+  - GET /orders/:id/tracking (public).
   - GET /orders
   - GET /orders/:id
+  - GET /orders/:id/status-history
   - PATCH /orders/:id/status
-- Status suportados:
-  - new, confirmed, in_preparation, ready, out_for_delivery, delivered, canceled.
+  - PATCH /orders/:id/cancellation/revert
+  - PATCH /orders/:id/kitchen/ready
+  - GET /orders/kitchen/board
+  - SSE: /orders/stream e /orders/kitchen/stream
+- backend/src/orders/orders.service.ts
+  - Criacao com totais calculados no backend.
+  - Suporte a extras estruturados por item.
+  - Cupons + combos no motor de desconto (sem acumulo).
+  - Deduplicacao de cliente por telefone no checkout publico.
+  - Maquina de status com validacao de transicoes.
+  - Restricao por role: kitchen so opera trecho de preparo.
+  - Confirmacao (new -> confirmed) faz baixa de estoque all-or-nothing em transacao.
+  - Auditoria em order_status_history (quem/quando + snapshot nome/email).
+  - Cancelamento com:
+    - cancellationCustomerMessage
+    - cancellationInternalNote
+    - reversao para confirmed
+  - Tracking publico retorna timeline + mensagem de cancelamento.
+- backend/src/orders/orders-realtime.service.ts
+  - Barramento em memoria para SSE (single instance).
 
-4) Migracoes ja geradas/aplicadas
-- 1771008934721-InitialSchema.ts (base inicial)
-- 1771031136829-OrdersSchema.ts (orders + order_items)
-- 1771033224037-ProductExtrasSchema.ts (product_extras)
-- Configuracao TypeORM:
-  - backend/src/database/data-source.ts
-  - backend/src/database/database.config.ts
-- Scripts em backend/package.json:
-  - migration:generate, migration:run, migration:revert.
+3.4 Promocoes
+- backend/src/coupons/*
+  - CRUD completo.
+  - Regras: validade, pedido minimo, limite de uso, firstOrderOnly.
+- backend/src/combos/*
+  - CRUD completo de combos.
+  - CRUD de regras (product/category + minimumQuantity).
+  - Pedido escolhe melhor combo por maior desconto monetario.
 
-5) Estado atual do frontend (visual/prototipo)
-- Foi feito prototipo visual para apresentacao ao cliente, sem integracao backend:
-  - hero + secoes de cardapio
-  - mock de carrinho
-  - mock de checkout
-  - mock de timeline de acompanhamento
-- Marca ajustada para HR Na Chapa, usando logo local /logo.jpg.
-- Arquivos principais alterados:
-  - hrnachapa-app/src/styles.css (tema global artesanal premium)
-  - hrnachapa-app/src/app/components/header/header.ts
-  - hrnachapa-app/src/app/components/header/header.html
-  - hrnachapa-app/src/app/components/home/home.ts
-  - hrnachapa-app/src/app/components/home/home.html
-  - hrnachapa-app/src/app/components/home/home.css
-  - hrnachapa-app/src/app/components/category-section/category-section.html
-  - hrnachapa-app/src/app/components/product-card/product-card.html
-  - hrnachapa-app/src/app/components/footer/footer.ts
-  - hrnachapa-app/src/app/components/footer/footer.html
-  - hrnachapa-app/public/logo.jpg
+3.5 Clientes e configuracoes
+- backend/src/clients/*
+  - Consulta admin com consolidado e historico.
+  - Rotas:
+    - GET /clients
+    - GET /clients/:id
+    - GET /clients/:id/orders
+- backend/src/store-settings/*
+  - Singleton de configuracao da loja, com autoprovionamento do primeiro registro.
+  - Rotas:
+    - GET /store-settings (admin)
+    - PATCH /store-settings (admin)
+    - GET /store-settings/public (public)
 
-6) Insomnia
-- Padrao preferido pelo usuario: colecao nativa Insomnia.
-- Arquivo criado: backend/docs/insomnia-backend.yaml.
-- Arquivo antigo OpenAPI ainda existe por decisao do usuario (nao apagar).
+3.6 WhatsApp
+- backend/src/whatsapp/whatsapp.service.ts
+  - Envio de notificacoes de criacao/status/cancelamento.
+  - Retry + timeout + logs em whatsapp_notification_logs.
+  - Sem controller proprio.
+  - Dependencias de ENV (WHATSAPP_ENABLED, WHATSAPP_WEBHOOK_URL etc).
+  - Provedor real ainda nao definido (pendente de roadmap).
 
-7) Documentacao e contexto
-- README.md atualizado para visao Fase 1 (feito antes).
-- ROADMAP.md atualizado com progresso.
-- AI_CONTEXT.md criado e atualizado com:
-  - stack
-  - estrutura de pastas
-  - filosofia design/implementacao
-  - checklist "como retomar sessao".
+4) Entidades e migrations relevantes
+- Entidades principais em backend/src/entities:
+  - order.entity.ts
+  - order-item.entity.ts
+  - order-item-extra.entity.ts
+  - order-status-history.entity.ts
+  - stock-movement.entity.ts
+  - coupon.entity.ts
+  - combo.entity.ts
+  - combo-rule.entity.ts
+  - store-settings.entity.ts
+  - whatsapp-notification-log.entity.ts
+- Migrations existentes:
+  - 1771008934721-InitialSchema.ts
+  - 1771031136829-OrdersSchema.ts
+  - 1771033224037-ProductExtrasSchema.ts
+  - 1771035481000-StockMovementsSchema.ts
+  - 1771037399000-OrderStatusHistorySchema.ts
+  - 1771041000000-CouponsSchema.ts
+  - 1771041900000-CouponFirstOrderRule.ts
+  - 1771043400000-CombosSchema.ts
+  - 1771045200000-WhatsAppNotificationLogs.ts
+  - 1771049300000-OrderItemExtrasSchema.ts
+  - 1771050500000-OrderCancellationMetadata.ts
+  - 1771052200000-StoreSettingsSchema.ts
+- Erros antigos de TypeORM (Data type Object) foram resolvidos com tipagem explicita em colunas/entity.
 
-8) Roadmap: posicao atual
-- Semana 1: concluida.
-- Semana 2: concluida (incluindo Dia 5 extras + disponibilidade).
-- Adiantamentos ja feitos:
-  - Semana 3 Dia 3 (endpoint criacao de pedido) concluido.
-  - Semana 3 Dia 4 (lista de pedidos no admin) concluido.
-  - Semana 4 Dia 4 (baixa automatica ao confirmar) concluido.
-- Status geral:
-  - E1: in-progress (falta realtime/logs estruturados).
-  - E2: in-progress com principais P0 concluidos.
-  - E3: in-progress (faltam auditoria, tela cozinha, realtime).
-- Proximo alvo natural: historico de movimentacao de estoque + alertas de minimo + tela cozinha/realtime.
+5) Frontend: estado atual real
 
-9) Decisao de engenharia recente importante
-- Novo requisito do usuario: toda funcao/componente novo deve ter docstring detalhada; logica complexa deve ter comentario de porque.
-- Aplicado retroativamente nos modulos backend recem-criados:
-  - controllers, services, modules, guards, decorators e bootstrap (main.ts).
-- Padrao ja esta em uso.
+5.1 Rotas publicas
+- hrnachapa-app/src/app/app.routes.ts
+  - Rotas: /, /cardapio, /produto/:id, /carrinho, /checkout, /acompanhar, /pedido/:id
+- Observacao: apesar de rotas separadas, a orquestracao ainda esta no mesmo HomeComponent (data.view).
 
-10) Estado de Git (importante)
-- Ha muitas alteracoes locais nao commitadas (backend + frontend + docs).
-- Em git status, aparecem arquivos modificados e muitos novos em backend/src/... e backend/docs/.
-- Tambem ha alteracoes frontend visuais em massa.
-- Recomenda-se separar commits por tema:
-  1. docs/context (AI_CONTEXT.md, ROADMAP.md etc.)
-  2. backend/core (auth + catalogo + pedidos + migrations)
-  3. frontend/prototipo-visual
+5.2 Fluxo publico
+- hrnachapa-app/src/app/components/home/home.ts + home.html
+  - Landing, catalogo, carrinho, checkout e tracking no mesmo componente.
+  - Checkout usa POST /orders/checkout (sem clientId manual).
+  - Tracking:
+    - sem botao "buscar outro pedido";
+    - cliente so ve pedido do dispositivo (ownedOrderId em localStorage);
+    - polling automatico na rota /pedido/:id;
+    - mensagem de cancelamento exibida quando status = canceled.
+- hrnachapa-app/src/app/components/header/header.html
+  - Nome e logo da loja com link para home (routerLink="/") implementado.
 
-11) Comandos para retomada rapida
+5.3 Servicos de dominio frontend
+- src/app/services/catalog-state.service.ts
+  - Estado de catalogo + fallback mock quando API falha.
+- src/app/services/cart.service.ts
+  - Carrinho com signal + localStorage.
+  - Chave composta para item configurado (productId + notes + extras).
+- src/app/services/checkout-state.service.ts
+  - Estado de checkout + normalizacao de telefone + feedback.
+- src/app/services/tracking-state.service.ts
+  - Estado de tracking + polling + controle de owned order.
+- src/app/services/orders-api.service.ts
+  - Adapter HTTP de pedidos/tracking.
+- src/app/services/public-store-settings.service.ts
+  - Carrega /store-settings/public + fallback.
+
+5.4 Admin frontend
+- src/app/admin/admin.routes.ts
+  - Implementados:
+    - /admin/pedidos -> AdminOrdersComponent
+    - /admin/cozinha -> AdminKitchenComponent
+    - /admin/clientes -> AdminClientsComponent
+    - /admin/configuracoes -> AdminSettingsComponent
+  - Ainda placeholder:
+    - /admin/cardapio
+    - /admin/estoque
+    - /admin/promocoes
+- src/app/admin/pages/orders/admin-orders.ts
+  - Lista + detalhe + historico + transicao de status.
+  - Fluxo completo de cancelamento (confirmacao + mensagem ao cliente + nota interna + reversao).
+  - SSE + polling de apoio.
+- src/app/admin/pages/kitchen/admin-kitchen.ts
+  - Board operacional com acoes de preparo/pronto.
+  - SSE + polling.
+- src/app/admin/pages/clients/admin-clients.ts
+  - Busca, consolidado, historico.
+- src/app/admin/pages/settings/admin-settings.ts
+  - CRUD de configuracoes da loja.
+- Auth admin:
+  - admin-auth.service.ts
+  - admin-auth.guard.ts
+  - admin-auth.interceptor.ts
+  - Token e user em localStorage; interceptor injeta bearer na API local.
+
+6) Insomnia e documentacao
+- backend/docs/insomnia-backend.yaml:
+  - Cobre base/auth/admin/categories/clients/store-settings/ingredients/products/product-ingredients/product-extras/orders/stock-movements/SSE.
+  - Gap atual: nao inclui colecao de coupons e combos, apesar do backend pronto.
+- backend/docs/insomnia-openapi.yaml:
+  - Mantido no repositorio por decisao do usuario (nao apagar).
+- ROADMAP.md e ROADMAP_COMPLEMENTAR.md:
+  - Atualizados com macro + subtopicos.
+- README.md:
+  - Desatualizado (ainda descreve backend como nao existente em alguns trechos).
+- AI_CONTEXT.md:
+  - Parcialmente desatualizado frente ao estado atual.
+
+7) Decisoes e acordos importantes
+- Regra obrigatoria do usuario:
+  - toda funcao/componente novo com docstring detalhada;
+  - logica complexa com comentario de "porque".
+- Nao fazer adaptacoes so para passar etapa; manter padrao de entidades/modulos.
+- Insomnia so deve ser atualizado quando o usuario pedir explicitamente.
+- Fluxo operacional acordado:
+  - cozinha lida com pedidos confirmados/em preparo/prontos;
+  - pedidos novos nao sao responsabilidade da cozinha.
+- Reversao de cancelamento volta para confirmed (nao ready).
+- Mensagem de cancelamento deve aparecer no tracking do cliente.
+- A cada "dia" concluido do roadmap: lembrar commit e sugerir mensagem em portugues.
+
+8) Problemas conhecidos / riscos atuais
+- Front publico ainda centralizado em HomeComponent (rotas separadas, componente unico).
+- /produto/:id ainda nao e pagina canonica de detalhe (fluxo ainda depende de modal no contexto do Home).
+- Seguranca do tracking cliente e por "pedido do dispositivo" no frontend; backend tracking por ID e publico.
+- Admin ainda sem modulos reais de cardapio, estoque e promocoes.
+- Insomnia ainda sem cobertura de coupons/combos.
+- Quase sem testes automatizados:
+  - backend: apenas app.controller.spec.ts
+  - frontend: apenas app.spec.ts
+- Build local nao foi validado agora por erro de ambiente EPERM (provavel lock/processo):
+  - backend nest build: EPERM unlink dist/*
+  - frontend ng build: spawn EPERM
+
+9) O que falta (roadmap consolidado)
+
+9.1 Macro (ROADMAP.md)
+- E6:
+  - Definir provedor real de WhatsApp.
+  - Templates configuraveis.
+- E8:
+  - Redesenho completo do admin.
+  - Modulo cardapio.
+  - Modulo estoque.
+  - Modulo promocoes.
+- E9:
+  - Testes unitarios/integracao/E2E.
+  - Checklist de producao.
+  - Deploy + smoke test.
+
+9.2 Subtopicos (ROADMAP_COMPLEMENTAR.md)
+- C1:
+  - layout publico reutilizavel melhor definido.
+  - produto em pagina canonica.
+  - validacoes extras carrinho/checkout.
+  - feedback de cupom no checkout.
+- C3:
+  - consolidar auditoria/snapshot de desconto no novo modelo de itens com extras.
+- C4:
+  - remover placeholders restantes.
+  - implementar admin promocoes.
+- C5/C6:
+  - operacional WhatsApp real + qualidade/go-live.
+- Pendencias explicitamente abertas:
+  - teste Insomnia de deduplicacao de cliente.
+  - teste manual ponta a ponta site -> admin -> cozinha -> tracking.
+
+10) Exatamente onde paramos
+- Ultima tarefa iniciada antes da interrupcao:
+  - proximo item do roadmap: modulo de promocoes no admin (/admin/promocoes) para substituir placeholder.
+- Ja foi feito apenas mapeamento tecnico:
+  - endpoints de coupons e combos (incluindo regras) estao prontos no backend.
+- Nao houve edicao aplicada nessa etapa interrompida.
+- Proximo passo natural:
+  - substituir AdminPlaceholderComponent em /admin/promocoes por modulo funcional consumindo /coupons e /combos.
+
+11) Comandos de retomada rapida
 - Banco:
   - docker compose up -d postgres
 - Backend:
@@ -173,18 +317,16 @@ Resumo Tecnico Completo (cole no novo chat)
   - cd hrnachapa-app
   - npm install
   - npm start
-- Endpoints basicos:
-  - GET http://localhost:3000/health
-  - POST http://localhost:3000/auth/login
 
-12) Pendencias tecnicas imediatas (recomendadas)
-1. Implementar stock_movements (entrada/saida/ajuste + log de baixa por pedido confirmado).
-2. Criar alerta de estoque minimo.
-3. Completar auditoria de mudanca de status de pedido (quem/quando).
-4. Implementar tela cozinha no backend/frontend admin.
-5. Implementar atualizacao em tempo real (pedidos/cozinha).
-6. So depois avancar para promocoes e integracao WhatsApp operacional.
+12) Credenciais e observacoes operacionais
+- DB local (docker compose):
+  - DB_NAME=hrnachapa_db
+  - DB_USER=hrnachapa_user
+  - DB_PASS=hrnachapa_pass
+- Admin default (.env backend):
+  - email: admin@hrnachapa.local
+  - senha: admin123
+- Se usar psql no container atual, usar hrnachapa_user (nao postgres).
 
-Instrucao sugerida para proximo chat:
-"Continue a partir do item 1 das pendencias tecnicas imediatas, mantendo docstrings e comentarios de porque."
-
+Instrucao sugerida para o proximo chat:
+"Continue do estado atual no branch dev. O proximo item e implementar o modulo /admin/promocoes (substituir placeholder), consumindo os endpoints de coupons e combos (incluindo CRUD de regras). Mantenha docstrings detalhadas e comentarios de porque. Nao atualizar Insomnia automaticamente; so quando eu pedir. No final, atualize ROADMAP.md e ROADMAP_COMPLEMENTAR.md com o status do que foi concluido e me lembre do commit com mensagem em portugues."

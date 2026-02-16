@@ -109,9 +109,10 @@
 - [ ] (`todo`) [P0] Redesenhar `/admin` para o fluxo real da operacao
 - [x] (`done`) [P0] Modulo de pedidos (admin)
 - [x] (`done`) [P0] Modulo cozinha (visualizacao para monitor)
-- [ ] (`todo`) [P0] Modulo cardapio (produtos/categorias/receitas/extras)
-- [ ] (`todo`) [P0] Modulo estoque (insumos + movimentacoes + alertas)
-- [ ] (`todo`) [P0] Modulo promocoes (cupons + combos)
+- [x] (`done`) [P0] Modulo cardapio (produtos/categorias/receitas/extras)
+- [x] (`done`) [P0] Modulo estoque (insumos + alertas)
+- [x] (`done`) [P0] Modulo estoque (movimentacoes)
+- [x] (`done`) [P0] Modulo promocoes (cupons + combos)
 - [x] (`done`) [P1] Modulo clientes
 - [x] (`done`) [P1] Modulo configuracoes
 - [x] (`done`) [P0] Guards por perfil e protecao de rotas

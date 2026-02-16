@@ -1,0 +1,611 @@
+<section class="space-y-4">
+  <header class="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">Backoffice</p>
+        <h1 class="text-2xl font-bold text-stone-900">Promocoes</h1>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          (click)="loadCoupons(true)"
+          class="rounded-xl border border-stone-300 px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100">
+          Atualizar cupons
+        </button>
+        <button
+          type="button"
+          (click)="loadCombos(true)"
+          class="rounded-xl border border-stone-300 px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100">
+          Atualizar combos
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid grid-cols-1 gap-4 2xl:grid-cols-2">
+    <article class="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.12em] text-stone-500">Cupons</p>
+          <h2 class="text-xl font-bold text-stone-900">Gestao de cupons</h2>
+        </div>
+        <button
+          type="button"
+          (click)="startNewCoupon()"
+          class="rounded-xl border border-stone-300 px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100">
+          Novo cupom
+        </button>
+      </div>
+
+      @if (couponErrorMessage) {
+        <p class="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {{ couponErrorMessage }}
+        </p>
+      }
+
+      @if (couponSuccessMessage) {
+        <p class="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          {{ couponSuccessMessage }}
+        </p>
+      }
+
+      <div class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[260px_1fr]">
+        <div class="space-y-2 rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <p class="text-xs font-semibold uppercase tracking-[0.1em] text-stone-500">
+            Cupons cadastrados
+          </p>
+
+          @if (isLoadingCoupons && coupons.length === 0) {
+            <p class="rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-600">
+              Carregando cupons...
+            </p>
+          }
+
+          <div class="max-h-[380px] space-y-2 overflow-y-auto pr-1">
+            @for (coupon of coupons; track coupon.id) {
+              <button
+                type="button"
+                (click)="selectCoupon(coupon.id)"
+                [class]="
+                  'w-full rounded-xl border px-3 py-3 text-left transition ' +
+                  (selectedCoupon?.id === coupon.id
+                    ? 'border-stone-800 bg-stone-900 text-stone-100'
+                    : 'border-stone-200 bg-white text-stone-800 hover:bg-stone-100')
+                ">
+                <div class="flex items-center justify-between gap-2">
+                  <p class="text-sm font-bold">{{ coupon.code }}</p>
+                  <span
+                    [class]="
+                      'rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] ' +
+                      getActivationBadgeClass(coupon.isActive)
+                    ">
+                    {{ coupon.isActive ? 'Ativo' : 'Inativo' }}
+                  </span>
+                </div>
+                <p class="mt-1 text-xs opacity-80">{{ coupon.name }}</p>
+                <p class="mt-1 text-xs opacity-80">
+                  {{ getDiscountTypeLabel(coupon.discountType) }}:
+                  @if (coupon.discountType === 'percentage') {
+                    {{ toNumber(coupon.discountValue) }}%
+                  } @else {
+                    {{ toNumber(coupon.discountValue) | currency:'BRL':'symbol':'1.2-2' }}
+                  }
+                </p>
+              </button>
+            }
+
+            @if (!isLoadingCoupons && coupons.length === 0) {
+              <p class="rounded-lg border border-dashed border-stone-300 px-3 py-3 text-sm text-stone-600">
+                Nenhum cupom cadastrado.
+              </p>
+            }
+          </div>
+        </div>
+
+        <form class="space-y-3" (ngSubmit)="saveCoupon()">
+          <p class="text-xs font-semibold uppercase tracking-[0.1em] text-stone-500">
+            {{ selectedCoupon ? 'Editar cupom' : 'Criar cupom' }}
+          </p>
+
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <label class="block text-sm text-stone-700">
+              Codigo
+              <input
+                [(ngModel)]="couponForm.code"
+                name="couponCode"
+                type="text"
+                required
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+            </label>
+
+            <label class="block text-sm text-stone-700">
+              Nome
+              <input
+                [(ngModel)]="couponForm.name"
+                name="couponName"
+                type="text"
+                required
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+            </label>
+
+            <label class="block text-sm text-stone-700 md:col-span-2">
+              Descricao
+              <textarea
+                [(ngModel)]="couponForm.description"
+                name="couponDescription"
+                rows="2"
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500"></textarea>
+            </label>
+
+            <label class="block text-sm text-stone-700">
+              Tipo de desconto
+              <select
+                [(ngModel)]="couponForm.discountType"
+                name="couponDiscountType"
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500">
+                @for (discountTypeOption of discountTypeOptions; track discountTypeOption) {
+                  <option [ngValue]="discountTypeOption">
+                    {{ getDiscountTypeLabel(discountTypeOption) }}
+                  </option>
+                }
+              </select>
+            </label>
+
+            <label class="block text-sm text-stone-700">
+              Valor do desconto
+              <input
+                [(ngModel)]="couponForm.discountValue"
+                name="couponDiscountValue"
+                type="number"
+                min="0.01"
+                step="0.01"
+                required
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+            </label>
+
+            <label class="block text-sm text-stone-700">
+              Pedido minimo (R$)
+              <input
+                [(ngModel)]="couponForm.minimumOrderAmount"
+                name="couponMinimumOrderAmount"
+                type="number"
+                min="0"
+                step="0.01"
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+            </label>
+
+            <label class="block text-sm text-stone-700">
+              Limite de uso
+              <input
+                [(ngModel)]="couponForm.usageLimit"
+                name="couponUsageLimit"
+                type="number"
+                min="1"
+                step="1"
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+            </label>
+
+            <label class="block text-sm text-stone-700">
+              Inicio da vigencia
+              <input
+                [(ngModel)]="couponForm.startsAt"
+                name="couponStartsAt"
+                type="datetime-local"
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+            </label>
+
+            <label class="block text-sm text-stone-700">
+              Fim da vigencia
+              <input
+                [(ngModel)]="couponForm.endsAt"
+                name="couponEndsAt"
+                type="datetime-local"
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+            </label>
+          </div>
+
+          <div class="flex flex-wrap gap-3 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-700">
+            <label class="inline-flex items-center gap-2">
+              <input [(ngModel)]="couponForm.isActive" name="couponIsActive" type="checkbox" />
+              Ativo para uso
+            </label>
+            <label class="inline-flex items-center gap-2">
+              <input
+                [(ngModel)]="couponForm.firstOrderOnly"
+                name="couponFirstOrderOnly"
+                type="checkbox" />
+              Apenas primeiro pedido
+            </label>
+          </div>
+
+          <div class="flex flex-wrap justify-end gap-2">
+            <button
+              type="button"
+              (click)="startNewCoupon()"
+              [disabled]="isSavingCoupon"
+              class="rounded-xl border border-stone-300 px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-60">
+              Limpar
+            </button>
+            @if (selectedCoupon) {
+              <button
+                type="button"
+                (click)="deleteSelectedCoupon()"
+                [disabled]="isSavingCoupon"
+                class="rounded-xl border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60">
+                Excluir
+              </button>
+            }
+            <button
+              type="submit"
+              [disabled]="isSavingCoupon"
+              class="rounded-xl border border-stone-900 bg-stone-900 px-4 py-2 text-sm font-semibold text-stone-100 hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-60">
+              {{ isSavingCoupon ? 'Salvando...' : selectedCoupon ? 'Salvar cupom' : 'Criar cupom' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </article>
+
+    <article class="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.12em] text-stone-500">Combos</p>
+          <h2 class="text-xl font-bold text-stone-900">Gestao de combos</h2>
+        </div>
+        <button
+          type="button"
+          (click)="startNewCombo()"
+          class="rounded-xl border border-stone-300 px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100">
+          Novo combo
+        </button>
+      </div>
+
+      @if (comboErrorMessage) {
+        <p class="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {{ comboErrorMessage }}
+        </p>
+      }
+
+      @if (comboSuccessMessage) {
+        <p class="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          {{ comboSuccessMessage }}
+        </p>
+      }
+
+      <div class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[260px_1fr]">
+        <div class="space-y-2 rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <p class="text-xs font-semibold uppercase tracking-[0.1em] text-stone-500">
+            Combos cadastrados
+          </p>
+
+          @if (isLoadingCombos && combos.length === 0) {
+            <p class="rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-600">
+              Carregando combos...
+            </p>
+          }
+
+          <div class="max-h-[380px] space-y-2 overflow-y-auto pr-1">
+            @for (combo of combos; track combo.id) {
+              <button
+                type="button"
+                (click)="selectCombo(combo.id)"
+                [class]="
+                  'w-full rounded-xl border px-3 py-3 text-left transition ' +
+                  (selectedCombo?.id === combo.id
+                    ? 'border-stone-800 bg-stone-900 text-stone-100'
+                    : 'border-stone-200 bg-white text-stone-800 hover:bg-stone-100')
+                ">
+                <div class="flex items-center justify-between gap-2">
+                  <p class="text-sm font-bold">{{ combo.name }}</p>
+                  <span
+                    [class]="
+                      'rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] ' +
+                      getActivationBadgeClass(combo.isActive)
+                    ">
+                    {{ combo.isActive ? 'Ativo' : 'Inativo' }}
+                  </span>
+                </div>
+                <p class="mt-1 text-xs opacity-80">
+                  {{ getDiscountTypeLabel(combo.discountType) }}:
+                  @if (combo.discountType === 'percentage') {
+                    {{ toNumber(combo.discountValue) }}%
+                  } @else {
+                    {{ toNumber(combo.discountValue) | currency:'BRL':'symbol':'1.2-2' }}
+                  }
+                </p>
+                <p class="mt-1 text-xs opacity-80">{{ combo.rules.length }} regra(s)</p>
+              </button>
+            }
+
+            @if (!isLoadingCombos && combos.length === 0) {
+              <p class="rounded-lg border border-dashed border-stone-300 px-3 py-3 text-sm text-stone-600">
+                Nenhum combo cadastrado.
+              </p>
+            }
+          </div>
+        </div>
+
+        <form class="space-y-3" (ngSubmit)="saveCombo()">
+          <p class="text-xs font-semibold uppercase tracking-[0.1em] text-stone-500">
+            {{ selectedCombo ? 'Editar combo' : 'Criar combo' }}
+          </p>
+
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <label class="block text-sm text-stone-700 md:col-span-2">
+              Nome
+              <input
+                [(ngModel)]="comboForm.name"
+                name="comboName"
+                type="text"
+                required
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+            </label>
+
+            <label class="block text-sm text-stone-700 md:col-span-2">
+              Descricao
+              <textarea
+                [(ngModel)]="comboForm.description"
+                name="comboDescription"
+                rows="2"
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500"></textarea>
+            </label>
+
+            <label class="block text-sm text-stone-700">
+              Tipo de desconto
+              <select
+                [(ngModel)]="comboForm.discountType"
+                name="comboDiscountType"
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500">
+                @for (discountTypeOption of discountTypeOptions; track discountTypeOption) {
+                  <option [ngValue]="discountTypeOption">
+                    {{ getDiscountTypeLabel(discountTypeOption) }}
+                  </option>
+                }
+              </select>
+            </label>
+
+            <label class="block text-sm text-stone-700">
+              Valor do desconto
+              <input
+                [(ngModel)]="comboForm.discountValue"
+                name="comboDiscountValue"
+                type="number"
+                min="0.01"
+                step="0.01"
+                required
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+            </label>
+
+            <label class="block text-sm text-stone-700">
+              Inicio da vigencia
+              <input
+                [(ngModel)]="comboForm.startsAt"
+                name="comboStartsAt"
+                type="datetime-local"
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+            </label>
+
+            <label class="block text-sm text-stone-700">
+              Fim da vigencia
+              <input
+                [(ngModel)]="comboForm.endsAt"
+                name="comboEndsAt"
+                type="datetime-local"
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+            </label>
+          </div>
+
+          <label class="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-700">
+            <input [(ngModel)]="comboForm.isActive" name="comboIsActive" type="checkbox" />
+            Combo ativo para aplicacao automatica
+          </label>
+
+          <div class="flex flex-wrap justify-end gap-2">
+            <button
+              type="button"
+              (click)="startNewCombo()"
+              [disabled]="isSavingCombo"
+              class="rounded-xl border border-stone-300 px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-60">
+              Limpar
+            </button>
+            @if (selectedCombo) {
+              <button
+                type="button"
+                (click)="deleteSelectedCombo()"
+                [disabled]="isSavingCombo"
+                class="rounded-xl border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60">
+                Excluir
+              </button>
+            }
+            <button
+              type="submit"
+              [disabled]="isSavingCombo"
+              class="rounded-xl border border-stone-900 bg-stone-900 px-4 py-2 text-sm font-semibold text-stone-100 hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-60">
+              {{ isSavingCombo ? 'Salvando...' : selectedCombo ? 'Salvar combo' : 'Criar combo' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </article>
+  </div>
+
+  <article class="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.12em] text-stone-500">Regras</p>
+        <h2 class="text-xl font-bold text-stone-900">Regras de combo</h2>
+        <p class="mt-1 text-sm text-stone-600">
+          @if (selectedCombo) {
+            Combo selecionado: <strong>{{ selectedCombo.name }}</strong>
+          } @else {
+            Selecione um combo para gerenciar regras.
+          }
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          (click)="loadSelectedComboRules()"
+          [disabled]="!selectedCombo"
+          class="rounded-xl border border-stone-300 px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-60">
+          Atualizar regras
+        </button>
+        <button
+          type="button"
+          (click)="startNewComboRule()"
+          [disabled]="!selectedCombo"
+          class="rounded-xl border border-stone-300 px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-60">
+          Nova regra
+        </button>
+      </div>
+    </div>
+
+    @if (comboRuleErrorMessage) {
+      <p class="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        {{ comboRuleErrorMessage }}
+      </p>
+    }
+
+    @if (comboRuleSuccessMessage) {
+      <p class="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+        {{ comboRuleSuccessMessage }}
+      </p>
+    }
+
+    @if (!selectedCombo) {
+      <p class="mt-4 rounded-xl border border-dashed border-stone-300 px-3 py-4 text-sm text-stone-600">
+        Nenhum combo selecionado para edicao de regras.
+      </p>
+    } @else {
+      <div class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[320px_1fr]">
+        <div class="space-y-2 rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <p class="text-xs font-semibold uppercase tracking-[0.1em] text-stone-500">
+            Regras cadastradas
+          </p>
+
+          @if (isLoadingComboRules && comboRules.length === 0) {
+            <p class="rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-600">
+              Carregando regras...
+            </p>
+          }
+
+          <div class="max-h-[280px] space-y-2 overflow-y-auto pr-1">
+            @for (rule of comboRules; track rule.id) {
+              <button
+                type="button"
+                (click)="selectComboRule(rule.id)"
+                [class]="
+                  'w-full rounded-xl border px-3 py-3 text-left transition ' +
+                  (selectedComboRule?.id === rule.id
+                    ? 'border-stone-800 bg-stone-900 text-stone-100'
+                    : 'border-stone-200 bg-white text-stone-800 hover:bg-stone-100')
+                ">
+                <p class="text-sm font-semibold">{{ getComboRuleTypeLabel(rule.type) }}</p>
+                <p class="mt-1 text-xs opacity-80">{{ getComboRuleTargetLabel(rule) }}</p>
+                <p class="mt-1 text-xs opacity-80">Quantidade minima: {{ rule.minimumQuantity }}</p>
+              </button>
+            }
+
+            @if (!isLoadingComboRules && comboRules.length === 0) {
+              <p class="rounded-lg border border-dashed border-stone-300 px-3 py-3 text-sm text-stone-600">
+                Este combo ainda nao possui regras.
+              </p>
+            }
+          </div>
+        </div>
+
+        <form class="space-y-3" (ngSubmit)="saveComboRule()">
+          <p class="text-xs font-semibold uppercase tracking-[0.1em] text-stone-500">
+            {{ selectedComboRule ? 'Editar regra' : 'Criar regra' }}
+          </p>
+
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <label class="block text-sm text-stone-700 md:col-span-2">
+              Tipo da regra
+              <select
+                [(ngModel)]="comboRuleForm.type"
+                name="comboRuleType"
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500">
+                @for (ruleTypeOption of comboRuleTypeOptions; track ruleTypeOption) {
+                  <option [ngValue]="ruleTypeOption">
+                    {{ getComboRuleTypeLabel(ruleTypeOption) }}
+                  </option>
+                }
+              </select>
+            </label>
+
+            @if (comboRuleForm.type === 'product') {
+              <label class="block text-sm text-stone-700">
+                Product ID
+                <input
+                  [(ngModel)]="comboRuleForm.productId"
+                  name="comboRuleProductId"
+                  type="number"
+                  min="1"
+                  step="1"
+                  required
+                  class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+              </label>
+            } @else {
+              <label class="block text-sm text-stone-700">
+                Category ID
+                <input
+                  [(ngModel)]="comboRuleForm.categoryId"
+                  name="comboRuleCategoryId"
+                  type="number"
+                  min="1"
+                  step="1"
+                  required
+                  class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+              </label>
+            }
+
+            <label class="block text-sm text-stone-700">
+              Quantidade minima
+              <input
+                [(ngModel)]="comboRuleForm.minimumQuantity"
+                name="comboRuleMinimumQuantity"
+                type="number"
+                min="1"
+                step="1"
+                required
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+            </label>
+          </div>
+
+          <div class="flex flex-wrap justify-end gap-2">
+            <button
+              type="button"
+              (click)="startNewComboRule()"
+              [disabled]="isSavingComboRule"
+              class="rounded-xl border border-stone-300 px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-60">
+              Limpar
+            </button>
+            @if (selectedComboRule) {
+              <button
+                type="button"
+                (click)="deleteSelectedComboRule()"
+                [disabled]="isSavingComboRule"
+                class="rounded-xl border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60">
+                Excluir
+              </button>
+            }
+            <button
+              type="submit"
+              [disabled]="isSavingComboRule"
+              class="rounded-xl border border-stone-900 bg-stone-900 px-4 py-2 text-sm font-semibold text-stone-100 hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-60">
+              {{
+                isSavingComboRule
+                  ? 'Salvando...'
+                  : selectedComboRule
+                    ? 'Salvar regra'
+                    : 'Criar regra'
+              }}
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+  </article>
+</section>

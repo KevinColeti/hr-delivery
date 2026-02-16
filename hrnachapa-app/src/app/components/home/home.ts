@@ -17,7 +17,10 @@ import { Product } from '../product-card/product-card';
 import { CartService } from '../../services/cart.service';
 import { CatalogStateService } from '../../services/catalog-state.service';
 import { CheckoutStateService } from '../../services/checkout-state.service';
-import { OrdersApiService } from '../../services/orders-api.service';
+import {
+  OrdersApiService,
+  ValidatePublicCouponResponse,
+} from '../../services/orders-api.service';
 import { PublicStoreSettingsService } from '../../services/public-store-settings.service';
 import { TrackingStateService } from '../../services/tracking-state.service';
 
@@ -50,6 +53,7 @@ export class HomeComponent implements OnInit {
     'Tivemos um problema com o seu pedido, e precisamos cancelar.';
   currentViewMode: HomeViewMode = 'landing';
   selectedCategoryId = '';
+  private productRouteSyncVersion = 0;
 
   /**
    * Injeta dependencias de estado, API e navegacao.
@@ -242,6 +246,28 @@ export class HomeComponent implements OnInit {
   }
 
   /**
+   * Calcula total selecionado em extras no detalhe atual.
+   */
+  get selectedExtrasTotal() {
+    const selectedIds = this.selectedExtraIds;
+
+    return this.selectedProductExtras
+      .filter((extra) => selectedIds.includes(extra.id))
+      .reduce((sum, extra) => sum + this.toNumber(extra.price), 0);
+  }
+
+  /**
+   * Retorna preco final configurado (base + extras selecionados).
+   */
+  get selectedProductConfiguredUnitPrice() {
+    if (!this.selectedProduct) {
+      return 0;
+    }
+
+    return this.selectedProduct.price + this.selectedExtrasTotal;
+  }
+
+  /**
    * Exposicao de observacao digitada no modal de produto.
    */
   get productObservation() {
@@ -312,14 +338,45 @@ export class HomeComponent implements OnInit {
    * Exposicao de estado de envio do checkout.
    */
   get isSubmittingOrder() {
-    return this.checkoutState.isSubmittingOrder;
+    return this.checkoutState.isSubmittingOrder();
   }
 
   /**
    * Exposicao de feedback operacional do checkout.
    */
   get orderFeedback() {
-    return this.checkoutState.orderFeedback;
+    return this.checkoutState.orderFeedback();
+  }
+
+  /**
+   * Exposicao de feedback de validacao de cupom.
+   */
+  get couponFeedback() {
+    return this.checkoutState.couponFeedback();
+  }
+
+  /**
+   * Exposicao de estado de validacao de cupom.
+   */
+  get isValidatingCoupon() {
+    return this.checkoutState.isValidatingCoupon();
+  }
+
+  /**
+   * Retorna desconto validado para o cupom atualmente preenchido.
+   */
+  get validatedCouponDiscountAmount() {
+    const feedback = this.couponFeedback;
+    if (!feedback || feedback.type !== 'success') {
+      return 0;
+    }
+
+    const normalizedCurrentCode = this.checkout.couponCode.trim().toUpperCase();
+    if (!feedback.code || feedback.code !== normalizedCurrentCode) {
+      return 0;
+    }
+
+    return feedback.discountAmount ?? 0;
   }
 
   /**
@@ -373,20 +430,32 @@ export class HomeComponent implements OnInit {
    */
   addToCart(product: Product) {
     this.cartService.addProduct(product);
+    this.checkoutState.clearCouponFeedback();
   }
 
   /**
-   * Abre modal de detalhe do produto com extras publicos.
+   * Abre detalhe do produto via rota canonica.
+   *
+   * Motivo:
+   * manter o id na URL permite recarregar, compartilhar e retomar
+   * o detalhe sem depender apenas de estado em memoria.
    */
   openProductDetails(product: Product) {
-    this.catalogState.openProductDetails(product);
+    void this.router.navigate(['/produto', product.id], {
+      queryParams: this.buildCatalogQueryParams(),
+    });
   }
 
   /**
-   * Fecha modal de detalhe e limpa estado temporario.
+   * Fecha detalhe e retorna para rota base de cardapio.
    */
   closeProductDetails() {
     this.catalogState.closeProductDetails();
+    if (this.route.snapshot.paramMap.get('id')) {
+      void this.router.navigate(['/cardapio'], {
+        queryParams: this.buildCatalogQueryParams(),
+      });
+    }
   }
 
   /**
@@ -408,8 +477,9 @@ export class HomeComponent implements OnInit {
       notes: this.productObservation.trim() || undefined,
       extraSelections: this.catalogState.buildSelectedExtraSelections(),
     });
+    this.checkoutState.clearCouponFeedback();
 
-    this.catalogState.closeProductDetails();
+    this.closeProductDetails();
   }
 
   /**
@@ -417,6 +487,7 @@ export class HomeComponent implements OnInit {
    */
   changeItemQuantity(itemKey: string, nextQuantity: number) {
     this.cartService.updateQuantity(itemKey, nextQuantity);
+    this.checkoutState.clearCouponFeedback();
   }
 
   /**
@@ -424,6 +495,7 @@ export class HomeComponent implements OnInit {
    */
   removeFromCart(itemKey: string) {
     this.cartService.removeItem(itemKey);
+    this.checkoutState.clearCouponFeedback();
   }
 
   /**
@@ -431,6 +503,66 @@ export class HomeComponent implements OnInit {
    */
   get orderTotal() {
     return this.cartSubtotal() + (this.checkout.deliveryFee || 0);
+  }
+
+  /**
+   * Limpa feedback quando o operador altera o codigo manualmente.
+   */
+  onCouponCodeChanged() {
+    this.checkoutState.clearCouponFeedback();
+  }
+
+  /**
+   * Valida cupom no backend sem criar pedido.
+   */
+  validateCouponForCheckout() {
+    const normalizedCode = this.checkout.couponCode.trim().toUpperCase();
+    if (!normalizedCode) {
+      this.checkoutState.setCouponFeedback({
+        type: 'error',
+        message: 'Informe um cupom para validar.',
+      });
+      return;
+    }
+
+    const rawPhone = this.checkout.whatsapp.trim();
+    const normalizedPhone = rawPhone
+      ? this.checkoutState.normalizePhoneForCheckout(rawPhone)
+      : null;
+    if (rawPhone.length > 0 && !normalizedPhone) {
+      this.checkoutState.setCouponFeedback({
+        type: 'error',
+        message: 'Informe um telefone valido para validar o cupom.',
+      });
+      return;
+    }
+
+    this.checkoutState.setIsValidatingCoupon(true);
+    this.checkoutState.setCouponFeedback(null);
+
+    this.ordersApiService
+      .validatePublicCoupon({
+        code: normalizedCode,
+        subtotal: this.cartSubtotal(),
+        clientPhone: normalizedPhone || undefined,
+      })
+      .subscribe({
+        next: (response) => {
+          this.checkoutState.setIsValidatingCoupon(false);
+          this.applyCouponValidationFeedback(response);
+        },
+        error: (error) => {
+          this.checkoutState.setIsValidatingCoupon(false);
+          const apiMessage =
+            error?.error?.message && typeof error.error.message === 'string'
+              ? error.error.message
+              : 'Nao foi possivel validar o cupom agora.';
+          this.checkoutState.setCouponFeedback({
+            type: 'error',
+            message: apiMessage,
+          });
+        },
+      });
   }
 
   /**
@@ -524,6 +656,13 @@ export class HomeComponent implements OnInit {
             type: 'error',
             message: apiMessage,
           });
+
+          if (this.checkout.couponCode.trim().length > 0 && apiMessage.toLowerCase().includes('cupom')) {
+            this.checkoutState.setCouponFeedback({
+              type: 'error',
+              message: apiMessage,
+            });
+          }
         },
       });
   }
@@ -602,8 +741,14 @@ export class HomeComponent implements OnInit {
         );
 
         if (this.isCatalogView) {
-          this.catalogState.ensureCatalogLoaded();
-        } else if (this.selectedProduct) {
+          void this.syncProductDetailsFromRoute(paramMap.get('id'));
+        } else {
+          // Invalidamos sincronizacoes pendentes para evitar que um await
+          // antigo reabra modal apos o usuario sair da rota de catalogo.
+          this.productRouteSyncVersion += 1;
+        }
+
+        if (!this.isCatalogView && this.selectedProduct) {
           this.catalogState.closeProductDetails();
         }
 
@@ -698,5 +843,79 @@ export class HomeComponent implements OnInit {
     }
 
     return 0;
+  }
+
+  /**
+   * Converte retorno de validacao do backend para feedback visual.
+   */
+  private applyCouponValidationFeedback(response: ValidatePublicCouponResponse) {
+    if (!response.valid) {
+      this.checkoutState.setCouponFeedback({
+        type: 'error',
+        message: response.message,
+        code: response.code,
+      });
+      return;
+    }
+
+    this.checkout.couponCode = response.code;
+    const discountAmount = this.toNumber(response.discountAmount);
+    this.checkoutState.setCouponFeedback({
+      type: 'success',
+      message: `${response.message}. Desconto previsto: R$ ${discountAmount.toFixed(2)}`,
+      code: response.code,
+      discountAmount,
+    });
+  }
+
+  /**
+   * Resolve query params de contexto para navegar entre cardapio e detalhe.
+   */
+  private buildCatalogQueryParams() {
+    return this.selectedCategoryId
+      ? this.getCatalogCategoryQueryParams(this.selectedCategoryId)
+      : this.getCatalogCategoryQueryParams();
+  }
+
+  /**
+   * Sincroniza rota `/produto/:id` com abertura do detalhe no estado local.
+   */
+  private async syncProductDetailsFromRoute(rawProductId: string | null) {
+    const syncVersion = ++this.productRouteSyncVersion;
+    await this.catalogState.ensureCatalogLoaded();
+
+    if (syncVersion !== this.productRouteSyncVersion || !this.isCatalogView) {
+      return;
+    }
+
+    if (!rawProductId) {
+      this.catalogState.closeProductDetails();
+      return;
+    }
+
+    const parsedProductId = Number(rawProductId);
+    if (!Number.isInteger(parsedProductId) || parsedProductId <= 0) {
+      this.catalogState.closeProductDetails();
+      await this.router.navigate(['/cardapio'], {
+        queryParams: this.buildCatalogQueryParams(),
+      });
+      return;
+    }
+
+    const product =
+      this.catalogProducts.find((catalogProduct) => catalogProduct.id === parsedProductId) ?? null;
+    if (!product) {
+      this.catalogState.closeProductDetails();
+      await this.router.navigate(['/cardapio'], {
+        queryParams: this.buildCatalogQueryParams(),
+      });
+      return;
+    }
+
+    if (this.selectedProduct?.id === product.id) {
+      return;
+    }
+
+    this.catalogState.openProductDetails(product);
   }
 }

@@ -35,6 +35,25 @@ interface CreatePublicCheckoutOrderPayload {
   notes?: string;
 }
 
+interface ValidatePublicCouponPayload {
+  code: string;
+  subtotal: number;
+  clientPhone?: string;
+}
+
+export interface ValidatePublicCouponResponse {
+  valid: boolean;
+  code: string;
+  message: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: string;
+  discountAmount: string;
+  subtotal: string;
+  finalSubtotal: string;
+  minimumOrderAmount: string;
+  firstOrderOnly: boolean;
+}
+
 export interface OrderTrackingResponse {
   id: number;
   status: string;
@@ -57,6 +76,7 @@ export interface OrderTrackingResponse {
  */
 export class OrdersApiService {
   private readonly baseUrl = 'http://localhost:3000/orders';
+  private readonly couponsBaseUrl = 'http://localhost:3000/coupons';
 
   /**
    * Injeta cliente HTTP para chamadas de pedidos publicos.
@@ -75,6 +95,16 @@ export class OrdersApiService {
    */
   createPublicCheckoutOrder(payload: CreatePublicCheckoutOrderPayload) {
     return this.http.post<{ id: number; status: string }>(`${this.baseUrl}/checkout`, payload);
+  }
+
+  /**
+   * Valida cupom no contexto do checkout publico sem criar pedido.
+   */
+  validatePublicCoupon(payload: ValidatePublicCouponPayload) {
+    return this.http.post<ValidatePublicCouponResponse>(
+      `${this.couponsBaseUrl}/public/validate`,
+      payload,
+    );
   }
 
   /**

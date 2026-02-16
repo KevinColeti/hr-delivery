@@ -30,7 +30,7 @@ export class UpdateProductExtraDto {
   @IsOptional()
   @IsNumber()
   @Min(1)
-  ingredientId?: number;
+  ingredientId?: number | null;
 
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 3 })

@@ -1,0 +1,560 @@
+<section class="space-y-4">
+  <header class="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">Operacao</p>
+        <h1 class="text-2xl font-bold text-stone-900">Estoque - Insumos</h1>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          (click)="refreshAll()"
+          class="rounded-xl border border-stone-300 px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100">
+          Atualizar tudo
+        </button>
+        <button
+          type="button"
+          (click)="startNewIngredient()"
+          class="rounded-xl border border-stone-300 px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100">
+          Novo insumo
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid grid-cols-1 gap-4 2xl:grid-cols-[1.6fr_1fr]">
+    <article class="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+      <div class="grid grid-cols-1 gap-2 md:grid-cols-[1fr_auto_auto]">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          name="stockIngredientSearch"
+          placeholder="Buscar insumo por nome ou unidade"
+          class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+
+        <select
+          [(ngModel)]="statusFilter"
+          name="stockIngredientStatusFilter"
+          class="rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500">
+          <option value="all">Todos</option>
+          <option value="active">Ativos</option>
+          <option value="inactive">Inativos</option>
+        </select>
+
+        <button
+          type="button"
+          (click)="loadIngredients(true)"
+          class="rounded-xl border border-stone-300 px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100">
+          Atualizar
+        </button>
+      </div>
+
+      @if (ingredientErrorMessage) {
+        <p class="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {{ ingredientErrorMessage }}
+        </p>
+      }
+      @if (ingredientSuccessMessage) {
+        <p class="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          {{ ingredientSuccessMessage }}
+        </p>
+      }
+
+      <div class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[320px_1fr]">
+        <div class="space-y-2 rounded-xl border border-stone-200 bg-stone-50 p-3">
+          <p class="text-xs font-semibold uppercase tracking-[0.1em] text-stone-500">
+            Lista de insumos
+          </p>
+
+          @if (isLoadingIngredients && ingredients.length === 0) {
+            <p class="rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-600">
+              Carregando insumos...
+            </p>
+          }
+
+          <div class="max-h-[62vh] space-y-2 overflow-y-auto pr-1">
+            @for (ingredient of filteredIngredients; track ingredient.id) {
+              <button
+                type="button"
+                (click)="selectIngredient(ingredient.id)"
+                [class]="
+                  'w-full rounded-xl border px-3 py-3 text-left transition ' +
+                  (selectedIngredient?.id === ingredient.id
+                    ? 'border-stone-800 bg-stone-900 text-stone-100'
+                    : 'border-stone-200 bg-white text-stone-800 hover:bg-stone-100')
+                ">
+                <div class="flex items-center justify-between gap-2">
+                  <p class="text-sm font-bold">{{ ingredient.name }}</p>
+                  <span
+                    [class]="
+                      'rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] ' +
+                      getActivationBadgeClass(ingredient.isActive)
+                    ">
+                    {{ ingredient.isActive ? 'Ativo' : 'Inativo' }}
+                  </span>
+                </div>
+                <p class="mt-1 text-xs opacity-80">
+                  Estoque: {{ toNumber(ingredient.stockQuantity) | number:'1.3-3' }} {{ ingredient.unit }}
+                </p>
+                <p class="text-xs opacity-80">
+                  Minimo: {{ toNumber(ingredient.minimumQuantity) | number:'1.3-3' }} {{ ingredient.unit }}
+                </p>
+              </button>
+            }
+
+            @if (!isLoadingIngredients && filteredIngredients.length === 0) {
+              <p class="rounded-lg border border-dashed border-stone-300 px-3 py-3 text-sm text-stone-600">
+                Nenhum insumo encontrado para os filtros atuais.
+              </p>
+            }
+          </div>
+        </div>
+
+        <form class="space-y-3" (ngSubmit)="saveIngredient()">
+          <p class="text-xs font-semibold uppercase tracking-[0.1em] text-stone-500">
+            {{ selectedIngredient ? 'Editar insumo' : 'Criar insumo' }}
+          </p>
+
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <label class="block text-sm text-stone-700 md:col-span-2">
+              Nome
+              <input
+                [(ngModel)]="ingredientForm.name"
+                name="stockIngredientName"
+                type="text"
+                required
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+            </label>
+
+            <label class="block text-sm text-stone-700">
+              Unidade
+              <input
+                [(ngModel)]="ingredientForm.unit"
+                name="stockIngredientUnit"
+                type="text"
+                required
+                maxlength="12"
+                placeholder="Ex.: g, ml, un"
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+            </label>
+
+            <label class="block text-sm text-stone-700">
+              Estoque atual
+              <input
+                [(ngModel)]="ingredientForm.stockQuantity"
+                name="stockIngredientQuantity"
+                type="number"
+                min="0"
+                step="0.001"
+                required
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+            </label>
+
+            <label class="block text-sm text-stone-700">
+              Estoque minimo
+              <input
+                [(ngModel)]="ingredientForm.minimumQuantity"
+                name="stockIngredientMinimumQuantity"
+                type="number"
+                min="0"
+                step="0.001"
+                required
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+            </label>
+          </div>
+
+          <label class="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-700">
+            <input
+              [(ngModel)]="ingredientForm.isActive"
+              name="stockIngredientIsActive"
+              type="checkbox" />
+            Insumo ativo para uso no cardapio
+          </label>
+
+          <div class="flex flex-wrap justify-end gap-2">
+            <button
+              type="button"
+              (click)="startNewIngredient()"
+              [disabled]="isSavingIngredient"
+              class="rounded-xl border border-stone-300 px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-60">
+              Limpar
+            </button>
+            @if (selectedIngredient) {
+              <button
+                type="button"
+                (click)="deleteSelectedIngredient()"
+                [disabled]="isSavingIngredient"
+                class="rounded-xl border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60">
+                Excluir
+              </button>
+            }
+            <button
+              type="submit"
+              [disabled]="isSavingIngredient"
+              class="rounded-xl border border-stone-900 bg-stone-900 px-4 py-2 text-sm font-semibold text-stone-100 hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-60">
+              {{
+                isSavingIngredient
+                  ? 'Salvando...'
+                  : selectedIngredient
+                    ? 'Salvar insumo'
+                    : 'Criar insumo'
+              }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </article>
+
+    <article class="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.12em] text-stone-500">Monitor</p>
+          <h2 class="text-xl font-bold text-stone-900">Alertas de estoque minimo</h2>
+        </div>
+        <button
+          type="button"
+          (click)="loadLowStockAlerts()"
+          class="rounded-xl border border-stone-300 px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100">
+          Atualizar alertas
+        </button>
+      </div>
+
+      <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-[auto_1fr]">
+        <label class="inline-flex items-center gap-2 rounded-xl border border-stone-300 px-3 py-2 text-sm text-stone-700">
+          <input
+            [(ngModel)]="includeInactiveInAlerts"
+            name="stockIncludeInactiveAlerts"
+            type="checkbox" />
+          Incluir inativos
+        </label>
+
+        <label class="text-sm text-stone-700">
+          Limite
+          <input
+            [(ngModel)]="alertsLimit"
+            name="stockAlertsLimit"
+            type="number"
+            min="1"
+            step="1"
+            class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+        </label>
+      </div>
+
+      @if (alertsErrorMessage) {
+        <p class="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {{ alertsErrorMessage }}
+        </p>
+      }
+
+      @if (isLoadingAlerts && lowStockAlerts.length === 0) {
+        <p class="mt-3 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-600">
+          Carregando alertas...
+        </p>
+      }
+
+      <div class="mt-3 max-h-[62vh] space-y-2 overflow-y-auto pr-1">
+        @for (alert of lowStockAlerts; track alert.ingredientId) {
+          <article class="rounded-xl border border-stone-200 bg-stone-50 p-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <p class="text-sm font-semibold text-stone-900">{{ alert.ingredientName }}</p>
+              <span
+                [class]="
+                  'rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] ' +
+                  getAlertLevelBadgeClass(alert.alertLevel)
+                ">
+                {{ getAlertLevelLabel(alert.alertLevel) }}
+              </span>
+            </div>
+            <p class="mt-1 text-xs text-stone-600">
+              Estoque: {{ toNumber(alert.stockQuantity) | number:'1.3-3' }} {{ alert.unit }}
+            </p>
+            <p class="text-xs text-stone-600">
+              Minimo: {{ toNumber(alert.minimumQuantity) | number:'1.3-3' }} {{ alert.unit }}
+            </p>
+            <p class="text-xs text-stone-600">
+              Deficit: {{ toNumber(alert.deficitQuantity) | number:'1.3-3' }} {{ alert.unit }}
+            </p>
+          </article>
+        }
+
+        @if (!isLoadingAlerts && lowStockAlerts.length === 0) {
+          <p class="rounded-xl border border-dashed border-stone-300 px-3 py-4 text-sm text-stone-600">
+            Sem alertas de estoque minimo no momento.
+          </p>
+        }
+      </div>
+    </article>
+  </div>
+
+  <article class="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.12em] text-stone-500">Historico</p>
+        <h2 class="text-xl font-bold text-stone-900">Movimentacoes de estoque</h2>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          (click)="loadStockMovements()"
+          class="rounded-xl border border-stone-300 px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100">
+          Atualizar movimentacoes
+        </button>
+        <button
+          type="button"
+          (click)="startNewMovement()"
+          class="rounded-xl border border-stone-300 px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100">
+          Nova movimentacao
+        </button>
+      </div>
+    </div>
+
+    <div class="mt-3 grid grid-cols-1 gap-2 lg:grid-cols-5">
+      <label class="text-sm text-stone-700">
+        Insumo
+        <select
+          [(ngModel)]="movementIngredientFilterId"
+          name="stockMovementFilterIngredientId"
+          class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500">
+          <option [ngValue]="null">Todos</option>
+          @for (ingredient of ingredients; track ingredient.id) {
+            <option [ngValue]="ingredient.id">{{ ingredient.name }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="text-sm text-stone-700">
+        Tipo
+        <select
+          [(ngModel)]="movementTypeFilter"
+          name="stockMovementFilterType"
+          class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500">
+          <option value="all">Todos</option>
+          @for (movementType of movementTypeOptions; track movementType) {
+            <option [ngValue]="movementType">{{ getMovementTypeLabel(movementType) }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="text-sm text-stone-700">
+        Origem
+        <select
+          [(ngModel)]="movementSourceFilter"
+          name="stockMovementFilterSource"
+          class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500">
+          <option value="all">Todas</option>
+          @for (movementSource of movementSourceOptions; track movementSource) {
+            <option [ngValue]="movementSource">{{ getMovementSourceLabel(movementSource) }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="text-sm text-stone-700">
+        Pedido
+        <input
+          [(ngModel)]="movementOrderFilterId"
+          name="stockMovementFilterOrderId"
+          type="number"
+          min="1"
+          step="1"
+          placeholder="Ex.: 123"
+          class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+      </label>
+
+      <label class="text-sm text-stone-700">
+        Limite
+        <input
+          [(ngModel)]="movementsLimit"
+          name="stockMovementFilterLimit"
+          type="number"
+          min="1"
+          step="1"
+          class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+      </label>
+    </div>
+
+    <div class="mt-3 flex justify-end">
+      <button
+        type="button"
+        (click)="loadStockMovements()"
+        class="rounded-xl border border-stone-300 px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100">
+        Aplicar filtros
+      </button>
+    </div>
+
+    @if (movementErrorMessage) {
+      <p class="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        {{ movementErrorMessage }}
+      </p>
+    }
+
+    @if (movementSuccessMessage) {
+      <p class="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+        {{ movementSuccessMessage }}
+      </p>
+    }
+
+    <div class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[1.4fr_1fr]">
+      <div class="space-y-2 rounded-xl border border-stone-200 bg-stone-50 p-3">
+        <p class="text-xs font-semibold uppercase tracking-[0.1em] text-stone-500">
+          Historico recente
+        </p>
+
+        @if (isLoadingMovements && stockMovements.length === 0) {
+          <p class="rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-600">
+            Carregando movimentacoes...
+          </p>
+        }
+
+        <div class="max-h-[50vh] space-y-2 overflow-y-auto pr-1">
+          @for (movement of stockMovements; track movement.id) {
+            <article class="rounded-xl border border-stone-200 bg-white p-3">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <p class="text-sm font-semibold text-stone-900">{{ movement.ingredient.name }}</p>
+                <p class="text-xs text-stone-600">{{ movement.createdAt | date:'dd/MM/yyyy HH:mm:ss' }}</p>
+              </div>
+
+              <div class="mt-2 flex flex-wrap items-center gap-2">
+                <span
+                  [class]="
+                    'rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] ' +
+                    getMovementTypeBadgeClass(movement.type)
+                  ">
+                  {{ getMovementTypeLabel(movement.type) }}
+                </span>
+                <span
+                  [class]="
+                    'rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] ' +
+                    getMovementSourceBadgeClass(movement.source)
+                  ">
+                  {{ getMovementSourceLabel(movement.source) }}
+                </span>
+                @if (movement.orderId) {
+                  <span class="rounded-full border border-stone-300 bg-stone-100 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-stone-700">
+                    Pedido #{{ movement.orderId }}
+                  </span>
+                }
+              </div>
+
+              <p class="mt-2 text-xs text-stone-700">
+                Variacao: {{ getSignedQuantityLabel(movement.quantityChange) }} {{ movement.ingredient.unit }}
+              </p>
+              <p class="text-xs text-stone-700">
+                Antes: {{ toNumber(movement.stockBefore) }} {{ movement.ingredient.unit }} -> Depois: {{ toNumber(movement.stockAfter) }} {{ movement.ingredient.unit }}
+              </p>
+              <p class="mt-1 text-xs text-stone-600">Motivo: {{ movement.reason }}</p>
+              @if (movement.notes) {
+                <p class="mt-1 text-xs text-stone-600">Obs: {{ movement.notes }}</p>
+              }
+            </article>
+          }
+
+          @if (!isLoadingMovements && stockMovements.length === 0) {
+            <p class="rounded-xl border border-dashed border-stone-300 px-3 py-4 text-sm text-stone-600">
+              Sem movimentacoes para os filtros atuais.
+            </p>
+          }
+        </div>
+      </div>
+
+      <form class="space-y-3 rounded-xl border border-stone-200 bg-stone-50 p-4" (ngSubmit)="saveMovement()">
+        <p class="text-xs font-semibold uppercase tracking-[0.1em] text-stone-500">
+          Nova movimentacao manual
+        </p>
+
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <label class="block text-sm text-stone-700 md:col-span-2">
+            Insumo
+            <select
+              [(ngModel)]="movementForm.ingredientId"
+              name="stockMovementIngredientId"
+              required
+              class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500">
+              <option [ngValue]="null">Selecione</option>
+              @for (ingredient of ingredients; track ingredient.id) {
+                <option [ngValue]="ingredient.id">{{ ingredient.name }} ({{ ingredient.unit }})</option>
+              }
+            </select>
+          </label>
+
+            <label class="block text-sm text-stone-700">
+              Tipo
+              <select
+              [(ngModel)]="movementForm.type"
+              name="stockMovementType"
+              required
+              class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500">
+              @for (movementType of movementTypeOptions; track movementType) {
+                <option [ngValue]="movementType">{{ getMovementTypeLabel(movementType) }}</option>
+              }
+            </select>
+          </label>
+
+          @if (movementForm.type === 'adjustment') {
+            <label class="block text-sm text-stone-700">
+              Saldo alvo
+              <input
+                [(ngModel)]="movementForm.targetQuantity"
+                name="stockMovementTargetQuantity"
+                type="number"
+                min="0"
+                step="0.001"
+                required
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+            </label>
+          } @else {
+            <label class="block text-sm text-stone-700">
+              Quantidade
+              <input
+                [(ngModel)]="movementForm.quantity"
+                name="stockMovementQuantity"
+                type="number"
+                min="0.001"
+                step="0.001"
+                required
+                class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+            </label>
+          }
+
+          <label class="block text-sm text-stone-700 md:col-span-2">
+            Motivo
+            <input
+              [(ngModel)]="movementForm.reason"
+              name="stockMovementReason"
+              type="text"
+              required
+              maxlength="180"
+              class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500" />
+          </label>
+
+          <label class="block text-sm text-stone-700 md:col-span-2">
+            Observacoes
+            <textarea
+              [(ngModel)]="movementForm.notes"
+              name="stockMovementNotes"
+              rows="3"
+              maxlength="1000"
+              class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-500"></textarea>
+          </label>
+        </div>
+
+        <div class="flex flex-wrap justify-end gap-2">
+          <button
+            type="button"
+            (click)="startNewMovement()"
+            [disabled]="isSavingMovement"
+            class="rounded-xl border border-stone-300 px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-60">
+            Limpar
+          </button>
+          <button
+            type="submit"
+            [disabled]="isSavingMovement"
+            class="rounded-xl border border-stone-900 bg-stone-900 px-4 py-2 text-sm font-semibold text-stone-100 hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-60">
+            {{ isSavingMovement ? 'Registrando...' : 'Registrar movimentacao' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </article>
+</section>
