@@ -133,10 +133,11 @@
 ---
 
 ## C6 - E9 (Qualidade e Go-live) - Subtopicos de Fechamento
-- Status: `todo`
+- Status: `in-progress`
 - Referencia principal: `E9 - Qualidade e Go-live` no `ROADMAP.md`
 
 ### C6.1 [Subtopico de E9] Testes
+- [x] (`done`) [P0] Cobertura inicial de promocoes com teste unitario em `CouponsService` (validacao publica por telefone, limite por cliente, first-order e calculo de desconto).
 - [ ] (`todo`) [P0] Testes unitarios de dominio: pedido, estoque, promocoes.
 - [ ] (`todo`) [P0] Testes de integracao API: checkout, confirmacao, baixa, tracking.
 - [ ] (`todo`) [P1] E2E do fluxo completo: cliente -> admin -> cozinha -> entrega.
@@ -145,6 +146,97 @@
 - [ ] (`todo`) [P0] Checklist de migracoes, backup e observabilidade.
 - [ ] (`todo`) [P0] Plano de deploy + smoke tests pos-deploy.
 - [ ] (`todo`) [P1] Revisao final de permissao por perfil.
+
+---
+
+## C7 - E10 (Gestao de Usuarios e Acesso) - Subtopicos
+- Status: `in-progress`
+- Referencia principal: `E10 - Gestao de Usuarios e Acesso Operacional` no `ROADMAP.md`
+
+### C7.1 [Subtopico de E10] CRUD de usuarios admin/cozinha
+- [ ] (`todo`) [P0] Endpoint/listagem com filtros por papel e status.
+- [ ] (`todo`) [P0] Criacao e edicao de usuarios no admin.
+- [ ] (`todo`) [P0] Ativacao/inativacao com protecoes de seguranca.
+- [ ] (`todo`) [P0] Reset de senha por admin (minimo 8 caracteres).
+
+### C7.2 [Subtopico de E10] Fluxo de acesso por perfil
+- [ ] (`todo`) [P0] Redirecionamento pos-login por papel.
+- [ ] (`todo`) [P0] Restricao do perfil kitchen ao modulo `/admin/cozinha`.
+
+## C8 - E11 (UX Publica e Checkout Seguro) - Subtopicos
+- Status: `in-progress`
+- Referencia principal: `E11 - UX Publica e Checkout Seguro` no `ROADMAP.md`
+
+### C8.1 [Subtopico de E11] Checkout com taxa controlada pelo backend
+- [ ] (`todo`) [P0] Remover edicao da taxa de entrega na UI.
+- [ ] (`todo`) [P0] Backend ignorar `deliveryFee` enviado pelo cliente.
+- [ ] (`todo`) [P0] Exibir taxa em modo somente leitura no resumo.
+
+### C8.2 [Subtopico de E11] Carrinho e feedback imediato
+- [ ] (`todo`) [P1] Mini-carrinho dropdown no header com subtotal.
+- [ ] (`todo`) [P1] Toast discreto ao adicionar item.
+
+### C8.3 [Subtopico de E11] Home orientada a conversao
+- [ ] (`todo`) [P1] Bloco de produtos da categoria `combos` (quando existir).
+- [ ] (`todo`) [P1] Bloco de top vendidos reais (ultimos 30 dias).
+
+## C9 - E12 (Rastreabilidade de Cupons) - Subtopicos
+- Status: `in-progress`
+- Referencia principal: `E12 - Rastreabilidade de Cupons e Promocoes` no `ROADMAP.md`
+
+### C9.1 [Subtopico de E12] Historico de uso de cupons em promocoes
+- [ ] (`todo`) [P0] Criar endpoint de historico global derivado de pedidos.
+- [ ] (`todo`) [P0] Incluir pedidos cancelados com status visivel.
+- [ ] (`todo`) [P1] Filtros por cupom, status, periodo e busca.
+- [ ] (`todo`) [P1] Paginacao com desempenho estavel.
+
+### C9.2 [Subtopico de E12] Cupom visivel em pedidos e clientes
+- [ ] (`todo`) [P0] Exibir badge `cupom aplicado` + desconto em pedidos.
+- [ ] (`todo`) [P0] Exibir cupom no historico de pedidos do cliente.
+
+### C9.3 [Subtopico de E12] Performance
+- [ ] (`todo`) [P1] Migration com indices para consultas de historico.
+
+## C10 - E13 (Conta do Cliente e Meus Pedidos) - Subtopicos
+- Status: `in-progress`
+- Referencia principal: `E13 - Conta do Cliente e Meus Pedidos` no `ROADMAP.md`
+
+### C10.1 [Subtopico de E13] Cadastro/login por telefone
+- [ ] (`todo`) [P0] Cadastro de cliente com senha.
+- [ ] (`todo`) [P0] Login com telefone + senha.
+- [ ] (`todo`) [P0] Sessao autenticada de cliente no frontend.
+
+### C10.2 [Subtopico de E13] Primeiro acesso de clientes existentes
+- [ ] (`todo`) [P0] Permitir definicao de senha para cliente legado sem senha.
+- [ ] (`todo`) [P0] Manter conflito para telefone que ja possui conta ativa.
+
+### C10.3 [Subtopico de E13] Tela Meus Pedidos
+- [ ] (`todo`) [P0] Listar pedidos do cliente autenticado.
+- [ ] (`todo`) [P0] Exibir detalhe e acompanhamento por pedido.
+- [ ] (`todo`) [P0] Manter checkout hibrido (com ou sem login).
+
+---
+
+## APIs/Interfaces relevantes da FASE 2 (contexto tecnico)
+1. `GET /coupons/history` (admin only), historico de uso em pedidos.
+2. `GET /orders?couponUsage=all|with|without`.
+3. `GET /products/public/highlights`.
+4. `POST /client-auth/register`, `POST /client-auth/login`, `GET /client/orders`, `GET /client/orders/:id`.
+5. Checkout publico com `deliveryFee` nao autoritativo no cliente.
+
+## Testes/cenarios para considerar como pronto na fase
+1. Pedido com cupom aparece em `Pedidos`, `Clientes` e `Promocoes`.
+2. Pedido cancelado com cupom continua no historico com status correto.
+3. Checkout nao permite editar taxa e backend aplica somente taxa da loja.
+4. Kitchen sem acesso a modulos administrativos fora de cozinha.
+5. Cliente cadastra/loga e consulta `Meus pedidos`.
+
+## Assuncoes e defaults da FASE 2
+1. Nao substituir conteudo atual dos roadmaps; apenas adicionar.
+2. Historico de promocoes nesta etapa cobre somente cupons.
+3. Sem exportacao CSV/Excel nesta etapa.
+4. Padrao de docstring/comentario de "porque" permanece obrigatorio.
+5. Nao atualizar Insomnia automaticamente.
 
 ---
 

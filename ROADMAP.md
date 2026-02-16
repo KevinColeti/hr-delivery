@@ -118,12 +118,52 @@
 - [x] (`done`) [P0] Guards por perfil e protecao de rotas
 
 ## E9 - Qualidade e Go-live
-- Status: `todo`
-- [ ] (`todo`) [P0] Testes unitarios de dominios criticos
+- Status: `in-progress`
+- [ ] (`in-progress`) [P0] Testes unitarios de dominios criticos (cobertura inicial em promocoes/coupons)
 - [ ] (`todo`) [P0] Testes de integracao (pedido, estoque, promocoes)
 - [ ] (`todo`) [P1] Teste E2E do fluxo completo (site -> admin -> cozinha -> entrega)
 - [ ] (`todo`) [P0] Checklist de producao (migrations, backup, observabilidade)
 - [ ] (`todo`) [P0] Deploy final e smoke test pos-deploy
+
+## E10 - Gestao de Usuarios e Acesso Operacional
+- Status: `in-progress`
+- [x] (`done`) [P0] Login unico para perfis `admin` e `kitchen` em `/admin/login`
+- [ ] (`todo`) [P0] CRUD administrativo de usuarios (`admin` e `kitchen`)
+- [ ] (`todo`) [P0] Ativacao/inativacao de usuario com regras de seguranca operacional
+- [ ] (`todo`) [P0] Reset administrativo de senha (minimo 8 caracteres)
+- [ ] (`todo`) [P0] Restricao de acesso do perfil `kitchen` somente ao modulo `/admin/cozinha`
+
+## E11 - UX Publica e Checkout Seguro
+- Status: `in-progress`
+- [ ] (`todo`) [P0] Checkout com taxa de entrega somente leitura (nao editavel pelo cliente)
+- [ ] (`todo`) [P0] Backend definir taxa de entrega como fonte unica (ignorar valor enviado pelo cliente)
+- [ ] (`todo`) [P1] Carrinho como dropdown no header com resumo rapido
+- [ ] (`todo`) [P1] Feedback visual (toast) ao adicionar item no carrinho
+- [ ] (`todo`) [P1] Home com blocos de `Combos` e `Mais pedidos` (top vendidos reais)
+
+## E12 - Rastreabilidade de Cupons e Promocoes
+- Status: `in-progress`
+- [ ] (`todo`) [P0] Exibir uso de cupom no modulo de pedidos (codigo + desconto)
+- [ ] (`todo`) [P0] Exibir uso de cupom no historico de pedidos do cliente
+- [ ] (`todo`) [P0] Historico global de cupons em `/admin/promocoes` (uso em pedidos)
+- [ ] (`todo`) [P1] Filtros por cupom/status/periodo/busca com paginacao no historico
+- [ ] (`todo`) [P1] Otimizacao de consulta com indices de banco para historico de cupons
+
+## E13 - Conta do Cliente e Meus Pedidos
+- Status: `in-progress`
+- [ ] (`todo`) [P0] Cadastro de cliente com login por telefone + senha
+- [ ] (`todo`) [P0] Fluxo de primeiro acesso para clientes existentes sem senha
+- [ ] (`todo`) [P0] Login de cliente e sessao autenticada no site
+- [ ] (`todo`) [P0] Tela `Meus pedidos` com historico + detalhe + acompanhamento
+- [ ] (`todo`) [P0] Checkout hibrido (com ou sem login) mantendo compatibilidade
+
+## Criterios de conclusao da Fase 2
+- [ ] (`todo`) [P0] Admin gerencia usuarios e acessos por perfil sem falhas de permissao
+- [ ] (`todo`) [P0] Kitchen acessa apenas fluxo operacional de cozinha
+- [ ] (`todo`) [P0] Taxa de entrega nao e editavel no checkout e e definida apenas pelo backend
+- [ ] (`todo`) [P0] Uso de cupom fica rastreavel em pedidos, clientes e promocoes
+- [ ] (`todo`) [P0] Cliente consegue cadastrar, logar e consultar `Meus pedidos`
+- [ ] (`todo`) [P1] Carrinho dropdown e toast melhoram feedback da jornada de compra
 
 ---
 
